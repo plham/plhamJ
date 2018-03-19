@@ -1,11 +1,54 @@
 package plham.main;
 
+import java.io.Serializable;
+
 /**
  * A Runner class for sequential execution.
  */
-@x10.runtime.impl.java.X10Generated
-public class SequentialRunner<$B> extends plham.main.Runner<$B> implements
-		x10.serialization.X10JavaSerializable {
+@SuppressWarnings("unused")
+public class SequentialRunner<T> extends Runner implements Serializable {
+	/*
+	public def this(sim:B) {
+		super(sim);
+	}
+	
+	public def updateMarkets(maxNormalOrders:Long, maxHifreqOrders:Long, diffPass:Boolean) { 
+		val orders = collectOrders(maxNormalOrders);
+		handleOrders(orders, maxHifreqOrders);
+	}
+	
+	public def collectOrders(MAX_NORMAL_ORDERS:Long):List[List[Order]] {
+		val env = this.env();
+		val markets = env.markets;
+		val agents = env.normalAgents;
+		
+		val beginTime = System.nanoTime();
+		val allOrders = new ArrayList[List[Order]]();
+
+		val random = sim.getRandom();
+		val randomAgents = new RandomPermutation[Agent](random, agents);
+
+		var k:Long = 0;
+		randomAgents.shuffle();
+		for (agent in randomAgents) {
+			if (k >= MAX_NORMAL_ORDERS) {
+				break;
+			}
+			val orders = agent.submitOrders(markets);
+			if (orders.size() > 0) {
+				allOrders.add(orders);
+				k++;
+			}
+		}
+		val endTime = System.nanoTime();
+		if (_PROFILE) {
+			Console.OUT.println("#PROFILE ORDER-MAKE TOTAL " + ((endTime - beginTime) / 1e+9) + " sec");
+			Console.OUT.println("#PROFILE MAX-NORMAL-ORDERS " + MAX_NORMAL_ORDERS);
+			Console.OUT.println("#PROFILE NUM-NORMAL-ORDERS " + allOrders.size());
+		}
+		return allOrders;
+	}
+	 */
 	public static final x10.rtt.RuntimeType<SequentialRunner> $RTT = x10.rtt.NamedType
 			.<SequentialRunner> make("plham.main.SequentialRunner",
 					SequentialRunner.class, 1,
@@ -83,8 +126,7 @@ public class SequentialRunner<$B> extends plham.main.Runner<$B> implements
 	public SequentialRunner(final x10.rtt.Type $B, final $B sim,
 			sequentialRunner $dummy) {
 		this((java.lang.System[]) null, $B);
-		init(sim,
-				(plham.main.SequentialRunner.sequentialRunner) null);
+		init(sim, (plham.main.SequentialRunner.sequentialRunner) null);
 	}
 
 	// constructor for non-virtual call
@@ -112,12 +154,11 @@ public class SequentialRunner<$B> extends plham.main.Runner<$B> implements
 			final long maxHifreqOrders, final boolean diffPass) {
 
 		// #line 23 "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
-		final x10.util.List orders = this
-				.collectOrders((maxNormalOrders));
+		final x10.util.List orders = this.collectOrders((maxNormalOrders));
 
 		// #line 24 "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
-		this.handleOrders__0$1x10$util$List$1plham$Order$2$2(
-				((orders)), (maxHifreqOrders));
+		this.handleOrders__0$1x10$util$List$1plham$Order$2$2(((orders)),
+				(maxHifreqOrders));
 	}
 
 	// #line 27 "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
@@ -254,8 +295,7 @@ public class SequentialRunner<$B> extends plham.main.Runner<$B> implements
 
 			// #line 52
 			// "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
-			final x10.io.Printer t$21801 = ((x10.io.Console
-					.get$OUT()));
+			final x10.io.Printer t$21801 = ((x10.io.Console.get$OUT()));
 
 			// #line 52
 			// "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
@@ -284,8 +324,7 @@ public class SequentialRunner<$B> extends plham.main.Runner<$B> implements
 
 			// #line 53
 			// "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
-			final x10.io.Printer t$21803 = ((x10.io.Console
-					.get$OUT()));
+			final x10.io.Printer t$21803 = ((x10.io.Console.get$OUT()));
 
 			// #line 53
 			// "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
@@ -298,8 +337,7 @@ public class SequentialRunner<$B> extends plham.main.Runner<$B> implements
 
 			// #line 54
 			// "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
-			final x10.io.Printer t$21806 = ((x10.io.Console
-					.get$OUT()));
+			final x10.io.Printer t$21806 = ((x10.io.Console.get$OUT()));
 
 			// #line 54
 			// "/home/dsl/workspace/plhamK/plham/main/SequentialRunner.x10"
