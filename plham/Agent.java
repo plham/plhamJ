@@ -40,8 +40,8 @@ public class Agent implements Serializable {
 	public var cashAmount:Double;
 	public var assetsVolumes:Map[Long,Long];
 	 */
-	private long id;
-	private String name;
+	public long id;
+	public String name;
 	private Random random;
 	private JsonNode jsonValue;
 	public double cashAmount;
@@ -73,8 +73,8 @@ public class Agent implements Serializable {
 		this.assetsVolumes = new HashMap<Long, Long>();
 	}
 
-	@SuppressWarnings("hiding")
-	public Agent create(long id, String name, Random random, JsonNode jsonValue) {
+	public static Agent create(long id, String name, Random random,
+			JsonNode jsonValue) {
 		return new Agent(id, name, random, jsonValue);
 	}
 
@@ -110,9 +110,8 @@ public class Agent implements Serializable {
 			super(id);
 		}
 
-		@SuppressWarnings("static-method")
-		public List<Order> submitOrders(
-				@SuppressWarnings("unused") List<Market> markets) {
+		@Override
+		public List<Order> submitOrders(List<Market> markets) {
 			throw new UnsupportedOperationException("should not called");
 		}
 	}
@@ -132,52 +131,177 @@ public class Agent implements Serializable {
 	public Agent setup(JsonNode jsonNode, Simulator sim) {
 		JSONRandom jsonRandom = new JSONRandom(getRandom());
 		this.assetsVolumes = new HashMap<Long, Long>();
-		this.cashAmount =jsonRandom.nextRandom(jsonNode.get("cashAmount"));
+		this.cashAmount = jsonRandom.nextRandom(jsonNode.get("cashAmount"));
 		sim.getMarketsByName(jsonNode.get("markets"));
-		for (market in sim.getMarketsByName(json.get(json("markets"))) {
-			this.assetsVolumes(market.id) = 0;
-			this.assetsVolumes(market.id) = jsonrandom.nextRandom(json("assetVolume")) as Long;
+		for (Market market : sim.getMarketsByName(jsonNode.get("markets"))) {
+			this.assetsVolumes.put(market.id, 0L);
+			this.assetsVolumes.put(
+					market.id,
+					new Double(jsonRandom.nextRandom(jsonNode
+							.get("assetVolume"))).longValue());
 		}
 		return this;
 	}
 
-	/**
-	 * idを取得します。
-	 * 
-	 * @return id
-	 */
-	public long getId() {
-		return id;
+	/*
+	public abstract def submitOrders(markets:List[Market]):List[Order];
+	*/
+	@SuppressWarnings({ "unused", "static-method" })
+	public List<Order> submitOrders(List<Market> markets) {
+		return null;
 	}
 
-	/**
-	 * idを設定します。
-	 * 
-	 * @param id
-	 *            id
-	 */
-	public void setId(long id) {
-		this.id = id;
+	/*
+	public def isMarketAccessible(id:Long) = this.assetsVolumes.containsKey(id);
+	*/
+	@SuppressWarnings("hiding")
+	public boolean isMarketAccessible(long id) {
+		return this.assetsVolumes.containsKey(id);
 	}
 
-	/**
-	 * nameを取得します。
-	 * 
-	 * @return name
-	 */
-	public String getName() {
-		return name;
+	/*
+	public def isMarketAccessible(market:Market) = this.isMarketAccessible(market.id);
+	*/
+	public boolean isMarketAccessible(Market market) {
+		return this.isMarketAccessible(market.id);
 	}
 
-	/**
-	 * nameを設定します。
-	 * 
-	 * @param name
-	 *            name
-	 */
-	public void setName(String name) {
-		this.name = name;
+	/*
+	public def setMarketAccessible(id:Long) = this.assetsVolumes(id) = 0;
+	*/
+
+	public void setMarketAccessible(Long id) {
+		this.assetsVolumes.put(id, 0L);
 	}
+
+	/*
+	public def setMarketAccessible(market:Market) = this.setMarketAccessible(market.id);
+	*/
+
+	public void setMarketAccessible(Market market) {
+		this.setMarketAccessible(market.id);
+	}
+
+	/*
+	public def getCashAmount():Double = this.cashAmount;
+	*/
+
+	public double getCashAmount() {
+		return this.cashAmount;
+	}
+
+	/*
+	public def setCashAmount(cashAmount:Double):Double = this.cashAmount = cashAmount;
+	*/
+
+	public void setCashAmount(Double cashAmount) {
+		this.cashAmount = cashAmount;
+	}
+
+	/*
+	public def updateCashAmount(delta:Double) = this.cashAmount += delta;
+	*/
+
+	public void updateCashAmount(Double delta) {
+		this.cashAmount += delta;
+	}
+
+	/*
+	public def executeUpdate(update:Market.AgentUpdate) {
+	updateCashAmount(update.cashAmountDelta);
+	updateAssetVolume(update.marketId, update.assetVolumeDelta);
+	orderExecuted(update.marketId, update.orderId, update.price, update.cashAmountDelta, update.assetVolumeDelta);
+	}
+	*/
+	public void executeUpdate(Market.AgentUpdate update) {
+		updateCashAmount(update.cashAmountDelta);
+		updateAssetVolume(update.marketId, update.assetVolumeDelta);
+		orderExecuted(update.marketId, update.orderId, update.price,
+				update.cashAmountDelta, update.assetVolumeDelta);
+	}
+
+	/*
+	public def getAssetVolume(id:Long):Long {
+		assert this.isMarketAccessible(id);
+		return this.assetsVolumes(id);
+	}
+	*/
+	@SuppressWarnings("hiding")
+	public long getAssetVolume(long id) {
+		assert this.isMarketAccessible(id);
+		return this.assetsVolumes.get(id);
+	}
+
+	/*
+	public def setAssetVolume(id:Long, assetVolume:Long) {
+		assert this.isMarketAccessible(id);
+		return this.assetsVolumes(id) = assetVolume;
+	}
+	*/
+
+	public void setAssetVolume(long id, long assetVolume) {
+		assert this.isMarketAccessible(id);
+		this.assetsVolumes.put(id, assetVolume);
+	}
+
+	/*
+	public def getAssetVolume(market:Market) = this.getAssetVolume(market.id);
+	*/
+
+	public long getAssetVolume(Market market) {
+		return this.getAssetVolume(market.id);
+	}
+
+	/*
+	public def setAssetVolume(market:Market, assetVolume:Long) = this.setAssetVolume(market.id, assetVolume);
+	*/
+	public void setAssetVolume(Market market, long assetVolume) {
+		this.setAssetVolume(market.id, assetVolume);
+	}
+
+	/*
+	public def updateAssetVolume(id:Long, delta:Long) {
+		assert this.isMarketAccessible(id);
+		return this.assetsVolumes(id) = this.assetsVolumes(id) + delta;
+	}
+	*/
+	@SuppressWarnings("hiding")
+	public void updateAssetVolume(long id, long delta) {
+		assert this.isMarketAccessible(id);
+		this.assetsVolumes.put(id, this.assetsVolumes.get(id) + delta);
+	}
+
+	/*
+	public def updateAssetVolume(market:Market, delta:Long) = this.updateAssetVolume(market.id, delta);
+	*/
+	public void updateAssetVolume(Market market, long delta) {
+		this.updateAssetVolume(market.id, delta);
+	}
+
+	/*
+	public def orderExecuted(marketId:Long, orderId:Long, price:Double, cashAmountDelta:Double, assetVolumeDelta:Long) {
+		//Console.OUT.println("#Agent#orderExecuted: " + ["agent:" + this.id, "market:" + market.id, "order:" + orderId, "price:" + price, "cashAmountDelta:" + cashAmountDelta, "assetVolumeDelta:" + assetVolumeDelta]);
+	}
+	*/
+	@SuppressWarnings("unused")
+	public void orderExecuted(long marketId, long orderId, double price,
+			double cashAmountDelta, long assetVolumeDelta) {
+		// do nothing
+	}
+
+	/*
+	public def nextOrderId():Long = 0;
+	*/
+	@SuppressWarnings("static-method")
+	public long nextOrderId() {
+		return 0L;
+	}
+
+	/*
+	public def toString():String {
+		return this.typeName() + [this.id, this.cashAmount, this.assetsVolumes.keySet()];
+	}
+	*/
 
 	/**
 	 * randomを取得します。

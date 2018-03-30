@@ -19,9 +19,6 @@ import plham.model.EventInitializer;
 import plham.model.MarketGenerator;
 import plham.model.MarketInitializer;
 import plham.model.MarketsInitializer;
-import plham.model.as;
-import plham.model.numMarkets;
-import plham.model.val;
 import x10.lang.LongRange;
 
 /**
@@ -46,12 +43,12 @@ public abstract class Simulator extends Env {
 	public Map<String, List<LongRange>> marketName2Ranges;
 	public JsonNode CONFIG;
 	public Random RANDOM;
-	private Map<String, AgentsInitializer> agentInitializers;
-	private Map<String, AgentGenerator> agentGenerators;
-	private Map<String, MarketsInitializer> marketInitializers;
-	private Map<String, MarketGenerator> marketGenerators;
-	private Map<String, EventInitializer> eventInitializers;
-	private Map<String, EventGenerator> eventGenerators;
+	public Map<String, AgentsInitializer> agentInitializers;
+	public Map<String, AgentGenerator> agentGenerators;
+	public Map<String, MarketsInitializer> marketInitializers;
+	public Map<String, MarketGenerator> marketGenerators;
+	public Map<String, EventInitializer> eventInitializers;
+	public Map<String, EventGenerator> eventGenerators;
 
 	/*
 	public def this() {
@@ -90,28 +87,29 @@ public abstract class Simulator extends Env {
 		});
 	}
 	 */
-	public void addAgentInitializer(String name, Agent clazz) {
-		AgentsInitializer initializer = this.agentInitializers.get(name);
-		LongRange idRange = initializer.getIdRange();
-		List<Random> randoms = initializer.getRandoms();
-		JsonNode jsonValue = initializer.getJsonValue();
-		@SuppressWarnings("hiding")
-		List<Agent> agents = new ArrayList<Agent>();
+	public void addAgentInitializer(String name, AgentInitializer initializer) {
+		AgentsInitializer initializers = new AgentsInitializer() {
+			private static final long serialVersionUID = 9190318304985601907L;
 
-		final long min = idRange.min;
-		final long max = idRange.max;
-		long n = min;
+			@SuppressWarnings("hiding")
+			public void initialize(String name, List<Random> randoms,
+					LongRange idRange, JsonNode jsonNode,
+					Map<Long, Agent> agents) {
+				final long min = idRange.min;
+				final long max = idRange.max;
+				long n = min;
 
-		while (n <= max) {
-			int i = (int) n;
-			Random random = randoms.get(i);
-			Agent agent = clazz.create(i, name, random, jsonValue);
-			agents.set(i, agent);
-			n++;
-		}
-		AgentsInitializer initializsers = new AgentsInitializer(name, randoms,
-				idRange, jsonValue, agents);
-		this.agentInitializers.put(name, initializsers);
+				while (n <= max) {
+					Random random = randoms.get((int) n);
+					Agent agent = initializer.initialize(n, name, random,
+							jsonNode);
+					agents.put(n, agent);
+					n++;
+				}
+
+			}
+		};
+		this.agentInitializers.put(name, initializers);
 	}
 
 	/*
@@ -134,33 +132,59 @@ public abstract class Simulator extends Env {
 		});
 	}
 	*/
-	public void addMarketInitializer(String name, MarketInitializer initializer) {
-		long numMarkets = jsonNode.has("numMarkets") ? jsonNode.get("numMarkets").asLong() : 1;
-		
-		
-		val markets = new ArrayList[Market](numMarkets) as List[Market];
-		markets.add(initializer(id, name, random, json));
-		this.GLOBAL(markets(0).name) = markets as Any; // assuming 'numMarkets' is always set to 1.
-		return markets;
+	public void addMarketInitializer(String className,
+			MarketInitializer initializer) {
+		final Map<String, Object> global = this.GLOBAL;
+		MarketsInitializer initializers = new MarketsInitializer() {
+			private static final long serialVersionUID = 2739579036719738032L;
+
+			@SuppressWarnings("hiding")
+			public List<Market> initialize(long id, String name, Random random,
+					JsonNode jsonNode) {
+				long numMarkets = jsonNode.has("numMarkets") ? jsonNode.get(
+						"numMarkets").asLong() : 1;
+				List<Market> markets = new ArrayList<Market>((int) numMarkets);
+				Market market = initializer.initialize(id, className, random,
+						jsonNode).setup(jsonNode);
+				markets.add(market);
+				global.put(name, markets);
+				return markets;
+			}
+
+		};
+		this.marketInitializers.put(className, initializers);
 	}
 
 	/*
 	public def addMarketsInitializer(name:String, initializer:MarketsInitializer) {
 		marketInitializers.put(name, initializer);
 	}
+	*/
 
+	public void addMarketsInitializer(String name,
+			MarketsInitializer initializer) {
+		marketInitializers.put(name, initializer);
+	}
+
+	/*
 	public def addMarketGenerator(name:String, generator:MarketGenerator) {
 		marketGenerators.put(name, generator);
 	}
+	*/
+	public void addMarketGenerator(String name, MarketGenerator generator) {
+		marketGenerators.put(name, generator);
+	}
 
+	/*
 	public def addEventInitializer(name:String, initializer:EventInitializer) = eventInitializers.put(name, initializer);
 	public def addEventGenerator(name:String, generator:EventGenerator) = eventGenerators.put(name, generator);
+	*/
 
-	public def getRandom():Random {
-		// assert here.id == 0 : "getRandom() must be called at Place(0)";
+	public Random getRandom() {
 		return RANDOM;
 	}
 
+	/*
 	public abstract def beginSimulation():void;
 
 	public abstract def endSimulation():void;
@@ -445,15 +469,32 @@ public abstract class Simulator extends Env {
 			market.updateOrderBooks();
 		}
 	}
+	*/
+
+	/*
 	public def getItemsByName[T](name:String):List[T] {
 		return GLOBAL(name) as List[T];
 	}
+	*/
+	@SuppressWarnings("unchecked")
+	public <T> List<T> getItemsByName(String name) {
+		return (List<T>) GLOBAL.get(name);
+	}
+
+	/*
 	public def getItemByName[T](name:String):T {
 		val items = getItemsByName[T](name);
 		assert items.size() == 1 : "getItemByName() got more than one object";
 		return items(0);
 	}
+	*/
+	public <T> T getItemByName(String name) {
+		List<T> items = getItemsByName(name);
+		assert items.size() == 1 : "getItemByName() got more than one object";
+		return items.get(0);
+	}
 
+	/*
 	public def getItemsByName[T](names:(i:Long)=>String, n:Long):List[T] {
 		val items = new ArrayList[T]();
 		for (i in 0..(n - 1)) {
@@ -461,30 +502,72 @@ public abstract class Simulator extends Env {
 		}
 		return items;
 	}
+	*/
+	public <T> List<T> getItemsByName(List<String> names, long n) {
+		List<T> items = new ArrayList<T>();
+		for (long i = 0; i < n; i++) {
+			items.addAll(getItemsByName(names.get((int) i)));
+		}
+		return items;
+	}
 
+	/*
 	public def getItemsByName[T](json:JSON.Value):List[T] {
 		if (json.isList()) {
 			return getItemsByName[T]((i:Long) => json(i).toString(), json.size());
 		}
 		return getItemsByName[T](json.toString());
 	}
+	*/
+	public <T> List<T> getItemsByName(JsonNode jsonNode) {
+		if (jsonNode.isArray()) {
+			List<String> names = new ArrayList<String>();
+			for (final JsonNode name : jsonNode) {
+				names.add(name.asText());
+			}
 
+			return getItemsByName(names, jsonNode.size());
+		}
+		return getItemsByName(jsonNode.asText());
+	}
+
+	/*
 	public def getItemByName[T](json:JSON.Value):T {
 		val items = getItemsByName[T](json);
 		assert items.size() == 1 : "getItemByName() got more than one object";
 		return items(0);
 	}
+	*/
+	public <T> T getItemByName(JsonNode jsonNode) {
+		List<T> items = getItemsByName(jsonNode);
+		assert items.size() == 1 : "getItemByName() got more than one object";
+		return items.get(0);
+	}
 
+	/*
 	public def getItemsByName0[T](kv:Map[String,List[T]], name:String):List[T] {
 		return kv(name) as List[T];
 	}
+	*/
+	@SuppressWarnings("static-method")
+	public <T> List<T> getItemsByName0(Map<String, List<T>> kv, String name) {
+		return kv.get(name);
+	}
 
+	/*
 	public def getItemByName0[T](kv:Map[String,List[T]], name:String):T {
 		val items = getItemsByName0[T](kv, name);
 		assert items.size() == 1 : "getItemByName0() got more than one object";
 		return items(0);
 	}
+	*/
+	public <T> T getItemByName0(Map<String, List<T>> kv, String name) {
+		List<T> items = getItemsByName0(kv, name);
+		assert items.size() == 1 : "getItemByName0() got more than one object";
+		return items.get(0);
+	}
 
+	/*
 	public def getItemsByName0[T](kv:Map[String,List[T]], names:(i:Long)=>String, n:Long):List[T] {
 		val items = new ArrayList[T]();
 		for (i in 0..(n - 1)) {
@@ -494,44 +577,116 @@ public abstract class Simulator extends Env {
 		}
 		return items;
 	}
+	*/
+	public <T> List<T> getItemsByName0(Map<String, List<T>> kv,
+			List<String> names, long n) {
+		List<T> items = new ArrayList<T>();
+		for (long i = 0; i < n; i++) {
+			List<T> r = getItemsByName0(kv, names.get((int) i));
+			if (r == null) {
+				System.out
+						.println("~~~~" + ":" + kv + ":" + names.get((int) i));
+			} else
+				items.addAll(r);
+		}
+		return items;
+	}
 
+	/*
 	public def getItemsByName0[T](kv:Map[String,List[T]], json:JSON.Value):List[T] {
 		if (json.isList()) {
 			return getItemsByName0[T](kv, (i:Long) => json(i).toString(), json.size());
 		}
 		return getItemsByName0[T](kv, json.toString());
 	}
+	*/
+	public <T> List<T> getItemsByName0(Map<String, List<T>> kv,
+			JsonNode jsonNode) {
+		if (jsonNode.isArray()) {
+			return getItemsByName0(kv, jsonNode);
+		}
+		return getItemsByName0(kv, jsonNode.asText());
+	}
 
+	/*
 	public def getItemByName0[T](kv:Map[String,List[T]], json:JSON.Value):T {
 		val items = getItemsByName0[T](kv, json);
 		assert items.size() == 1 : "getItemByName0() got more than one object";
 		return items(0);
 	}
+	*/
+	public <T> T getItemByName0(Map<String, List<T>> kv, JsonNode jsonNode) {
+		List<T> items = getItemsByName0(kv, jsonNode);
+		assert items.size() == 1 : "getItemByName0() got more than one object";
+		return items.get(0);
+	}
 
-
+	/*
 	private def marketConverter1(range:LongRange):Market {
 	return markets(range.min);
 	}
+	*/
+	private Market marketConverter1(LongRange range) {
+		return markets.get((int) range.min);
+	}
+
+	/*
 	private def marketConverterM(ranges:List[LongRange]):List[Market] {
 	//	Console.OUT.println(""+here+"converterM:"+ranges + ":"+ markets);
 	val result = new ArrayList[Market]();
 	for(range in ranges) for(i in range) result.add(markets(i));
 	return result;
 	}
+	*/
+	private List<Market> marketConverterM(List<LongRange> ranges) {
+		List<Market> result = new ArrayList<Market>();
+		for (LongRange range : ranges) {
+			for (long i = range.min; i < range.max; i++) {
+				result.add(markets.get((int) i));
+			}
+		}
+		return result;
+	}
 
-
-	
+	/*
 	public def getMarketsByName(json:JSON.Value) {
 	    return marketConverterM(getItemsByName0[LongRange](marketName2Ranges,json));
 	}
+	*/
+	public List<Market> getMarketsByName(JsonNode jsonNode) {
+		return marketConverterM(getItemsByName0(marketName2Ranges, jsonNode));
+	}
 
+	/*
 	public def getMarketByName(json:JSON.Value) = marketConverter1(getItemByName0[LongRange](marketName2Ranges,json));
+	 */
+	public Market getMarketByName(JsonNode jsonNode) {
+		return marketConverter1(getItemByName0(marketName2Ranges, jsonNode));
+	}
 
+	/*
 	public def getMarketsByName(names:List[String]) = marketConverterM(getItemsByName0[LongRange](marketName2Ranges,(i:Long) => names(i), names.size()));
+	 */
+	public List<Market> getMarketsByName(List<String> names) {
+		return marketConverterM(getItemsByName0(marketName2Ranges, names,
+				names.size()));
+	}
 
+	/*
 	public def getMarketsByName(name:String) = marketConverterM(getItemsByName0[LongRange](marketName2Ranges,name));
+	 */
+	public List<Market> getMarketsByName(String name) {
+		return marketConverterM(getItemsByName0(marketName2Ranges, name));
+	}
 
+	/*
 	public def getMarketByName(name:String) = marketConverter1(getItemByName0[LongRange](marketName2Ranges,name));
+	 */
+	public Market getMarketByName(String name) {
+		return marketConverter1(getItemByName0(marketName2Ranges, name));
+	}
+	/*
+
 
 	public def getAgentsByName(json:JSON.Value) = getItemsByName[Agent](json);
 

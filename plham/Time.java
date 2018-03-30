@@ -16,28 +16,9 @@ public class Time implements Serializable {
 		this.t = t;
 	}
 	 */
-	private long t;
+	public long t;
 
 	public Time(long t) {
-		this.t = t;
-	}
-
-	/**
-	 * tを取得します。
-	 * 
-	 * @return t
-	 */
-	public long getT() {
-		return t;
-	}
-
-	/**
-	 * tを設定します。
-	 * 
-	 * @param t
-	 *            t
-	 */
-	public void setT(long t) {
 		this.t = t;
 	}
 }
