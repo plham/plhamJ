@@ -2,10 +2,9 @@ package plham.model;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import plham.util.Random;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import cassia.util.JSON;
 
 import plham.Agent;
 import x10.lang.LongRange;
@@ -16,5 +15,5 @@ import x10.lang.LongRange;
 public interface AgentsInitializer extends Serializable {
 
 	public void initialize(String name, List<Random> randoms,
-			LongRange longRange, JsonNode jsonNode, Map<Long, Agent> agents);
+			LongRange longRange, JSON.Value json, List<Agent> agents);
 }

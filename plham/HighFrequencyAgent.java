@@ -1,7 +1,7 @@
 package plham;
 
 import java.io.Serializable;
-import java.util.Random;
+import plham.util.Random;
 
 /**
  * A marker class for high-frequency trading agents.

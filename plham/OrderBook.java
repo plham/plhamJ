@@ -2,12 +2,11 @@ package plham;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import plham.model.PlhamComparator;
-import cassia.util.HeapQueue;
-import cassia.util.SortedQueue;
 
 /**
  * A class for orderbooks for continuous double action mechanism. Orders are
@@ -22,7 +21,7 @@ public class OrderBook implements Serializable {
 	public var time:Time;
 	protected var cancelCache:Set[Key] = new HashSet[Key](); // Poor implimentation.
 	*/
-	private SortedQueue<Order> queue;
+	private PriorityQueue<Order> queue;
 	private Time time;
 	protected Set<String> cancelCache = new HashSet<String>();
 
@@ -32,7 +31,7 @@ public class OrderBook implements Serializable {
 	}
 	*/
 	public OrderBook(PlhamComparator<Order> comparator) {
-		this.queue = new HeapQueue<Order>(comparator);
+		this.queue = new PriorityQueue<Order>(comparator);
 	}
 
 	/*
@@ -80,12 +79,11 @@ public class OrderBook implements Serializable {
 
 	protected void popUntil() {
 		long t = this.getTime();
-		SortedQueue<Order> q = this.queue;
-		long n = q.size();
+		PriorityQueue<Order> q = this.queue;
 		while (q.size() > 0) {
 			Order order = q.peek();
 			if (order.isExpired(t) || isCancelled(order)) {
-				q.pop();
+				q.remove();
 				cancelCache.remove(OrderBook.getKey(order));
 			} else {
 				break;
@@ -155,6 +153,27 @@ public class OrderBook implements Serializable {
 		return this.queue.removeAllWhere(f);
 	}
 	*/
+	/* from HeapQueue.x10
+	public def removeAllWhere(p:(T)=>Boolean):Boolean {
+		val a = this.heap;
+		val n = a.size();
+		var i:Long = 0;
+		while (i < a.size()) {
+			if (p(a(i))) {
+				val last = a.removeLast();
+				if (i < a.size()) {
+					a(i) = last;
+				}
+			} else {
+				i++;
+			}
+		}
+		if (i < n) {
+			heapify();
+		}
+		return i < n;
+	}
+	 */
 	public interface RemoveAllWhere {
 		public boolean check(Order order);
 	}
@@ -163,17 +182,21 @@ public class OrderBook implements Serializable {
 		public boolean check(Order order);
 	}
 
-	public boolean removeAllWhere(RemoveAllWhere p) {
-		RemoveAllWhereFromQueue f = new RemoveAllWhereFromQueue() {
-			public boolean check(final Order order) {
-				boolean b = p.check(order);
-				if (b) {
-					cancelCache.remove(OrderBook.getKey(order));
-				}
-				return b;
+	public synchronized boolean removeAllWhere(RemoveAllWhere p) {
+		long size = this.queue.size();
+		Order[] orders = this.queue.toArray(new Order[(int) size]);
+		LinkedList<Order> list = new LinkedList<Order>(this.queue);
+		for (int i = 0; i < orders.length; i++) {
+			Order order = orders[i];
+			boolean b = p.check(order);
+			if (b) {
+				cancelCache.remove(OrderBook.getKey(order));
+				list.set(i, list.removeLast());
 			}
-		};
-		return this.queue.removeAllWhere(f);
+		}
+		this.queue.clear();
+		this.queue.addAll(list);
+		return this.queue.size() < size;
 	}
 
 	/*

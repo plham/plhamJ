@@ -1,15 +1,14 @@
 package plham.model;
 
-import java.util.Random;
+import plham.util.Random;
 
 import plham.Agent;
-
-import com.fasterxml.jackson.databind.JsonNode;
+import cassia.util.JSON;
 
 /*
 	public static type AgentInitializer = (Long, String, Random, JSON.Value)=>Agent;
  */
 public interface AgentInitializer {
 	public Agent initialize(long id, String name, Random random,
-			JsonNode jsonNode);
+			JSON.Value json);
 }

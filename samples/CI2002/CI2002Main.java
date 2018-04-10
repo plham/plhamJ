@@ -1,10 +1,5 @@
 package samples.CI2002;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.ListIterator;
-
-import plham.Agent;
 import plham.Main;
 import plham.Market;
 import plham.agent.FCNAgent;
@@ -38,8 +33,9 @@ public class CI2002Main extends Main {
 	public static void main(String[] args) {
 		final CI2002Main sim = new CI2002Main();
 		FCNAgent.register(sim);
-		plham.Market.register(sim);
-		final SequentialRunner<CI2002Main> runner = new SequentialRunner<CI2002Main>();
+		Market.register(sim);
+		final SequentialRunner<CI2002Main> runner = new SequentialRunner<CI2002Main>(
+				sim);
 		runner.run(args);
 	}
 
@@ -49,13 +45,6 @@ public class CI2002Main extends Main {
 
 	@Override
 	public void print(String sessionName) {
-		@SuppressWarnings("hiding")
-		List<Market> markets = getMarketsByName("markets");
-		for (Market market : markets) {
-			long t = market.getTime$O();
-			System.out.println(String.format("%s %s %s %s %s %s", sessionName,
-					t, market.id, market.name, market.getPrice$O(t),
-					market.getFundamentalPrice(t)));
-		}
+		super.print(sessionName);
 	}
 }

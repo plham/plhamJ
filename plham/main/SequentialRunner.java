@@ -3,7 +3,7 @@ package plham.main;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import plham.util.Random;
 
 import cassia.util.random.RandomPermutation;
 import plham.Agent;
@@ -92,20 +92,22 @@ public class SequentialRunner<T> extends Runner<T> implements Serializable {
 			if (k >= MAX_NORMAL_ORDERS) {
 				break;
 			}
-			val orders = agent.submitOrders(markets);
+			List<Order> orders = agent.submitOrders(markets);
 			if (orders.size() > 0) {
 				allOrders.add(orders);
 				k++;
 			}
 		}
-		val endTime = System.nanoTime();
+		long endTime = System.nanoTime();
 		if (_PROFILE) {
+			/*
 			Console.OUT.println("#PROFILE ORDER-MAKE TOTAL "
 					+ ((endTime - beginTime) / 1e+9) + " sec");
 			Console.OUT.println("#PROFILE MAX-NORMAL-ORDERS "
 					+ MAX_NORMAL_ORDERS);
 			Console.OUT.println("#PROFILE NUM-NORMAL-ORDERS "
 					+ allOrders.size());
+			*/
 		}
 		return allOrders;
 	}

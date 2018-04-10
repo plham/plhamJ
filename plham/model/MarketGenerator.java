@@ -3,11 +3,11 @@ package plham.model;
 import java.io.Serializable;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import cassia.util.JSON;
 
 /*
-	public static type MarketGenerator = (JsonNode )=>List[JsonNode ];
+	public static type MarketGenerator = (JSON.Value)=>List[JSON.Value];
  */
 public interface MarketGenerator extends Serializable {
-	public List<JsonNode> generate(JsonNode jsonNode);
+	public List<JSON.Value> generate(JSON.Value json);
 }

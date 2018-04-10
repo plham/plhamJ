@@ -1,7 +1,7 @@
 package plham.util;
 
 import java.io.Serializable;
-import java.util.Random;
+import plham.util.Random;
 
 /**
  * A helper class adding more utilities to Random.
@@ -90,6 +90,13 @@ public class RandomHelper implements Serializable {
 	}
 
 	/*
+	public def nextGaussian() = this.g.nextGaussian(); // Java compatible
+	 */
+	public double nextGaussian() {
+		return this.random.nextGaussian();
+	}
+
+	/*
 	public def nextUniform(min:Double, max:Double):Double {
 		return this.nextDouble() * (max - min) + min;
 	}
@@ -103,7 +110,7 @@ public class RandomHelper implements Serializable {
 		return mu + this.nextGaussian() * sigma;
 	}
 	 */
-	public double nextNormal(long mu, double sigma) {
+	public double nextNormal(double mu, double sigma) {
 		return mu + random.nextGaussian() * sigma;
 	}
 

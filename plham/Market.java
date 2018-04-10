@@ -4,15 +4,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Random;
+import plham.util.Random;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
+import cassia.util.JSON;
 import plham.OrderBook.RemoveAllWhere;
 import plham.main.Simulator;
 import plham.model.ComparatorHighersFirst;
 import plham.model.ComparatorLowersFirst;
 import plham.model.MarketsInitializer;
+import plham.util.Itayose;
 import plham.util.JSONRandom;
 
 /**
@@ -219,25 +219,24 @@ public class Market implements Serializable {
 		return this;
 	}
 	*/
-	public Market setup(JsonNode jsonNode/*, Simulator sim */) {
+	public Market setup(JSON.Value json/*, Simulator sim */) {
 		JSONRandom jsonRandom = new JSONRandom(getRandom());
-		if (jsonNode.get("tickSize") == null) { // " tick-size <= 0.0 means no
-												// tick size.
+		if (json.get("tickSize") == null) { // " tick-size <= 0.0 means no
+											// tick size.
 			setTickSize(-1.0);
 		} else {
-			setTickSize(jsonRandom.nextRandom(jsonNode.get("tickSize")));
+			setTickSize(jsonRandom.nextRandom(json.get("tickSize")));
 		}
-		setInitialMarketPrice(jsonRandom
-				.nextRandom(jsonNode.get("marketPrice")));
-		setInitialFundamentalPrice(jsonRandom.nextRandom(jsonNode
+		setInitialMarketPrice(jsonRandom.nextRandom(json.get("marketPrice")));
+		setInitialFundamentalPrice(jsonRandom.nextRandom(json
 				.get("marketPrice")));
-		if (jsonNode.get("fundamentalVolatility") == null) {
+		if (json.get("fundamentalVolatility") == null) {
 			setFundamentalVolatility(0.0);
 		} else {
-			setFundamentalVolatility(jsonRandom.nextRandom(jsonNode
+			setFundamentalVolatility(jsonRandom.nextRandom(json
 					.get("fundamentalVolatility")));
 		}
-		setOutstandingShares(new Double(jsonRandom.nextRandom(jsonNode
+		setOutstandingShares(new Double(jsonRandom.nextRandom(json
 				.get("outstandingShares"))).longValue());
 		return this;
 	}
@@ -263,12 +262,12 @@ public class Market implements Serializable {
 			private static final long serialVersionUID = 2739579036719738032L;
 
 			public List<Market> initialize(long id, String name, Random random,
-					JsonNode jsonNode) {
-				long numMarkets = jsonNode.has("numMarkets") ? jsonNode.get(
-						"numMarkets").asLong() : 1;
+					JSON.Value json) {
+				long numMarkets = json.has("numMarkets") ? json.get(
+						"numMarkets").toLong() : 1;
 				List<Market> markets = new ArrayList<Market>((int) numMarkets);
-				Market market = Market.create(id, className, random).setup(
-						jsonNode);
+				Market market = Market.create(id, className, random)
+						.setup(json);
 				markets.add(market);
 				return markets;
 			}
@@ -629,6 +628,10 @@ public class Market implements Serializable {
 		this.updateOrderBooks();
 	}
 	*/
+	public void itayoseOrderBooks() {
+		Itayose.itayose(this);
+		this.updateOrderBooks();
+	}
 
 	/*
 	public def isRunning():Boolean = this._isRunning;

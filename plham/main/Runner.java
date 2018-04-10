@@ -1,14 +1,21 @@
 package plham.main;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 
+import plham.util.CentricAllocManager;
+import plham.util.Random;
+import cassia.util.JSON;
 import cassia.util.random.RandomPermutation;
 import plham.Agent;
 import plham.Env;
+import plham.Event;
 import plham.Fundamentals;
+import plham.HighFrequencyAgent;
 import plham.IndexMarket;
 import plham.Market;
 import plham.Order;
@@ -17,13 +24,14 @@ import plham.event.FundamentalPriceShock;
 import plham.event.OrderMistakeShock;
 import plham.event.PriceLimitRule;
 import plham.event.TradingHaltRule;
+import plham.util.RandomHelper;
 import samples.ShockTransfer.ArbitrageAgent;
+import x10.lang.LongRange;
 
 /**
  * A base class for execution models. See {@link plham.main.Simulator} for
  * simulation models. This class is basically for system developers.
  */
-@SuppressWarnings("hiding")
 public abstract class Runner<T> implements Serializable {
 
 	private static final long serialVersionUID = 4487185718113921593L;
@@ -36,7 +44,7 @@ public abstract class Runner<T> implements Serializable {
 	public boolean _PROFILE = false;
 	public static boolean useTeam = true;
 	protected static double HIFREQ_SUBMIT_RATE = System
-			.getenv("HIFREQ_SUBMIT_RATE") != null ? Double.parseDouble(System
+			.getenv("HIFREQ_SUBMIT_RATE") != null ? Double.valueOf(System
 			.getenv("HIFREQ_SUBMIT_RATE")) : 1.0d;
 
 	/*
@@ -61,6 +69,7 @@ public abstract class Runner<T> implements Serializable {
 		return this.sim;
 	}
 
+	@SuppressWarnings("static-access")
 	public Runner(Simulator sim) {
 		this.sim = sim;
 		FCNAgent.register(sim);
@@ -126,13 +135,14 @@ public abstract class Runner<T> implements Serializable {
 
 		val endTime = System.nanoTime();
 		if (_PROFILE) {
-			Console.OUT.println("#PROFILE ORDER-EXEC TOTAL " + ((endTime - beginTime) / 1e+9) + " sec");
-			Console.OUT.println("#PROFILE MAX-HIFREQ-ORDERS " + MAX_HIFREQ_ORDERS + " x " + localOrders.size());
-			Console.OUT.println("#PROFILE NUM-HIFREQ-ORDERS " + allOrders.size());
+			System.out.println("#PROFILE ORDER-EXEC TOTAL " + ((endTime - beginTime) / 1e+9) + " sec");
+			System.out.println("#PROFILE MAX-HIFREQ-ORDERS " + MAX_HIFREQ_ORDERS + " x " + localOrders.size());
+			System.out.println("#PROFILE NUM-HIFREQ-ORDERS " + allOrders.size());
 		}
 		return allOrders;
 	}
 	*/
+	@SuppressWarnings("unused")
 	public List<List<Order>> handleOrders(List<List<Order>> localOrders,
 			long MAX_HIFREQ_ORDERS) {
 		Env env = this.env();
@@ -204,9 +214,10 @@ public abstract class Runner<T> implements Serializable {
 			val size = env.markets(id).marketPrices.size();
 			val time = env.markets(id).getTime();
 		}
-		Console.OUT.println("#SyncCheck: OK");
+		System.out.println("#SyncCheck: OK");
 	}
 	*/
+	@SuppressWarnings("unused")
 	public void syncCheck(List<Market> markets) {
 		Simulator env = this.env();
 		/*
@@ -232,7 +243,7 @@ public abstract class Runner<T> implements Serializable {
 			withOrderPlacement:Boolean, withOrderExecution:Boolean, withPrint:Boolean, forDummyTimeseries:Boolean,
 			maxNormalOrders:Long, maxHifreqOrders:Long,
 			fundamentals:Fundamentals) {
-		//Console.OUT.println("#hoge1-1");
+		//System.out.println("#hoge1-1");
 		val env = this.env();
 		val markets = env.markets;  
 		for (market in markets) {
@@ -245,36 +256,36 @@ public abstract class Runner<T> implements Serializable {
 		for (market in markets) {
 			market.check();
 		}
-		//Console.OUT.println("#hoge1-2SessionName:"+sessionName+",itestep:"+iterationSteps+",withplacement:"+withOrderPlacement);
+		//System.out.println("#hoge1-2SessionName:"+sessionName+",itestep:"+iterationSteps+",withplacement:"+withOrderPlacement);
 		for (t in 1..iterationSteps) {
 			sim.updateFundamentals(fundamentals);
 			for (market in markets) {
 				market.triggerBeforeSimulationStepEvents(); // Assuming the markets in dependency order.
 			}
-			//Console.OUT.println("#hoge1-3:t="+t);
+			//System.out.println("#hoge1-3:t="+t);
 			if (withOrderPlacement) {
 				updateMarkets(maxNormalOrders, maxHifreqOrders, t > 0);
 			}
-			//Console.OUT.println("#hoge1-4");			
+			//System.out.println("#hoge1-4");			
 			if (forDummyTimeseries) {
 				sim.updateMarketsUsingFundamentalPrice(markets, fundamentals);
 			} else {
 				sim.updateMarketsUsingMarketPrice(markets, fundamentals);
 			}
-			//Console.OUT.println("#hoge1-5");
+			//System.out.println("#hoge1-5");
 			if (withPrint) {
 				sim.print(sessionName);
 			}
-			//Console.OUT.println("#hoge1-6");
+			//System.out.println("#hoge1-6");
 			for (market in markets) {
 				market.triggerAfterSimulationStepEvents();
 			}
-			//Console.OUT.println("#hoge1-7");			
+			//System.out.println("#hoge1-7");			
 			for (market in markets) {
 				market.updateTime();
 				market.updateOrderBooks();
 			}
-			//Console.OUT.println("#hoge1-8");
+			//System.out.println("#hoge1-8");
 		}
 		if (withPrint) {
 			sim.endprint(sessionName,iterationSteps);
@@ -286,6 +297,53 @@ public abstract class Runner<T> implements Serializable {
 			boolean withPrint, boolean forDummyTimeseries,
 			long maxNormalOrders, long maxHifreqOrders,
 			Fundamentals fundamentals) {
+		Env env = this.env();
+		List<Market> markets = env.markets;
+		for (Market market : markets) {
+			market.setRunning(withOrderExecution);
+		}
+		for (Market market : markets) {
+			market.itayoseOrderBooks();
+		}
+		for (Market market : markets) {
+			market.check();
+		}
+		// System.out.println("#hoge1-2SessionName:"+sessionName+",itestep:"+iterationSteps+",withplacement:"+withOrderPlacement);
+		for (long t = 1; t < iterationSteps; t++) {
+			sim.updateFundamentals(fundamentals);
+			for (Market market : markets) {
+				market.triggerBeforeSimulationStepEvents(); // Assuming the
+															// markets in
+															// dependency order.
+			}
+			// System.out.println("#hoge1-3:t="+t);
+			if (withOrderPlacement) {
+				updateMarkets(maxNormalOrders, maxHifreqOrders, t > 0);
+			}
+			// System.out.println("#hoge1-4");
+			if (forDummyTimeseries) {
+				sim.updateMarketsUsingFundamentalPrice(markets, fundamentals);
+			} else {
+				sim.updateMarketsUsingMarketPrice(markets, fundamentals);
+			}
+			// System.out.println("#hoge1-5");
+			if (withPrint) {
+				sim.print(sessionName);
+			}
+			// System.out.println("#hoge1-6");
+			for (Market market : markets) {
+				market.triggerAfterSimulationStepEvents();
+			}
+			// System.out.println("#hoge1-7");
+			for (Market market : markets) {
+				market.updateTime();
+				market.updateOrderBooks();
+			}
+			// System.out.println("#hoge1-8");
+		}
+		if (withPrint) {
+			sim.endprint(sessionName, iterationSteps);
+		}
 	}
 
 	/*
@@ -309,7 +367,24 @@ public abstract class Runner<T> implements Serializable {
 	}
 	 */
 	public void setupEnv(List<Market> markets, List<Agent> agents) {
+		Env env = this.env();
+		List<Agent> normalAgents = new ArrayList<Agent>();
+		List<Agent> hifreqAgents = new ArrayList<Agent>();
+		for (Agent agent : agents) {
+			if (agent instanceof HighFrequencyAgent) {
+				hifreqAgents.add(agent);
+			} else {
+				normalAgents.add(agent);
+			}
+		}
 
+		for (Market market : markets) {
+			market.env = env;
+		}
+		env.markets = markets;
+		env.agents = agents;
+		env.normalAgents = normalAgents;
+		env.hifreqAgents = hifreqAgents;
 	}
 
 	/*
@@ -325,8 +400,8 @@ public abstract class Runner<T> implements Serializable {
 			seed = new Random().nextLong(Long.MAX_VALUE / 2); // MEMO: main()
 		}
 
-		Console.OUT.println("# X10_NPLACES  " + Env.getenvOrElse("X10_NPLACES", ""));
-		Console.OUT.println("# X10_NTHREADS " + Env.getenvOrElse("X10_NTHREADS", ""));
+		System.out.println("# X10_NPLACES  " + Env.getenvOrElse("X10_NPLACES", ""));
+		System.out.println("# X10_NTHREADS " + Env.getenvOrElse("X10_NTHREADS", ""));
 
 		val TIME_THE_BEGINNING = System.nanoTime();
 
@@ -338,7 +413,7 @@ public abstract class Runner<T> implements Serializable {
 
 		val RANDOM = new Random(seed);
 		sim.RANDOM = RANDOM;
-		Console.OUT.println("# Random.seed " + seed);
+		System.out.println("# Random.seed " + seed);
 
 		//////// MARKETS INSTANTIATION ////////
 
@@ -347,7 +422,7 @@ public abstract class Runner<T> implements Serializable {
 		val mrange = new ArrayList[LongRange](); mrange.add(0..(markets.size()-1));
 		sim.marketName2Ranges("markets") = mrange;
 
-		Console.OUT.println("# #(markets) " + markets.size());
+		System.out.println("# #(markets) " + markets.size());
 
 		//////// AGENTS INSTANTIATION ////////
 		val dm = new CentricAllocManager[Agent]();
@@ -364,8 +439,8 @@ public abstract class Runner<T> implements Serializable {
 
 		setupEnv(markets, dm.getBody()); // TODObyTK
 
-		//Console.OUT.println("# #(agents) " + agents.size());
-		//Console.OUT.println("# #(hifreqAgents) " + env().hifreqAgents.size());
+		//System.out.println("# #(agents) " + agents.size());
+		//System.out.println("# #(hifreqAgents) " + env().hifreqAgents.size());
 
 		//////// MAIN SIMULATION PROCEDURE ////////
 
@@ -374,7 +449,7 @@ public abstract class Runner<T> implements Serializable {
 		val sessions = CONFIG("simulation")("sessions");
 		for (i in 0..(sessions.size() - 1)) {
 
-		Console.OUT.println("------------Session "+i+" Start@"+here);
+		System.out.println("------------Session "+i+" Start@"+here);
 			val json = sessions(i);
 			val sessionName = json("sessionName").toString();
 			val iterationSteps:Long;
@@ -395,14 +470,14 @@ public abstract class Runner<T> implements Serializable {
 			val maxHifreqOrders = json("maxHifreqOrders", "0").toLong();
 
 			if (true) {
-				Console.OUT.println("# SESSION: " + sessionName);
-				Console.OUT.println("# iterationSteps: " + iterationSteps);
-				Console.OUT.println("# withOrderPlacement: " + withOrderPlacement);
-				Console.OUT.println("# withOrderExecution: " + withOrderExecution);
-				Console.OUT.println("# withPrint: " + withPrint);
-				Console.OUT.println("# forDummyTimeseries: " + forDummyTimeseries);
-				Console.OUT.println("# maxNormalOrders: " + maxNormalOrders);
-				Console.OUT.println("# maxHifreqOrders: " + maxHifreqOrders);
+				System.out.println("# SESSION: " + sessionName);
+				System.out.println("# iterationSteps: " + iterationSteps);
+				System.out.println("# withOrderPlacement: " + withOrderPlacement);
+				System.out.println("# withOrderExecution: " + withOrderExecution);
+				System.out.println("# withPrint: " + withPrint);
+				System.out.println("# forDummyTimeseries: " + forDummyTimeseries);
+				System.out.println("# maxNormalOrders: " + maxNormalOrders);
+				System.out.println("# maxHifreqOrders: " + maxHifreqOrders);
 			}
 
 			GLOBAL("events") = null;
@@ -410,24 +485,158 @@ public abstract class Runner<T> implements Serializable {
 				val events = sim.createAllEvents(json("events"));
 				GLOBAL("events") = events;
 			}
-			//Console.OUT.println("#hoge0");
+			//System.out.println("#hoge0");
 			sim.beginSession(sessionName);
-			//Console.OUT.println("#hoge1");
+			//System.out.println("#hoge1");
 			iterateMarketUpdates(
 					sessionName, iterationSteps,
 					withOrderPlacement, withOrderExecution, withPrint, forDummyTimeseries,
 					maxNormalOrders, maxHifreqOrders,
 					fundamentals);
-			//Console.OUT.println("#hoge2");			
+			//System.out.println("#hoge2");			
 			sim.endSession(sessionName);
-			//Console.OUT.println("#hoge3");
+			//System.out.println("#hoge3");
 		}
 		sim.endSimulation();
 
 		val TIME_THE_END = System.nanoTime();
-		Console.OUT.println("# TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
+		System.out.println("# TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
 	}
 	 */
 	public void run(String[] args) {
+		if (args.length < 1) {
+			throw new RuntimeException("Usage: ./a.out config.json [SEED]");
+		}
+
+		long seed;
+		if (args.length > 1) {
+			seed = Long.valueOf(args[1]);
+		} else {
+			Random random = new Random();
+			RandomHelper helper = new RandomHelper(random);
+			seed = helper.nextLong(Long.MAX_VALUE / 2); // MEMO: main()
+		}
+
+		System.out.println("# X10_NPLACES  "
+				+ Env.getEnvOrElse("X10_NPLACES", ""));
+		System.out.println("# X10_NTHREADS "
+				+ Env.getEnvOrElse("X10_NTHREADS", ""));
+
+		long TIME_THE_BEGINNING = System.nanoTime();
+
+		Map<String, Object> GLOBAL = new HashMap<String, Object>();
+		sim.GLOBAL = GLOBAL;
+		JSON.Value CONFIG = JSON.parse(new File(args[0]));
+		sim.CONFIG = CONFIG;
+		JSON.extendDeeply(CONFIG, CONFIG);
+
+		Random RANDOM = new Random(seed);
+		sim.RANDOM = RANDOM;
+		System.out.println("# Random.seed " + seed);
+
+		// ////// MARKETS INSTANTIATION ////////
+
+		List<Market> markets = sim.createAllMarkets(CONFIG.get("simulation")
+				.get("markets"));
+		// TODO
+		List<LongRange> mrange = new ArrayList<LongRange>();
+		mrange.add(new LongRange(0, markets.size() - 1));
+		sim.marketName2Ranges.put("markets", mrange);
+
+		System.out.println("# #(markets) " + markets.size());
+
+		// ////// AGENTS INSTANTIATION ////////
+		CentricAllocManager<Agent> dm = new CentricAllocManager<Agent>();
+		sim.createAllAgents(CONFIG.get("simulation").get("agents"), dm);
+		GLOBAL.put("agents", dm.getBody());
+
+		// ////// MULTIVARIATE GEOMETRIC BROWNIAN ////////
+
+		Fundamentals fundamentals = sim.createFundamentals(
+				markets,
+				CONFIG.get("simulation").getOrElse("fundamentalCorrelations",
+						"{}"));
+		// val fundamentals =
+		// sim.createFundamentals(CONFIG("simulation")("fundamentalCorrelations",
+		// "{}"), CONFIG("simulation")("markets"));
+		GLOBAL.put("fundamentals", fundamentals);
+
+		// ////// SERIAL/PARALLEL ENV SETUP ////////
+
+		setupEnv(markets, dm.getBody()); // TODObyTK
+
+		// System.out.println("# #(agents) " + agents.size());
+		// System.out.println("# #(hifreqAgents) " + env().hifreqAgents.size());
+
+		// ////// MAIN SIMULATION PROCEDURE ////////
+
+		sim.beginSimulation();
+
+		JSON.Value sessions = CONFIG.get("simulation").get("sessions");
+		for (long i = 0; i < sessions.size(); i++) {
+
+			System.out.println("------------Session " + i + " Start@" + here);
+			JSON.Value json = sessions.get(i);
+			String sessionName = json.get("sessionName").toString();
+			long iterationSteps;
+			if (json.has("iterationSteps")) {
+				iterationSteps = json.get("iterationSteps").toLong();
+			} else {
+				iterationSteps = json.get("iterationDays").toLong()
+						* CONFIG.get("numStepsOneDay").toLong();
+			}
+
+			boolean withOrderPlacement = json.get("withOrderPlacement")
+					.toBoolean();
+			boolean withOrderExecution = json.get("withOrderExecution")
+					.toBoolean();
+			boolean withPrint = json.getOrElse("withPrint", "true").toBoolean();
+			boolean forDummyTimeseries = (!withOrderPlacement && !withOrderExecution);
+			if (json.has("forDummyTimeseries")) {
+				forDummyTimeseries = json.get("forDummyTimeseries").toBoolean();
+			}
+			long maxNormalOrders = json.getOrElse("maxNormalOrders",
+					String.valueOf(markets.size())).toLong();
+			long maxHifreqOrders = json.getOrElse("maxHifreqOrders", "0")
+					.toLong();
+
+			if (true) {
+				System.out.println("# SESSION: " + sessionName);
+				System.out.println("# iterationSteps: " + iterationSteps);
+				System.out.println("# withOrderPlacement: "
+						+ withOrderPlacement);
+				System.out.println("# withOrderExecution: "
+						+ withOrderExecution);
+				System.out.println("# withPrint: " + withPrint);
+				System.out.println("# forDummyTimeseries: "
+						+ forDummyTimeseries);
+				System.out.println("# maxNormalOrders: " + maxNormalOrders);
+				System.out.println("# maxHifreqOrders: " + maxHifreqOrders);
+			}
+
+			GLOBAL.put("events", null);
+			if (json.has("events")) {
+				List<Event> events = sim.createAllEvents(json.get("events"));
+				GLOBAL.put("events", events);
+			}
+			// System.out.println("#hoge0");
+			sim.beginSession(sessionName);
+			// System.out.println("#hoge1");
+			iterateMarketUpdates(sessionName, iterationSteps,
+					withOrderPlacement, withOrderExecution, withPrint,
+					forDummyTimeseries, maxNormalOrders, maxHifreqOrders,
+					fundamentals);
+			// System.out.println("#hoge2");
+			sim.endSession(sessionName);
+			// System.out.println("#hoge3");
+		}
+		sim.endSimulation();
+
+		long TIME_THE_END = System.nanoTime();
+		System.out.println("# TIME "
+				+ ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
 	}
+
+	// TODO
+	protected String here = "PLACE";
 }

@@ -51,4 +51,7 @@ public class Env {
 	public static long isDebug() {
 		return Env.DEBUG;
 	}
+
+	// TODO
+	protected String here = "PLACE";
 }

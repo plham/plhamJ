@@ -4,10 +4,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import plham.util.Random;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
+import cassia.util.JSON;
 import plham.main.Simulator;
 import plham.util.JSONRandom;
 
@@ -42,8 +41,7 @@ public class Agent implements Serializable {
 	 */
 	public long id;
 	public String name;
-	private Random random;
-	private JsonNode jsonValue;
+	protected Random random;
 	public double cashAmount;
 	public Map<Long, Long> assetsVolumes;
 
@@ -56,15 +54,6 @@ public class Agent implements Serializable {
 		this.assetsVolumes = new HashMap[Long,Long]();
 	}
 	 */
-	public Agent(long id, String name, Random random, JsonNode jsonValue) {
-		this.id = id;
-		this.name = name;
-		this.random = random;
-		this.jsonValue = jsonValue;
-		this.cashAmount = 0.0D;
-		this.assetsVolumes = new HashMap<Long, Long>();
-	}
-
 	public Agent(long id, String name, Random random) {
 		this.id = id;
 		this.name = name;
@@ -73,9 +62,8 @@ public class Agent implements Serializable {
 		this.assetsVolumes = new HashMap<Long, Long>();
 	}
 
-	public static Agent create(long id, String name, Random random,
-			JsonNode jsonValue) {
-		return new Agent(id, name, random, jsonValue);
+	public static Agent create(long id, String name, Random random) {
+		return new Agent(id, name, random);
 	}
 
 	/*
@@ -91,7 +79,6 @@ public class Agent implements Serializable {
 		this.id = id;
 		this.name = null;
 		this.random = null;
-		this.jsonValue = null;
 		this.cashAmount = 0.0D;
 		this.assetsVolumes = null;
 	}
@@ -128,17 +115,16 @@ public class Agent implements Serializable {
 		return this;
 	}
 	*/
-	public Agent setup(JsonNode jsonNode, Simulator sim) {
-		JSONRandom jsonRandom = new JSONRandom(getRandom());
+	public Agent setup(JSON.Value json, Simulator sim) {
+		JSONRandom jsonRandom = new JSONRandom(random);
 		this.assetsVolumes = new HashMap<Long, Long>();
-		this.cashAmount = jsonRandom.nextRandom(jsonNode.get("cashAmount"));
-		sim.getMarketsByName(jsonNode.get("markets"));
-		for (Market market : sim.getMarketsByName(jsonNode.get("markets"))) {
+		this.cashAmount = jsonRandom.nextRandom(json.get("cashAmount"));
+		sim.getMarketsByName(json.get("markets"));
+		for (Market market : sim.getMarketsByName(json.get("markets"))) {
 			this.assetsVolumes.put(market.id, 0L);
-			this.assetsVolumes.put(
-					market.id,
-					new Double(jsonRandom.nextRandom(jsonNode
-							.get("assetVolume"))).longValue());
+			this.assetsVolumes.put(market.id,
+					new Double(jsonRandom.nextRandom(json.get("assetVolume")))
+							.longValue());
 		}
 		return this;
 	}
@@ -185,6 +171,15 @@ public class Agent implements Serializable {
 	/*
 	public def getCashAmount():Double = this.cashAmount;
 	*/
+
+	/**
+	 * randomを取得します。
+	 * 
+	 * @return random
+	 */
+	public Random getRandom() {
+		return random;
+	}
 
 	public double getCashAmount() {
 		return this.cashAmount;
@@ -302,43 +297,10 @@ public class Agent implements Serializable {
 		return this.typeName() + [this.id, this.cashAmount, this.assetsVolumes.keySet()];
 	}
 	*/
-
-	/**
-	 * randomを取得します。
-	 * 
-	 * @return random
-	 */
-	public Random getRandom() {
-		return random;
-	}
-
-	/**
-	 * randomを設定します。
-	 * 
-	 * @param random
-	 *            random
-	 */
-	public void setRandom(Random random) {
-		this.random = random;
-	}
-
-	/**
-	 * jsonValueを取得します。
-	 * 
-	 * @return jsonValue
-	 */
-	public JsonNode getJsonValue() {
-		return jsonValue;
-	}
-
-	/**
-	 * jsonValueを設定します。
-	 * 
-	 * @param jsonValue
-	 *            jsonValue
-	 */
-	public void setJsonValue(JsonNode jsonValue) {
-		this.jsonValue = jsonValue;
+	@Override
+	public String toString() {
+		return this.getClass().getName() + this.id + "," + this.cashAmount
+				+ "," + this.assetsVolumes.keySet();
 	}
 
 }

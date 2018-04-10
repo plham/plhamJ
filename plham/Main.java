@@ -24,6 +24,7 @@ public class Main extends Simulator {
 	/*
 	public def beginSimulation() {}
 	 */
+	@Override
 	public void beginSimulation() {
 		// do nothing;
 	}
@@ -31,6 +32,7 @@ public class Main extends Simulator {
 	/*
 	public def endSimulation() {}
 	 */
+	@Override
 	public void endSimulation() {
 		// do nothing;
 	}
@@ -38,7 +40,7 @@ public class Main extends Simulator {
 	/*
 	public def beginSession(sessionName:String) {}
 	 */
-	@SuppressWarnings("unused")
+	@Override
 	public void beginSession(String sessionName) {
 		// do nothing;
 	}
@@ -46,7 +48,7 @@ public class Main extends Simulator {
 	/*
 	public def endSession(sessionName:String) {}
 	 */
-	@SuppressWarnings("unused")
+	@Override
 	public void endSession(String endSession) {
 		// do nothing;
 	}
@@ -56,7 +58,7 @@ public class Main extends Simulator {
 
 	}
 	 */
-	@SuppressWarnings("unused")
+	@Override
 	public void endprint(String sessionName, long iterationSteps) {
 		// do nothing
 	}
@@ -77,6 +79,7 @@ public class Main extends Simulator {
 		}
 	}
 	 */
+	@Override
 	public void print(String sessionName) {
 		@SuppressWarnings("hiding")
 		List<Market> markets = getMarketsByName("markets");

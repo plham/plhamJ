@@ -3,12 +3,11 @@ package plham;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
+import plham.util.Random;
 
+import cassia.util.JSON;
 import plham.main.Simulator;
 import plham.util.JSONRandom;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * A class for markets (assets) associated with some underlying markets
@@ -340,14 +339,14 @@ public class IndexMarket extends Market {
 		return totalValue / totalShares;
 	}
 
-	public Market setup(JsonNode jsonNode, Simulator sim) {
+	public Market setup(JSON.Value json, Simulator sim) {
 		JSONRandom random = new JSONRandom(getRandom());
-		List<Market> spots = sim.getMarketsByName(jsonNode.get("markets"));
+		List<Market> spots = sim.getMarketsByName(json.get("markets"));
 		this.addMarkets(spots);
 
 		// WARN: Market's methods access to market.env is not available here
 		// :WARN
-		this.setOutstandingShares(new Double(random.nextRandom(jsonNode
+		this.setOutstandingShares(new Double(random.nextRandom(json
 				.get("outstandingShares"))).longValue());
 
 		this.setInitialMarketPrice(computeIndex(MARKET, spots));
@@ -369,11 +368,11 @@ public class IndexMarket extends Market {
 	*/
 	@SuppressWarnings({ "static-method", "unused", "hiding" })
 	public List<Market> register(Simulator sim, long id, String name,
-			Random random, JsonNode jsonNode) {
+			Random random, JSON.Value json) {
 		// String className = "IndexMarket";
 
 		List<Market> markets = new ArrayList<Market>();
-		Market market = new IndexMarket(id, name, random).setup(jsonNode);
+		Market market = new IndexMarket(id, name, random).setup(json);
 		markets.add(market);
 		return markets;
 	}
