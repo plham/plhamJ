@@ -164,6 +164,9 @@ public class Itayose implements Serializable {
 
 		long t2 = market.sumExecutedVolumes.get((int) t);
 		market.sumExecutedVolumes.set((int) t, t2 + sumExchangeVolume);
+		
+		System.out.println("# Itayose exchangePrice " + exchangePrice);
+		
 		for (AgentUpdate update : buyUpdates) {
 			market.handleAgentUpdate(update);
 		}

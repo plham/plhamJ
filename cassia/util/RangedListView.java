@@ -281,6 +281,18 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 
 	/*
 	public operator this(i: Long)=(v: T) : T = set(v,i);
+	*/
+	@Override
+	public T set(int i, T v) {
+		base.set(i, v);
+		return v;
+	}
+
+	public void set(long i, T v) {
+		base.set((int) i, v);
+	}
+
+	/*
 	public def set(v: T, i0: Long): T {
 	    base(i0) = v;
 	    return v;

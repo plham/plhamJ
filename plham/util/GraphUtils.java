@@ -2,8 +2,8 @@ package plham.util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +28,7 @@ public class GraphUtils implements Serializable {
 	*/
 	public static <T> Map<T, Set<T>> toAdjacencySet(Set<T> nodes,
 			Set<List<T>> pairs) {
-		Map<T, Set<T>> graph = new HashMap<T, Set<T>>();
+		Map<T, Set<T>> graph = new LinkedHashMap<T, Set<T>>();
 		for (T i : nodes) {
 			graph.put(i, new HashSet<T>());
 		}
@@ -93,6 +93,7 @@ public class GraphUtils implements Serializable {
 				continue;
 			}
 
+			System.out.println("#GRAPH " + root + " checking");
 			Set<T> visited = new HashSet<T>();
 			Stack<T> stack = new Stack<T>();
 			stack.push(root);
@@ -102,14 +103,17 @@ public class GraphUtils implements Serializable {
 					continue;
 				}
 				visited.add(key);
+				System.out.println("#GRAPH " + key + " checking(sub)");
 				for (T child : graph.get(key)) {
 					assert graph.get(child).contains(key) : "Undirected graph only supported";
 					stack.push(child);
+					System.out.println("#GRAPH " + key + " --> " + child + " connected");
 				}
 			}
 			out.add(visited);
 			checked.addAll(visited);
 		}
+		System.out.println("#GRAPH finished");
 		return out;
 	}
 

@@ -1,6 +1,7 @@
 package plham;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -79,11 +80,10 @@ public class OrderBook implements Serializable {
 
 	protected void popUntil() {
 		long t = this.getTime();
-		PriorityQueue<Order> q = this.queue;
-		while (q.size() > 0) {
-			Order order = q.peek();
+		while (queue.size() > 0) {
+			Order order = queue.peek();
 			if (order.isExpired(t) || isCancelled(order)) {
-				q.remove();
+				queue.remove();
 				cancelCache.remove(OrderBook.getKey(order));
 			} else {
 				break;
@@ -191,11 +191,19 @@ public class OrderBook implements Serializable {
 			boolean b = p.check(order);
 			if (b) {
 				cancelCache.remove(OrderBook.getKey(order));
-				list.set(i, list.removeLast());
+				Order last = list.removeLast();
+				list.addLast((Order) null);
+				if (i < this.queue.size()) {
+					list.set(i, last);
+				}
 			}
 		}
 		this.queue.clear();
-		this.queue.addAll(list);
+		for (Order order : list) {
+			if (null != order) {
+				this.queue.add(order);
+			}
+		}
 		return this.queue.size() < size;
 	}
 
@@ -309,19 +317,39 @@ public class OrderBook implements Serializable {
 				"", ""], " ", "", Int.MAX_VALUE));
 		}
 	}
+	*/
+	/*
 	public static def dump(orders:List[Order], time:Long) {
 		dump(orders.iterator(), time);
 	}
+	*/
+	public static void dump(Collection<Order> orders, long time) {
+		for (Order order : orders) {
+			System.out.println(String
+					.format("%s %s %s %s %s %s   ", "#BOOK", time, order.kind,
+							order.marketId, order.price, order.volume));
+
+		}
+
+	}
+
+	/*
 
 	public def dump() {
 		dump(this.queue.iterator(), this.getTime());
 	}
+	*/
+	public void dump() {
+		dump(this.queue, this.getTime());
+	}
+	/*
 
 	public def dump(comparator:(Order,Order)=>Int) {
 		val orders = this.toList(comparator);
 		dump(orders, this.getTime());
 	}
-
+	*/
+	/*
 	public def toList():List[Order] {
 		return this.queue.toList();
 	}

@@ -1,6 +1,7 @@
 package plham.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import x10.lang.LongRange;
@@ -44,6 +45,7 @@ public class CentricAllocManager<T> extends DistAllocManager<T> {
 	@Override
 	public void setTotalCount(long size) {
 		this.body = new ArrayList<T>((int) size);
+		this.body.addAll(Collections.nCopies((int) size, (T) null));
 	}
 
 	/*

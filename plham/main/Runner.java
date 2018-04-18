@@ -3,7 +3,7 @@ package plham.main;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +24,6 @@ import plham.event.FundamentalPriceShock;
 import plham.event.OrderMistakeShock;
 import plham.event.PriceLimitRule;
 import plham.event.TradingHaltRule;
-import plham.util.RandomHelper;
 import samples.ShockTransfer.ArbitrageAgent;
 import x10.lang.LongRange;
 
@@ -69,7 +68,6 @@ public abstract class Runner<T> implements Serializable {
 		return this.sim;
 	}
 
-	@SuppressWarnings("static-access")
 	public Runner(Simulator sim) {
 		this.sim = sim;
 		FCNAgent.register(sim);
@@ -243,7 +241,7 @@ public abstract class Runner<T> implements Serializable {
 			withOrderPlacement:Boolean, withOrderExecution:Boolean, withPrint:Boolean, forDummyTimeseries:Boolean,
 			maxNormalOrders:Long, maxHifreqOrders:Long,
 			fundamentals:Fundamentals) {
-		//System.out.println("#hoge1-1");
+		//Console.OUT.println("#hoge1-1");
 		val env = this.env();
 		val markets = env.markets;  
 		for (market in markets) {
@@ -256,36 +254,36 @@ public abstract class Runner<T> implements Serializable {
 		for (market in markets) {
 			market.check();
 		}
-		//System.out.println("#hoge1-2SessionName:"+sessionName+",itestep:"+iterationSteps+",withplacement:"+withOrderPlacement);
+		//Console.OUT.println("#hoge1-2SessionName:"+sessionName+",itestep:"+iterationSteps+",withplacement:"+withOrderPlacement);
 		for (t in 1..iterationSteps) {
 			sim.updateFundamentals(fundamentals);
 			for (market in markets) {
 				market.triggerBeforeSimulationStepEvents(); // Assuming the markets in dependency order.
 			}
-			//System.out.println("#hoge1-3:t="+t);
+			//Console.OUT.println("#hoge1-3:t="+t);
 			if (withOrderPlacement) {
 				updateMarkets(maxNormalOrders, maxHifreqOrders, t > 0);
 			}
-			//System.out.println("#hoge1-4");			
+			//Console.OUT.println("#hoge1-4");			
 			if (forDummyTimeseries) {
 				sim.updateMarketsUsingFundamentalPrice(markets, fundamentals);
 			} else {
 				sim.updateMarketsUsingMarketPrice(markets, fundamentals);
 			}
-			//System.out.println("#hoge1-5");
+			//Console.OUT.println("#hoge1-5");
 			if (withPrint) {
 				sim.print(sessionName);
 			}
-			//System.out.println("#hoge1-6");
+			//Console.OUT.println("#hoge1-6");
 			for (market in markets) {
 				market.triggerAfterSimulationStepEvents();
 			}
-			//System.out.println("#hoge1-7");			
+			//Console.OUT.println("#hoge1-7");			
 			for (market in markets) {
 				market.updateTime();
 				market.updateOrderBooks();
 			}
-			//System.out.println("#hoge1-8");
+			//Console.OUT.println("#hoge1-8");
 		}
 		if (withPrint) {
 			sim.endprint(sessionName,iterationSteps);
@@ -309,7 +307,7 @@ public abstract class Runner<T> implements Serializable {
 			market.check();
 		}
 		// System.out.println("#hoge1-2SessionName:"+sessionName+",itestep:"+iterationSteps+",withplacement:"+withOrderPlacement);
-		for (long t = 1; t < iterationSteps; t++) {
+		for (long t = 1; t <= iterationSteps; t++) {
 			sim.updateFundamentals(fundamentals);
 			for (Market market : markets) {
 				market.triggerBeforeSimulationStepEvents(); // Assuming the
@@ -513,8 +511,7 @@ public abstract class Runner<T> implements Serializable {
 			seed = Long.valueOf(args[1]);
 		} else {
 			Random random = new Random();
-			RandomHelper helper = new RandomHelper(random);
-			seed = helper.nextLong(Long.MAX_VALUE / 2); // MEMO: main()
+			seed = random.nextLong(Long.MAX_VALUE / 2); // MEMO: main()
 		}
 
 		System.out.println("# X10_NPLACES  "
@@ -524,11 +521,12 @@ public abstract class Runner<T> implements Serializable {
 
 		long TIME_THE_BEGINNING = System.nanoTime();
 
-		Map<String, Object> GLOBAL = new HashMap<String, Object>();
+		Map<String, Object> GLOBAL = new LinkedHashMap<String, Object>();
 		sim.GLOBAL = GLOBAL;
 		JSON.Value CONFIG = JSON.parse(new File(args[0]));
 		sim.CONFIG = CONFIG;
 		JSON.extendDeeply(CONFIG, CONFIG);
+		// System.err.println(JSON.dump(CONFIG));
 
 		Random RANDOM = new Random(seed);
 		sim.RANDOM = RANDOM;
@@ -540,7 +538,7 @@ public abstract class Runner<T> implements Serializable {
 				.get("markets"));
 		// TODO
 		List<LongRange> mrange = new ArrayList<LongRange>();
-		mrange.add(new LongRange(0, markets.size() - 1));
+		mrange.add(new LongRange(0, markets.size()));
 		sim.marketName2Ranges.put("markets", mrange);
 
 		System.out.println("# #(markets) " + markets.size());

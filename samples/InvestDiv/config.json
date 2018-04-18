@@ -40,7 +40,7 @@
 		"marketPrice": 300.0,
 		"outstandingShares": 25000
 	},
-
+	
 	"FCNAgents": {
 		"class": "FCNAgent",
 		"numAgents": 100,

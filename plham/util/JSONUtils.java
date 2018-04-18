@@ -3,8 +3,8 @@ package plham.util;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,12 +62,13 @@ public class JSONUtils implements Serializable {
 			V = originalGraph.size();
 			g = new ArrayList<List<Long>>((int) (V));
 			rg = new ArrayList<List<Long>>((int) (V));
-			for (long v = 0; v < V - 1; v++) {
-				g.set((int) v, new ArrayList<Long>());
-				rg.set((int) v, new ArrayList<Long>());
+			for (int i = 0; i < (int) V; i++) {
+				g.add(new ArrayList<Long>());
+				rg.add(new ArrayList<Long>());
 			}
-			NodeID = new HashMap<String, Long>();
+			NodeID = new LinkedHashMap<String, Long>();
 			NodeName = new ArrayList<String>((int) V);
+			NodeName.addAll(Collections.nCopies((int) V, (String) null));
 			long curID = 0;
 			for (Map.Entry<String, Set<String>> e : originalGraph.entrySet()) {
 				String key = e.getKey();
@@ -115,7 +116,8 @@ public class JSONUtils implements Serializable {
 		public List<String> sort() {
 			List<Long> order = calcTopologicalOrder();
 			List<String> ans = new ArrayList<String>((int) V);
-			for (long i = 0; i < V - 1; i++) {
+			ans.addAll(Collections.nCopies((int) V, (String) null));
+			for (long i = 0; i < V; i++) {
 				ans.set(order.get((int) i).intValue(), NodeName.get((int) i));
 			}
 			return ans;
@@ -143,11 +145,12 @@ public class JSONUtils implements Serializable {
 		 */
 		private List<Long> calcTopologicalOrder() {
 			List<Boolean> used = new ArrayList<Boolean>((int) V);
-			for (long i = 0; i < V - 1; i++) {
+			used.addAll(Collections.nCopies((int) V, (Boolean) null));
+			for (long i = 0; i < V; i++) {
 				used.set((int) i, false);
 			}
 			List<Long> vs = new ArrayList<Long>();
-			for (long v = 0; v < V - 1; v++) {
+			for (long v = 0; v < V; v++) {
 				if (used.get((int) v)) {
 					continue;
 				}
@@ -157,10 +160,8 @@ public class JSONUtils implements Serializable {
 				used.set((int) i, false);
 			}
 			long k = 0;
-			List<Long> order = new ArrayList<Long>((int) V);
-			for (long i = 0; i < order.size(); i++) {
-				order.set((int) i, -1L);
-			}
+			ArrayList<Long> order = new ArrayList<Long>((int) V);
+			order.addAll(Collections.nCopies((int) V, -1L));
 			Collections.reverse(vs);
 			for (long v : vs) {
 				if (used.get((int) v)) {
@@ -246,9 +247,10 @@ public class JSONUtils implements Serializable {
 	*/
 	public static Map<String, Set<String>> getDependencyGraph(JSON.Value root,
 			JSON.Value list, List<String> keywords) {
-		Map<String, Set<String>> graph = new HashMap<String, Set<String>>();
+		// FIXME: sort の順序が x10.util.HashMap の順序に依存している
+		Map<String, Set<String>> graph = new LinkedHashMap<String, Set<String>>();
 		Stack<String> stack = new Stack<String>();
-		for (long i = 0; i < list.size() - 1; i++) {
+		for (long i = 0; i < list.size(); i++) {
 			String name = list.get(i).toString();
 			stack.push(name);
 		}
@@ -326,7 +328,7 @@ public class JSONUtils implements Serializable {
 	@SuppressWarnings("unused")
 	public static Map<String, Set<String>> getDependencyGraph(JSON.Value root,
 			JSON.Value list, String keyword) {
-		Map<String, Set<String>> graph = new HashMap<String, Set<String>>();
+		Map<String, Set<String>> graph = new LinkedHashMap<String, Set<String>>();
 		Stack<String> stack = new Stack<String>();
 		for (long i = 0; i < list.size(); i++) {
 			String name = list.get((int) i).toString();

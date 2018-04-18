@@ -3,8 +3,8 @@ package plham.main;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import plham.util.Random;
 
+import plham.util.Random;
 import cassia.util.random.RandomPermutation;
 import plham.Agent;
 import plham.Env;
@@ -100,14 +100,12 @@ public class SequentialRunner<T> extends Runner<T> implements Serializable {
 		}
 		long endTime = System.nanoTime();
 		if (_PROFILE) {
-			/*
-			Console.OUT.println("#PROFILE ORDER-MAKE TOTAL "
+			System.out.println("#PROFILE ORDER-MAKE TOTAL "
 					+ ((endTime - beginTime) / 1e+9) + " sec");
-			Console.OUT.println("#PROFILE MAX-NORMAL-ORDERS "
+			System.out.println("#PROFILE MAX-NORMAL-ORDERS "
 					+ MAX_NORMAL_ORDERS);
-			Console.OUT.println("#PROFILE NUM-NORMAL-ORDERS "
-					+ allOrders.size());
-			*/
+			System.out
+					.println("#PROFILE NUM-NORMAL-ORDERS " + allOrders.size());
 		}
 		return allOrders;
 	}

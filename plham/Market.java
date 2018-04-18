@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import plham.util.Random;
 
+import plham.util.Random;
 import cassia.util.JSON;
 import plham.OrderBook.RemoveAllWhere;
 import plham.main.Simulator;
@@ -14,6 +14,7 @@ import plham.model.ComparatorLowersFirst;
 import plham.model.MarketsInitializer;
 import plham.util.Itayose;
 import plham.util.JSONRandom;
+import x10.lang.LongRange;
 
 /**
  * The base class for markets. A continuous double auction mechanism is
@@ -230,15 +231,15 @@ public class Market implements Serializable {
 		setInitialMarketPrice(jsonRandom.nextRandom(json.get("marketPrice")));
 		setInitialFundamentalPrice(jsonRandom.nextRandom(json
 				.get("marketPrice")));
-		if (json.get("fundamentalVolatility") == null) {
-			setFundamentalVolatility(0.0);
-		} else {
-			setFundamentalVolatility(jsonRandom.nextRandom(json
-					.get("fundamentalVolatility")));
-		}
+		setFundamentalVolatility(jsonRandom.nextRandom(json.getOrElse(
+				"fundamentalVolatility", "0.0")));
 		setOutstandingShares(new Double(jsonRandom.nextRandom(json
-				.get("outstandingShares"))).longValue());
-		return this;
+				.get("outstandingShares"))).longValue());		return this;
+	}
+
+	@SuppressWarnings("unused")
+	public Market setup(JSON.Value json, Simulator sim) {
+		return setup(json);
 	}
 
 	/*
@@ -266,9 +267,14 @@ public class Market implements Serializable {
 				long numMarkets = json.has("numMarkets") ? json.get(
 						"numMarkets").toLong() : 1;
 				List<Market> markets = new ArrayList<Market>((int) numMarkets);
-				Market market = Market.create(id, className, random)
+				Market market = Market.create(id, name, random)
 						.setup(json);
 				markets.add(market);
+
+				sim.GLOBAL.put(markets.get(0).name, markets);
+				List<LongRange> r = new ArrayList<LongRange>();
+				r.add(new LongRange(id, id));
+				sim.marketName2Ranges.put(name, r);
 				return markets;
 			}
 
@@ -1038,6 +1044,7 @@ public class Market implements Serializable {
 		assert this.executedOrdersCounts.size() - 1 == t;
 		assert this.executionLogs.size() - 1 == t;
 		assert this.agentUpdates.size() - 1 == t;
+		System.out.println("#MARKET CHECK PASSED");
 	}
 
 	/*

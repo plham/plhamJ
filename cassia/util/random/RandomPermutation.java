@@ -6,8 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import plham.util.Random;
 
-import plham.util.RandomHelper;
-
 /**
  * Knuth-Fisher-Yates shuffle. Reference:
  * http://en.wikipedia.org/wiki/Fisher-Yates_shuffle
@@ -50,8 +48,7 @@ public class RandomPermutation<T> implements Iterable<T>, Serializable {
 	public void shuffle() {
 		int size = this.array.size();
 		for (long i = size - 1; i > 0; i--) {
-			RandomHelper helper = new RandomHelper(random);
-			long j = helper.nextLong(i + 1);
+			long j = random.nextLong(i + 1);
 			T temp = this.array.get((int) j);
 			this.array.set((int) j, this.array.get((int) i));
 			this.array.set((int) i, temp);

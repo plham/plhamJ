@@ -85,7 +85,7 @@ public class Main extends Simulator {
 		List<Market> markets = getMarketsByName("markets");
 		for (Market market : markets) {
 			long t = market.getTime();
-			System.out.println(String.format("%s %s %s %s %s %s", sessionName,
+			System.out.println(String.format("%s %s %s %s %s %s  ", sessionName,
 					t, market.id, market.name, market.getPrice(t),
 					market.getFundamentalPrice(t)));
 		}

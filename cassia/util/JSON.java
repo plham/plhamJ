@@ -6,7 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -203,9 +203,11 @@ public class JSON implements Serializable {
 			if (this.isList()) {
 				long i = Long.valueOf(s.toString());
 				this.asList().set((int) i, v);
+				return;
 			}
 			if (this.isMap()) {
 				this.asMap().put(s.toString(), v);
+				return;
 			}
 			throw new JSONException("Cannot assign to " + s + ": " + v);
 
@@ -216,7 +218,7 @@ public class JSON implements Serializable {
 			return this.put(s, new Value(v.toString()));
 		}
 		*/
-		public void pu(String s, Object v) {
+		public void put(String s, Object v) {
 			this.put(s, new Value(v.toString()));
 		}
 
@@ -415,7 +417,7 @@ public class JSON implements Serializable {
 			for (Entry entry : entries) {
 				String key = entry.getKey();
 				Value value = entry.getValue();
-				obj.put(key, new Value(value));
+				obj.put(key,value.clone());
 			}
 			return obj;
 		}
@@ -481,7 +483,7 @@ public class JSON implements Serializable {
 		@Override
 		public String toString() {
 			try {
-				return (String) this.value;
+				return this.value.toString();
 			} catch (Exception e) {
 				throw new JSONException("Cannot cast to String: "
 						+ this.getExInfo());
@@ -593,7 +595,7 @@ public class JSON implements Serializable {
 			}
 			if (this.isMap()) {
 				Map<String, Value> a = this.asMap();
-				Map<String, Value> h = new HashMap<String, Value>();
+				Map<String, Value> h = new LinkedHashMap<String, Value>();
 				for (Map.Entry<String, Value> entry : a.entrySet()) {
 					h.put(entry.getKey(), entry.getValue().clone());
 				}
@@ -866,7 +868,7 @@ public class JSON implements Serializable {
 	}
 	*/
 	public static Map<String, Value> parseObject(Reader p) {
-		Map<String, Value> a = new HashMap<String, Value>();
+		Map<String, Value> a = new LinkedHashMap<String, Value>();
 
 		if (p.get() == '{') {
 			p.next();
@@ -1105,7 +1107,7 @@ public class JSON implements Serializable {
 				continue;
 			}
 			if (root.get(key).has("extends")) {
-				Map<String, Value> out = new HashMap<String, Value>();
+				Map<String, Value> out = new LinkedHashMap<String, Value>();
 				_extendChain(root, root.get(key), out);
 				root.get(key).value = out;
 			}
@@ -1142,7 +1144,7 @@ public class JSON implements Serializable {
 				continue;
 			}
 			if (nextFocus.has("extends")) {
-				Map<String, Value> out = new HashMap<String, Value>();
+				Map<String, Value> out = new LinkedHashMap<String, Value>();
 				_extendChain(root, nextFocus, out);
 				nextFocus.value = out;
 			}

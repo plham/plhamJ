@@ -1,6 +1,8 @@
 package plham.util;
 
 import java.io.Serializable;
+
+import cassia.util.random.Gaussian;
 import plham.util.Random;
 
 /**
@@ -15,6 +17,7 @@ public class RandomHelper implements Serializable {
 	public var g:Gaussian;
 	*/
 	private Random random;
+	private Gaussian g;
 
 	/*
 	public def this(random:Random) {
@@ -24,6 +27,7 @@ public class RandomHelper implements Serializable {
 	*/
 	public RandomHelper(Random random) {
 		this.random = random;
+		this.g = new Gaussian(random);
 
 	}
 
@@ -81,19 +85,14 @@ public class RandomHelper implements Serializable {
 	public def nextLong(max:Long) = this.random.nextLong(max);
 	 */
 	public long nextLong(long max) {
-		long bits, val;
-		do {
-			bits = (random.nextLong() << 1) >>> 1;
-			val = bits % max;
-		} while (bits - val + (max - 1) < 0L);
-		return val;
+		return random.nextLong(max);
 	}
 
 	/*
 	public def nextGaussian() = this.g.nextGaussian(); // Java compatible
 	 */
 	public double nextGaussian() {
-		return this.random.nextGaussian();
+		return this.g.nextGaussian();
 	}
 
 	/*
@@ -102,7 +101,7 @@ public class RandomHelper implements Serializable {
 	}
 	 */
 	public double nextUniform(double min, double max) {
-		return random.nextDouble() * (max - min) + min;
+		return this.nextDouble() * (max - min) + min;
 	}
 
 	/*
@@ -111,7 +110,7 @@ public class RandomHelper implements Serializable {
 	}
 	 */
 	public double nextNormal(double mu, double sigma) {
-		return mu + random.nextGaussian() * sigma;
+		return mu + this.nextGaussian() * sigma;
 	}
 
 	/*
@@ -120,7 +119,7 @@ public class RandomHelper implements Serializable {
 	}
 	 */
 	public double nextExponential(double lambda) {
-		return lambda * -Math.log(random.nextDouble());
+		return lambda * -Math.log(this.nextDouble());
 	}
 
 }

@@ -2,10 +2,13 @@ package plham;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import plham.util.Random;
+
 import java.util.Set;
 
 import plham.util.GraphUtils;
@@ -38,11 +41,11 @@ public class Fundamentals implements Serializable {
 	*/
 
 	public Random random;
-	public Map<Long, Long> table = new HashMap<Long, Long>();
-	public Map<Long, Double> initials = new HashMap<Long, Double>();
-	public Map<Long, Double> drifts = new HashMap<Long, Double>();
-	public Map<Long, Double> volatilities = new HashMap<Long, Double>();
-	public Map<List<Long>, Double> correlations = new HashMap<List<Long>, Double>();
+	public Map<Long, Long> table = new LinkedHashMap<Long, Long>();
+	public Map<Long, Double> initials = new LinkedHashMap<Long, Double>();
+	public Map<Long, Double> drifts = new LinkedHashMap<Long, Double>();
+	public Map<Long, Double> volatilities = new LinkedHashMap<Long, Double>();
+	public Map<List<Long>, Double> correlations = new LinkedHashMap<List<Long>, Double>();
 
 	/*
 	static type Key = Pair[Long,Long];
@@ -326,9 +329,9 @@ public class Fundamentals implements Serializable {
 		// GraphUtils.dump(cclist);
 
 		@SuppressWarnings("hiding")
-		Map<Long, Long> g = new HashMap<Long, Long>();
+		Map<Long, Long> g = new LinkedHashMap<Long, Long>();
 		@SuppressWarnings("hiding")
-		Map<Long, Long> l = new HashMap<Long, Long>();
+		Map<Long, Long> l = new LinkedHashMap<Long, Long>();
 
 		long gid;
 		long lid;
@@ -340,16 +343,19 @@ public class Fundamentals implements Serializable {
 				g.put(id, gid);
 				l.put(id, lid++);
 			}
+			gid++;
 		}
 
 		@SuppressWarnings("hiding")
 		List<MultiGeomBrownian> GBM = new ArrayList<MultiGeomBrownian>(
 				cclist.size());
+		GBM.addAll(Collections.nCopies(cclist.size(), (MultiGeomBrownian) null));
 		for (Set<Long> ccitems : cclist) {
 			long N = ccitems.size();
 			MultiGeomBrownian gbm = new MultiGeomBrownian(random, N);
 
 			List<Long> m = new ArrayList<Long>((int) N);
+			m.addAll(Collections.nCopies((int) N, (Long) null));
 			for (long id : ccitems) {
 				m.set(l.get(id).intValue(), id);
 			}
@@ -373,6 +379,8 @@ public class Fundamentals implements Serializable {
 				}
 			}
 			for (long i = 0; i < N; i++) {
+				gbm.cor.get((int) i).addAll(
+						Collections.nCopies((int) N, (Double) null));
 				for (long j = 0; j < N; j++) {
 					List<Long> k1 = Fundamentals.getKey(m.get((int) i),
 							m.get((int) j));
@@ -411,6 +419,8 @@ public class Fundamentals implements Serializable {
 				}
 			}
 		}
+		System.out.println("#Fundamentals.setup() finished");
+		System.out.println("# #groups " + GBM.size());
 
 		this.GBM = GBM;
 		this.g = g;

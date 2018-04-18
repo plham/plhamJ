@@ -223,7 +223,7 @@ public class ArbitrageAgent extends HighFrequencyAgent {
 
 			public void initialize(String name, List<Random> randoms,
 					LongRange range, Value json, List<Agent> agents) {
-				for (long i = range.min; i < range.max; i++) {
+				for (long i = range.min; i <= range.max; i++) {
 					agents.set(
 							(int) i,
 							createArbitrageAgent(i, name, randoms.get((int) i),

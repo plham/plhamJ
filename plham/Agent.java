@@ -1,11 +1,11 @@
 package plham;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import plham.util.Random;
 
+import plham.util.Random;
 import cassia.util.JSON;
 import plham.main.Simulator;
 import plham.util.JSONRandom;
@@ -59,7 +59,7 @@ public class Agent implements Serializable {
 		this.name = name;
 		this.random = random;
 		this.cashAmount = 0.0D;
-		this.assetsVolumes = new HashMap<Long, Long>();
+		this.assetsVolumes = new LinkedHashMap<Long, Long>();
 	}
 
 	public static Agent create(long id, String name, Random random) {
@@ -117,10 +117,10 @@ public class Agent implements Serializable {
 	*/
 	public Agent setup(JSON.Value json, Simulator sim) {
 		JSONRandom jsonRandom = new JSONRandom(random);
-		this.assetsVolumes = new HashMap<Long, Long>();
+		this.assetsVolumes = new LinkedHashMap<Long, Long>();
 		this.cashAmount = jsonRandom.nextRandom(json.get("cashAmount"));
-		sim.getMarketsByName(json.get("markets"));
-		for (Market market : sim.getMarketsByName(json.get("markets"))) {
+		List<Market> markets = sim.getMarketsByName(json.get("markets"));
+		for (Market market : markets) {
 			this.assetsVolumes.put(market.id, 0L);
 			this.assetsVolumes.put(market.id,
 					new Double(jsonRandom.nextRandom(json.get("assetVolume")))

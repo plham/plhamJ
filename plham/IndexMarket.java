@@ -3,10 +3,11 @@ package plham;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import plham.util.Random;
 
+import plham.util.Random;
 import cassia.util.JSON;
 import plham.main.Simulator;
+import plham.model.MarketsInitializer;
 import plham.util.JSONRandom;
 
 /**
@@ -149,6 +150,7 @@ public class IndexMarket extends Market {
 		assert this.executedOrdersCounts.size() - 1 == t;
 		assert this.executionLogs.size() - 1 == t;
 		assert this.agentUpdates.size() - 1 == t;
+		System.out.println("#MARKET CHECK PASSED");
 	}
 
 	/*
@@ -197,9 +199,9 @@ public class IndexMarket extends Market {
 	public double getFundamentalPrice(long t) {
 		int size = this.fundamentalPrices.size();
 		if (size <= t) {
-			List<Double> l = new ArrayList<Double>((int) (t + 1));
-			Collections.nCopies((int) (t - size), Double.NaN);
-			this.fundamentalPrices.addAll(l);
+			int addSize = size - (int) t + 1;
+			this.fundamentalPrices.addAll(Collections.nCopies(addSize,
+					Double.NaN));
 		}
 		if (this.fundamentalPrices.get((int) t).isNaN()) {
 			this.fundamentalPrices
@@ -339,6 +341,7 @@ public class IndexMarket extends Market {
 		return totalValue / totalShares;
 	}
 
+	@Override
 	public Market setup(JSON.Value json, Simulator sim) {
 		JSONRandom random = new JSONRandom(getRandom());
 		List<Market> spots = sim.getMarketsByName(json.get("markets"));
@@ -366,14 +369,23 @@ public class IndexMarket extends Market {
 		});
 	}
 	*/
-	@SuppressWarnings({ "static-method", "unused", "hiding" })
-	public List<Market> register(Simulator sim, long id, String name,
-			Random random, JSON.Value json) {
-		// String className = "IndexMarket";
+	public static void register(Simulator sim) {
+		String className = "IndexMarket";
+		MarketsInitializer initializers = new MarketsInitializer() {
+			private static final long serialVersionUID = -5278272316635355514L;
 
-		List<Market> markets = new ArrayList<Market>();
-		Market market = new IndexMarket(id, name, random).setup(json);
-		markets.add(market);
-		return markets;
+			public List<Market> initialize(long id, String name, Random random,
+					JSON.Value json) {
+				List<Market> markets = new ArrayList<Market>();
+				Market market = new IndexMarket(id, name, random).setup(
+						json, sim);
+				markets.add(market);
+				System.out.println("# " + json.get("class").toString() + " : "
+						+ JSON.dump(json));
+				return markets;
+			}
+
+		};
+		sim.marketInitializers.put(className, initializers);
 	}
 }

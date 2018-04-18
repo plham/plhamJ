@@ -132,7 +132,8 @@ public class FCNAgent extends plham.Agent {
 		this.timeWindowSize = (long) jsonRandom.nextRandom(json
 				.get("timeWindowSize"));
 		this.orderMargin = jsonRandom.nextRandom(json.get("orderMargin"));
-		if (json.get("marginType").equals("fixed")) {
+
+		if ("fixed".equals(json.getOrElse("marginType", "fixed").toString())) {
 			this.marginType = FCNAgent.MARGIN_FIXED;
 		} else {
 			this.marginType = FCNAgent.MARGIN_NORMAL;

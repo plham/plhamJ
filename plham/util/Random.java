@@ -9,12 +9,12 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class Random {
 	private static AtomicLong defaultGen = new AtomicLong(System.nanoTime());
 	private static long GOLDEN_GAMMA = -7046029254386353131L;
-	private static float FLOAT_ULP = 0.0F;
-	private static double DOUBLE_ULP = 0.0;
+	private static float FLOAT_ULP = 1.0f / 16777216L;
+	private static double DOUBLE_ULP = 1.0 / 9007199254740992L;
 
 	private long seed;
 	private long gamma;
-	private double storedGaussian;
+	private double storedGaussian = 0.0D;
 	private boolean haveStoredGaussian = false;
 
 	public Random(long seed, long gamma) {
@@ -113,11 +113,35 @@ public final class Random {
 	}
 
 	public float nextFloat() {
-		return (nextInt() >>> 8) * FLOAT_ULP;
+		long nextSeed = seed + gamma;
+		seed = nextSeed;
+		long l1 = nextSeed >>> (int) 33L;
+		long l2 = nextSeed ^ l1;
+		nextSeed = l2 * -49064778989728563L;
+		long l3 = nextSeed >>> (int) 33L;
+		long l4 = nextSeed ^ l3;
+		nextSeed = l4 * -4265267296055464877L;
+		long l5 = nextSeed >>> (int) 32L;
+		int l6 = (int) l5;
+		int l7 = l6 >>> (int) 8L;
+		float l8 = l7;
+		return l8 * FLOAT_ULP;
 	}
 
 	public double nextDouble() {
-		return (nextLong() >>> 11) * DOUBLE_ULP;
+		long nextSeed = seed + gamma;
+		seed = nextSeed;
+		long l1 = nextSeed >>> (int) 33L;
+		long l2 = nextSeed ^ l1;
+		nextSeed = l2 * -49064778989728563L;
+		long l3 = nextSeed >>> (int) 33L;
+		long l4 = nextSeed ^ l3;
+		nextSeed = l4 * -4265267296055464877L;
+		long l5 = nextSeed >>> (int) 33L;
+		long l6 = nextSeed ^ l5;
+		long l7 = l6 >>> (int) 11L;
+		double l8 = l7;
+		return l8 * DOUBLE_ULP;
 	}
 
 	public double nextGaussian() {
@@ -141,19 +165,20 @@ public final class Random {
 	}
 
 	private long nextSeed() {
-		return (seed += gamma);
+		seed += gamma;
+		return seed;
 	}
 
 	private static long mix64(long z) {
 		long l = z;
-		long l1 = ((l) >>> (int) (((33L))));
-		long l2 = ((l) ^ (((l1))));
-		l = ((l2) * (((-49064778989728563L))));
-		long l3 = ((l) >>> (int) (((33L))));
-		long l4 = ((l) ^ (((l3))));
-		l = ((l4) * (((-4265267296055464877L))));
-		long l5 = ((l) >>> (int) (((33L))));
-		long l6 = ((l) ^ (((l5))));
+		long l1 = l >>> (int) 33L;
+		long l2 = l ^ l1;
+		l = l2 * -49064778989728563L;
+		long l3 = l >>> (int) 33L;
+		long l4 = l ^ l3;
+		l = l4 * -4265267296055464877L;
+		long l5 = l >>> (int) 33L;
+		long l6 = l ^ l5;
 		return l6;
 	}
 
