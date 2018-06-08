@@ -14,7 +14,7 @@ import plham.model.AgentInitializer;
 import plham.util.Random;
 import plham.util.Statistics;
 
-@x10.runtime.impl.java.X10Generated
+
 public class MarketShareFCNAgent extends FCNAgent {
 	private static final long serialVersionUID = -8791648119282933905L;
 

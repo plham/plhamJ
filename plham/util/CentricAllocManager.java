@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import x10.lang.LongRange;
+import apgas.core.LongRange;
 import cassia.util.JSON;
 import cassia.util.RangedList;
 import cassia.util.RangedListView;

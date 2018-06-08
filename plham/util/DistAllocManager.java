@@ -2,7 +2,7 @@ package plham.util;
 
 import java.io.Serializable;
 
-import x10.lang.LongRange;
+import apgas.core.LongRange;
 import cassia.util.JSON;
 import cassia.util.RangedList;
 

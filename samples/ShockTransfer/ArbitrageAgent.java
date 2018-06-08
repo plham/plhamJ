@@ -14,7 +14,7 @@ import plham.main.Simulator;
 import plham.model.AgentsInitializer;
 import plham.util.JSONRandom;
 import plham.util.Random;
-import x10.lang.LongRange;
+import apgas.core.LongRange;
 
 public class ArbitrageAgent extends HighFrequencyAgent {
 	private static final long serialVersionUID = -7905166019557169688L;
@@ -223,7 +223,7 @@ public class ArbitrageAgent extends HighFrequencyAgent {
 
 			public void initialize(String name, List<Random> randoms,
 					LongRange range, Value json, List<Agent> agents) {
-				for (long i = range.min; i <= range.max; i++) {
+				for (long i = range.from; i < range.to; i++) {
 					agents.set(
 							(int) i,
 							createArbitrageAgent(i, name, randoms.get((int) i),

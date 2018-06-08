@@ -14,7 +14,7 @@ import plham.model.ComparatorLowersFirst;
 import plham.model.MarketsInitializer;
 import plham.util.Itayose;
 import plham.util.JSONRandom;
-import x10.lang.LongRange;
+import apgas.core.LongRange;
 
 /**
  * The base class for markets. A continuous double auction mechanism is
@@ -273,7 +273,7 @@ public class Market implements Serializable {
 
 				sim.GLOBAL.put(markets.get(0).name, markets);
 				List<LongRange> r = new ArrayList<LongRange>();
-				r.add(new LongRange(id, id));
+				r.add(new LongRange(id, id+1));
 				sim.marketName2Ranges.put(name, r);
 				return markets;
 			}

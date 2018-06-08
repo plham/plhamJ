@@ -1,6 +1,7 @@
 package cassia.util;
 
-import x10.lang.LongRange;
+import apgas.core.LongRange;
+import apgas.core.LongRange;
 
 public interface RangedCommon<T> {
 	/*

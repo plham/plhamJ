@@ -7,7 +7,7 @@ import plham.util.Random;
 import cassia.util.JSON;
 
 import plham.Agent;
-import x10.lang.LongRange;
+import apgas.core.LongRange;
 
 /*
 	public static type AgentsInitializer = (String, Indexed[Random], LongRange, JSON.Value, Settable[Long, Agent])=>void;

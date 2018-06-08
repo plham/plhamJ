@@ -28,7 +28,7 @@ import plham.model.MarketGenerator;
 import plham.model.MarketInitializer;
 import plham.model.MarketsInitializer;
 import plham.util.JSONUtils;
-import x10.lang.LongRange;
+import apgas.core.LongRange;
 
 /**
  * A base class for simulation models. See {@link plham.main.Runner} for
@@ -103,11 +103,11 @@ public abstract class Simulator extends Env {
 			@SuppressWarnings("hiding")
 			public void initialize(String name, List<Random> randoms,
 					LongRange idRange, JSON.Value json, List<Agent> agents) {
-				final long min = idRange.min;
-				final long max = idRange.max;
+				final long min = idRange.from;
+				final long max = idRange.to;
 				long n = min;
 
-				while (n <= max) {
+				while (n < max) {
 					Random random = randoms.get((int) n);
 					Agent agent = initializer.initialize(n, name, random, json);
 					agents.set((int) n, agent);
@@ -522,8 +522,7 @@ public abstract class Simulator extends Env {
 				continue;
 			}
 			long numAgents = config.get("numAgents").toLong();
-			LongRange range = new LongRange(lastAgentId, lastAgentId
-					+ numAgents - 1);
+			LongRange range = new LongRange(lastAgentId, lastAgentId + numAgents);
 			lastAgentId += numAgents;
 			RangedList<Agent> subList = dm.getRangedList(here, config, range);
 			if (!subList.isEmpty()) {
@@ -537,8 +536,7 @@ public abstract class Simulator extends Env {
 			for (JSON.Value config : configs) {
 				String className = config.get("class").toString();
 				long numAgents = config.get("numAgents").toLong();
-				LongRange range = new LongRange(lastAgentId, lastAgentId
-						+ numAgents - 1);
+				LongRange range = new LongRange(lastAgentId, lastAgentId + numAgents);
 				lastAgentId += numAgents;
 				RangedList<Agent> subList = dm.getRangedList(here, config,
 						range);
@@ -983,7 +981,7 @@ public abstract class Simulator extends Env {
 	}
 	*/
 	private Market marketConverter1(LongRange range) {
-		return markets.get((int) range.min);
+		return markets.get((int) range.from);
 	}
 
 	/*
@@ -997,7 +995,7 @@ public abstract class Simulator extends Env {
 	private List<Market> marketConverterM(List<LongRange> ranges) {
 		List<Market> result = new ArrayList<Market>();
 		for (LongRange range : ranges) {
-			for (long i = range.min; i < range.max; i++) {
+			for (long i = range.from; i < range.to; i++) {
 				result.add(markets.get((int) i));
 			}
 		}
