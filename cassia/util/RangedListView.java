@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import x10.lang.LongRange;
+import apgas.core.LongRange;
 
 public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	private static final long serialVersionUID = 5144877061214880343L;
@@ -24,7 +24,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	public static def emptyView[T]() =  new RangedListView[T](null, 0..-1);
 	 */
 	public static RangedListView<Object> emptyView = new RangedListView<Object>(
-			null, new LongRange(0, -1));
+			null, new LongRange(0, 0));
 
 	/*
 	public def getRange() = range;
@@ -46,7 +46,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	 */
 	@Override
 	public boolean contains(Object v) {
-		for (long i = range.min; i < range.max; i++) {
+		for (long i = range.from; i < range.to; i++) {
 			T elem = base.get((int) i);
 			if (v == null ? elem == null : v.equals(elem)) {
 				return true;
@@ -79,7 +79,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public int indexOf(Object v) {
-		return indexOf(range.min, (T) v);
+		return indexOf(range.from, (T) v);
 	}
 
 	/*
@@ -92,7 +92,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	}
 	 */
 	public int indexOf(long index, T v) {
-		for (long i = index; i < range.max; i++) {
+		for (long i = index; i < range.to; i++) {
 			if (v == null ? base.get((int) i) == null : v.equals(base
 					.get((int) i))) {
 				return (int) i;
@@ -109,7 +109,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public int lastIndexOf(Object v) {
-		return indexOf(range.max, (T) v);
+		return indexOf(range.to-1, (T) v);
 	}
 
 	/*
@@ -122,7 +122,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	}
 	 */
 	public long lastIndexOf(long index, T v) {
-		for (long i = index; i >= range.min; i--) {
+		for (long i = index; i >= range.from; i--) {
 			if (v == null ? base.get((int) i) == null : v.equals(base
 					.get((int) i)))
 				return i;
@@ -194,7 +194,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	}
 
 	public long last() {
-		return range.max;
+		return range.to-1;
 	}
 
 	@Override
@@ -243,14 +243,14 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	public def getFirst(): T  = base(range.min);
 	 */
 	public T getFirst() {
-		return base.get((int) range.min);
+		return base.get((int) range.from);
 	}
 
 	/*
 	public def getLast(): T  = base(range.max);
 	 */
 	public T getLast() {
-		return base.get((int) range.max);
+		return base.get((int) (range.to-1));
 	}
 
 	/*
@@ -318,7 +318,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	 */
 	@Override
 	public int size() {
-		return (int) (range.max - range.min) + 1;
+		return (int) (range.to - range.from);
 	}
 
 	/*
@@ -326,7 +326,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	 */
 	@Override
 	public boolean isEmpty() {
-		return range.max < range.min;
+		return (range.to <= range.from);
 	}
 
 	/*
@@ -338,7 +338,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	 */
 	public List<Long> indices() {
 		List<Long> results = new ArrayList<Long>();
-		for (long i = range.min; i < range.max; i++) {
+		for (long i = range.from; i < range.to; i++) {
 			results.add(i);
 		}
 		return results;
@@ -416,10 +416,10 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 			this.range = range;
 		}
 
-		private long i = range.min - 1;
+		private long i = range.from - 1;
 
 		public boolean hasNext() {
-			return i + 1 <= range.max;
+			return i + 1 < range.to;
 		}
 
 		public S next() {
@@ -433,7 +433,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 
 		@SuppressWarnings("unused")
 		public boolean hasPrevious() {
-			return i - 1 >= range.min;
+			return i - 1 >= range.from;
 		}
 
 		@SuppressWarnings("unused")
@@ -477,8 +477,8 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	}
 	*/
 	public Iterator<T> iteratorFrom(long index) {
-		return new It<T>(this.base, new LongRange(Math.max(range.min, index),
-				range.max));
+		return new It<T>(this.base, new LongRange(Math.max(range.from, index),
+				range.to));
 	}
 
 	/*
@@ -488,7 +488,7 @@ public class RangedListView<T> extends ArrayList<T> implements RangedList<T> {
 	*/
 	public RangedList<T> subList(long fromIndex, long toIndex) {
 		return new RangedListView<T>(base, new LongRange(Math.max(fromIndex,
-				range.min), Math.min(toIndex, range.max)));
+				range.from), Math.min(toIndex, range.to)));
 	}
 
 	/*

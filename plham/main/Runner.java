@@ -25,7 +25,7 @@ import plham.event.OrderMistakeShock;
 import plham.event.PriceLimitRule;
 import plham.event.TradingHaltRule;
 import samples.ShockTransfer.ArbitrageAgent;
-import x10.lang.LongRange;
+import apgas.core.LongRange;
 
 /**
  * A base class for execution models. See {@link plham.main.Simulator} for

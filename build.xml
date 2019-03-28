@@ -15,7 +15,7 @@
     <target depends="clean" name="cleanall"/>
     <target depends="init" name="build">
         <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" includeantruntime="false" source="${source}" target="${target}">
+        <javac debug="true" debuglevel="${debuglevel}" includeantruntime="false" source="${source}" target="${target}" encoding="UTF-8">
             <src path="."/>
             <classpath refid="plham.classpath"/>
         </javac>

@@ -35,7 +35,7 @@ public class Env {
 	}
 
 	public static String getEnvOrElse(final String name, final String orElse) {
-		final String value = x10.lang.System.getenv(name);
+		final String value = System.getenv(name);
 		if (value == null) {
 			return orElse;
 		}
