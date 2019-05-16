@@ -573,7 +573,7 @@ public abstract class Runner<T> implements Serializable {
 		JSON.Value sessions = CONFIG.get("simulation").get("sessions");
 		for (long i = 0; i < sessions.size(); i++) {
 
-			System.out.println("------------Session " + i + " Start@" + here);
+			System.out.println("#------------Session " + i + " Start@" + here);
 			JSON.Value json = sessions.get(i);
 			String sessionName = json.get("sessionName").toString();
 			long iterationSteps;
