@@ -1,4 +1,7 @@
 .idea/
+out/
+*.dat
+*.png
 # Compiled class file
 *.class
 
