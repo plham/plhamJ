@@ -2,7 +2,6 @@ package samples.HFThirano2019;
 
 import plham.Main;
 import plham.Market;
-import plham.agent.FCNAgent;
 import plham.main.SequentialRunner;
 
 import java.util.List;
