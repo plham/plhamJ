@@ -10,7 +10,7 @@ import java.util.List;
 public class HFThirano2019Main extends Main {
     public static void main(String[] args) {
         final HFThirano2019Main sim = new HFThirano2019Main();
-        FCNAgent.register(sim);
+        DelayFCNAgent.register(sim);
         Market.register(sim);
         final SequentialRunner<HFThirano2019Main> runner = new SequentialRunner<HFThirano2019Main>(
                 sim);
