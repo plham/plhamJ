@@ -70,13 +70,15 @@ public class HFThirano2019Main extends Main {
 
             sellBook.entrySet().stream()
                     .sorted(java.util.Collections.reverseOrder(java.util.Map.Entry.comparingByKey()))
-                    .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s",
-                            "OrderBook", sessionName, t, market.id, "Sell", s.getKey(),s.getValue())));
+                    .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s %s %s %s ",
+                            "OrderBook", sessionName, t, market.id, "Sell", s.getKey(),s.getValue()
+                            , "-", "-", "-")));
 
             buyBook.entrySet().stream()
                     .sorted(java.util.Collections.reverseOrder(java.util.Map.Entry.comparingByKey()))
-                    .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s",
-                            "OrderBook", sessionName, t, market.id, "Buy", s.getKey(),s.getValue())));
+                    .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s %s %s %s",
+                            "OrderBook", sessionName, t, market.id, "Buy", s.getKey(),s.getValue()
+                            , "-", "-", "-")));
 
         }
     }

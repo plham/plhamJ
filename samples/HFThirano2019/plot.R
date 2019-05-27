@@ -12,6 +12,7 @@ colnames(data) = c('logtype','session', 't', 'market.id', 'market.name', 'price.
 
 marketData = data[data$logtype == "MarketPrice",]
 
+
 png(pngfile, width=640, height=480)
 
 par(oma = c(0, 0, 0, 2))
@@ -23,7 +24,7 @@ lines(marketData$price.bestbuy, col='red')
 lines(marketData$price.bestsell, col='blue')
 
 par(new = T)
-barplot(data$volume, axes = FALSE, ylab = "", ylim=c(0, 100), col="blue")
+barplot(marketData$volume, axes = FALSE, ylab = "", ylim=c(0, 100), col="blue")
 axis(4)
 
 mtext("volume", side = 4, line = 2)
