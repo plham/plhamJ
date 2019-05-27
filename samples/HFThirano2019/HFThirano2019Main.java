@@ -3,6 +3,7 @@ package samples.HFThirano2019;
 import plham.Main;
 import plham.Market;
 import plham.main.SequentialRunner;
+import plham.Order;
 
 import java.util.List;
 
@@ -40,8 +41,8 @@ public class HFThirano2019Main extends Main {
 
         for (Market market : markets) {
             long t = market.getTime();
-            System.out.println(String.format("%s %s %s %s %s %s %s %s %s ",
-                    sessionName, t, market.id, market.name, market.getFundamentalPrice(t),
+            System.out.println(String.format("%s %s %s %s %s %s %s %s %s %s ",
+                    "MarketPrice",sessionName, t, market.id, market.name, market.getFundamentalPrice(t),
                     market.getPrice(t), market.getBestBuyPrice(), market.getBestSellPrice(),
                     market.getTradeVolume()));
         }
@@ -49,6 +50,6 @@ public class HFThirano2019Main extends Main {
     @Override
     public void endprint(String sessionName, long iterationSteps) {
         super.endprint(sessionName, iterationSteps);
-        System.out.println("# SessionName Time MarketId MarketName FundamentalPrice lastPrice BestBuyPrice BestSellPrice TradeVolume");
+        System.out.println("# LogType SessionName Time MarketId MarketName FundamentalPrice lastPrice BestBuyPrice BestSellPrice TradeVolume");
     }
 }

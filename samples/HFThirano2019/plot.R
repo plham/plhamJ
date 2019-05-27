@@ -8,17 +8,19 @@ datafile = args[1]
 pngfile = args[2]
 
 data = read.table(datafile)
-colnames(data) = c('session', 't', 'market.id', 'market.name', 'price.fundam', 'price.last','price.bestbuy', 'price.bestsell', 'volume')
+colnames(data) = c('logtype','session', 't', 'market.id', 'market.name', 'price.fundam', 'price.last','price.bestbuy', 'price.bestsell', 'volume')
+
+marketData = data[data$logtype == "MarketPrice",]
 
 png(pngfile, width=640, height=480)
 
 par(oma = c(0, 0, 0, 2))
 
-plot(0, type='n', xlim=c(1, nrow(data)), ylim=c(395, 405), xlab='t', ylab='price')
-lines(data$price.last, col='green')
-lines(data$price.fundam, col='black')
-lines(data$price.bestbuy, col='red')
-lines(data$price.bestsell, col='blue')
+plot(0, type='n', xlim=c(1, nrow(marketData)), ylim=c(395, 405), xlab='t', ylab='price')
+lines(marketData$price.last, col='green')
+lines(marketData$price.fundam, col='black')
+lines(marketData$price.bestbuy, col='red')
+lines(marketData$price.bestsell, col='blue')
 
 par(new = T)
 barplot(data$volume, axes = FALSE, ylab = "", ylim=c(0, 100), col="blue")

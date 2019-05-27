@@ -43,13 +43,16 @@
     "assetVolume": 50,
     "cashAmount": 10000,
 
-    "MEMO": "DelayFCNAgent class",
+    "MEMO": "FCNAgent class",
     "fundamentalWeight": {"expon": [1.0]},
     "chartWeight": {"expon": [1.0]},
     "noiseWeight": {"expon": [0.1]},
     "meanReversionTime":{"uniform":[50,100]},
     "noiseScale": 0.001,
     "timeWindowSize": [100, 200],
-    "orderMargin": [0.0, 0.1]
+    "orderMargin": [0.0, 0.1],
+
+    "MOMO": "DelayFCNAgent Class",
+    "informationDelay": 1
   }
 }
