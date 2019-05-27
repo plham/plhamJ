@@ -5,7 +5,9 @@ import plham.Market;
 import plham.main.SequentialRunner;
 import plham.Order;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Arrays;
 
 public class HFThirano2019Main extends Main {
     public static void main(String[] args) {
@@ -45,11 +47,37 @@ public class HFThirano2019Main extends Main {
                     "MarketPrice",sessionName, t, market.id, market.name, market.getFundamentalPrice(t),
                     market.getPrice(t), market.getBestBuyPrice(), market.getBestSellPrice(),
                     market.getTradeVolume()));
+            HashMap<Double, Long> sellBook = new HashMap<Double, Long>();
             for (Order order: market.getSellOrderBook().queue){
-                System.out.println(String.format("%s %s %s %s %s %s %s %s %s %s ",
-                        "OrderBook", sessionName, t, order.marketId,order.kind, order.price, order.volume, order.timePlaced
-                        ,order.orderId, order.timeLength));
+                if (sellBook.get(order.price) == null){
+                    sellBook.put(order.price, order.volume);
+                }else{
+                    Long volume = sellBook.get(order.price);
+                    volume += order.volume;
+                    sellBook.put(order.price, volume);
+                }
             }
+            HashMap<Double, Long> buyBook = new HashMap<Double, Long>();
+            for (Order order: market.getBuyOrderBook().queue){
+                if (buyBook.get(order.price) == null){
+                    buyBook.put(order.price, order.volume);
+                }else{
+                    Long volume = buyBook.get(order.price);
+                    volume += order.volume;
+                    buyBook.put(order.price, volume);
+                }
+            }
+
+            sellBook.entrySet().stream()
+                    .sorted(java.util.Collections.reverseOrder(java.util.Map.Entry.comparingByKey()))
+                    .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s",
+                            "OrderBook", sessionName, t, market.id, "Sell", s.getKey(),s.getValue())));
+
+            buyBook.entrySet().stream()
+                    .sorted(java.util.Collections.reverseOrder(java.util.Map.Entry.comparingByKey()))
+                    .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s",
+                            "OrderBook", sessionName, t, market.id, "Buy", s.getKey(),s.getValue())));
+
         }
     }
     @Override
