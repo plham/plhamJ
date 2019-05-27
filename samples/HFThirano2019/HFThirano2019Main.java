@@ -45,6 +45,11 @@ public class HFThirano2019Main extends Main {
                     "MarketPrice",sessionName, t, market.id, market.name, market.getFundamentalPrice(t),
                     market.getPrice(t), market.getBestBuyPrice(), market.getBestSellPrice(),
                     market.getTradeVolume()));
+            for (Order order: market.getSellOrderBook().queue){
+                System.out.println(String.format("%s %s %s %s %s %s %s %s %s %s ",
+                        "OrderBook", sessionName, t, order.marketId,order.kind, order.price, order.volume, order.timePlaced
+                        ,order.orderId, order.timeLength));
+            }
         }
     }
     @Override
