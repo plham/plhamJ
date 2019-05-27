@@ -22,7 +22,7 @@ public class OrderBook implements Serializable {
 	public var time:Time;
 	protected var cancelCache:Set[Key] = new HashSet[Key](); // Poor implimentation.
 	*/
-	private PriorityQueue<Order> queue;
+	public PriorityQueue<Order> queue;
 	private Time time;
 	protected Set<String> cancelCache = new HashSet<String>();
 
