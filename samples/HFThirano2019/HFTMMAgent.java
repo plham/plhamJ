@@ -183,8 +183,8 @@ public class HFTMMAgent extends FCNAgent {
 			}
 		}
 
-		int volumeOnece = 10;
-		int totalVolume = 30;
+		int volumeOnece = 1;
+		int totalVolume = 10;
 		if (a_num < totalVolume) {
 			orders.add(new Order(Order.KIND_BUY_LIMIT_ORDER, this, market,
 					p_a_order, volumeOnece, timeWindowSize));

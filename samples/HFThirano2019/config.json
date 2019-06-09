@@ -18,12 +18,12 @@
         "withPrint": false
       },
       {	"sessionName": 2,
-        "iterationSteps": 1000,
+        "iterationSteps": 1500,
         "withOrderPlacement": true,
         "withOrderExecution": true,
         "maxNormalOrders": 10,
         "withPrint": true,
-        "events": ["FundamentalPriceShock"]
+        "events": ["FundamentalPriceShock1","FundamentalPriceShock2"]
       }
     ]
   },
@@ -38,17 +38,24 @@
     "fundamentalVolatility": 0.00
   },
 
-  "FundamentalPriceShock": {
+  "FundamentalPriceShock1": {
     "class": "FundamentalPriceShock",
     "target": "Market",
     "triggerTime": 900,    "MEMO": "At the beginning of the session 2",
     "priceChangeRate": -0.05,    "MEMO": "Sign: negative for down; positive for up; zero for no change",
     "enabled": true
   },
+  "FundamentalPriceShock2": {
+    "class": "FundamentalPriceShock",
+    "target": "Market",
+    "triggerTime": 1400,    "MEMO": "At the beginning of the session 2",
+    "priceChangeRate": 0.05,    "MEMO": "Sign: negative for down; positive for up; zero for no change",
+    "enabled": true
+  },
 
   "DelayFCNAgents": {
     "class": "DelayFCNAgent",
-    "numAgents": 100,
+    "numAgents": 1000,
 
     "MEMO": "Agent class",
     "markets": ["Market"],
@@ -87,7 +94,7 @@
     "orderMargin": [0.0, 0.1],
 
     "MOMO": "HFTMMAgent Class",
-    "riskTime": 1,
+    "riskTime": 10,
     "riskHedgeLevel": 0.01
   }
 }
