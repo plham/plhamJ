@@ -1,19 +1,26 @@
 package samples.HFThirano2019;
 
+import plham.Agent;
 import plham.Main;
 import plham.Market;
+import plham.event.FundamentalPriceShock;
 import plham.main.SequentialRunner;
 import plham.Order;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
+
+import java.io.IOException;
 
 public class HFThirano2019Main extends Main {
     public static void main(String[] args) {
         final HFThirano2019Main sim = new HFThirano2019Main();
         DelayFCNAgent.register(sim);
+        HFTMMAgent.register(sim);
         Market.register(sim);
+        FundamentalPriceShock.register(sim);
         final SequentialRunner<HFThirano2019Main> runner = new SequentialRunner<HFThirano2019Main>(
                 sim);
         runner.run(args);
@@ -86,5 +93,29 @@ public class HFThirano2019Main extends Main {
     public void endprint(String sessionName, long iterationSteps) {
         super.endprint(sessionName, iterationSteps);
         System.out.println("# LogType SessionName Time MarketId MarketName FundamentalPrice lastPrice BestBuyPrice BestSellPrice TradeVolume");
+        for (Agent oneAgent: this.agents){
+            System.out.println(String.format("%s %s", oneAgent.name, oneAgent.getCashAmount()));
+        }
+
+        HashMap<String, List<Double>> cashMap = new HashMap<String, List<Double>>();
+        for (Agent oneAgent: this.agents){
+            System.out.println(String.format("%s %s", oneAgent.name, oneAgent.getCashAmount()));
+            List<Double> cashList = new ArrayList<Double>();
+            if (cashMap.keySet().contains(oneAgent.name)){
+                cashList = cashMap.get(oneAgent.name);
+            }
+            cashList.add(oneAgent.getCashAmount());
+            cashMap.put(oneAgent.name, cashList);
+        }
+        System.out.println("# Result >>>>>>>");
+        for (String key: cashMap.keySet()){
+            double mean = 0;
+            for (double cash: cashMap.get(key)){
+                mean += cash;
+            }
+            mean /= cashMap.get(key).size();
+            System.out.println(String.format("%s %s", key, mean));
+        }
+
     }
 }

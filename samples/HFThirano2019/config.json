@@ -1,28 +1,29 @@
 {
   "simulation": {
     "markets": ["Market"],
-    "agents": ["DelayFCNAgents"],
+    "agents": ["DelayFCNAgents","HFTMMAgents"],
     "sessions": [
       {	"sessionName": 0,
         "iterationSteps": 100,
         "withOrderPlacement": true,
         "withOrderExecution": false,
-        "maxNormalOrders": 1,
+        "maxNormalOrders": 10,
         "withPrint": false
       },
       {	"sessionName": 1,
         "iterationSteps": 500,
         "withOrderPlacement": true,
         "withOrderExecution": true,
-        "maxNormalOrders": 1,
+        "maxNormalOrders": 10,
         "withPrint": false
       },
       {	"sessionName": 2,
         "iterationSteps": 1000,
         "withOrderPlacement": true,
         "withOrderExecution": true,
-        "maxNormalOrders": 1,
-        "withPrint": true
+        "maxNormalOrders": 10,
+        "withPrint": true,
+        "events": ["FundamentalPriceShock"]
       }
     ]
   },
@@ -31,7 +32,18 @@
     "class": "Market",
     "tickSize": 1,
     "marketPrice": 400.0,
-    "outstandingShares": 25000
+    "outstandingShares": 25000,
+    "fundamentalPrice": 400.0,
+    "fundamentalDrift": 0.0,
+    "fundamentalVolatility": 0.00
+  },
+
+  "FundamentalPriceShock": {
+    "class": "FundamentalPriceShock",
+    "target": "Market",
+    "triggerTime": 900,    "MEMO": "At the beginning of the session 2",
+    "priceChangeRate": -0.05,    "MEMO": "Sign: negative for down; positive for up; zero for no change",
+    "enabled": true
   },
 
   "DelayFCNAgents": {
@@ -53,6 +65,29 @@
     "orderMargin": [0.0, 0.1],
 
     "MOMO": "DelayFCNAgent Class",
-    "informationDelay": 1
+    "informationDelay": 10
+  },
+  "HFTMMAgents": {
+    "class": "HFTMMAgent",
+    "MEMO":50,
+    "numAgents": 50,
+
+    "MEMO": "Agent class",
+    "markets": ["Market"],
+    "assetVolume": 0,
+    "cashAmount": 100000,
+
+    "MEMO": "FCNAgent class",
+    "fundamentalWeight": {"expon": [1.0]},
+    "chartWeight": {"expon": [1.0]},
+    "noiseWeight": {"expon": [0.1]},
+    "meanReversionTime":{"uniform":[50,100]},
+    "noiseScale": 0.001,
+    "timeWindowSize": [100, 200],
+    "orderMargin": [0.0, 0.1],
+
+    "MOMO": "HFTMMAgent Class",
+    "riskTime": 1,
+    "riskHedgeLevel": 0.01
   }
 }
