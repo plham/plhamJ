@@ -35,27 +35,27 @@
     "outstandingShares": 25000,
     "fundamentalPrice": 400.0,
     "fundamentalDrift": 0.0,
-    "fundamentalVolatility": 0.00
+    "fundamentalVolatility": 0.001
   },
 
   "FundamentalPriceShock1": {
     "class": "FundamentalPriceShock",
     "target": "Market",
     "triggerTime": 900,    "MEMO": "At the beginning of the session 2",
-    "priceChangeRate": -0.05,    "MEMO": "Sign: negative for down; positive for up; zero for no change",
+    "priceChangeRate": -0.00,    "MEMO": "Sign: negative for down; positive for up; zero for no change",
     "enabled": true
   },
   "FundamentalPriceShock2": {
     "class": "FundamentalPriceShock",
     "target": "Market",
     "triggerTime": 1400,    "MEMO": "At the beginning of the session 2",
-    "priceChangeRate": 0.05,    "MEMO": "Sign: negative for down; positive for up; zero for no change",
+    "priceChangeRate": 0.00,    "MEMO": "Sign: negative for down; positive for up; zero for no change",
     "enabled": true
   },
 
   "DelayFCNAgents": {
     "class": "DelayFCNAgent",
-    "numAgents": 10,
+    "numAgents": 100,
 
     "MEMO": "Agent class",
     "markets": ["Market"],
