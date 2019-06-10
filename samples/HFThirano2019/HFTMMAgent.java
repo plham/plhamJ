@@ -151,7 +151,7 @@ public class HFTMMAgent extends FCNAgent {
 		double tick = market.getTickSize();
 		double p_b_order = p_b - (p_b % tick) + (p_b % tick == 0 ? 0 : 1);
 		double p_a_order = p_a - (p_a % tick);
-		System.out.println(hat_s);
+		/*System.out.println(hat_s);
 		System.out.println(delta);
 		System.out.println(gamma);
 		System.out.println(sigma);
@@ -160,7 +160,7 @@ public class HFTMMAgent extends FCNAgent {
 		System.out.println(p_a);
 		System.out.println(p_b);
 		System.out.println(p_a_order);
-		System.out.println(p_b_order);
+		System.out.println(p_b_order);*/
 
 		int a_num = 0;
 		int b_num = 0;
@@ -168,7 +168,7 @@ public class HFTMMAgent extends FCNAgent {
 			if (oneOrder.kind == Order.KIND_BUY_LIMIT_ORDER){
 				// buyの場合
 				if (oneOrder.price > p_a){
-					cancelOrders.add(oneOrder);
+					cancelOrders.add(new Cancel(oneOrder));
 				}else if (oneOrder.price == p_a_order){
 					a_num += oneOrder.volume;
 				}
@@ -176,7 +176,7 @@ public class HFTMMAgent extends FCNAgent {
 			}else{
 				// sellの場合
 				if (oneOrder.price < p_b){
-					cancelOrders.add(oneOrder);
+					cancelOrders.add(new Cancel(oneOrder));
 				}else if (oneOrder.price == p_b_order){
 					b_num += oneOrder.volume;
 				}
@@ -196,11 +196,11 @@ public class HFTMMAgent extends FCNAgent {
 
 		this.current_orders.removeAll(cancelOrders);
 		this.current_orders.addAll(orders);
-
+		/*
 		if (cancelOrders.size() > 0){
 			System.out.println(">>>>>>>>>>>>>>>");
 			System.out.println(cancelOrders);
-		}
+		}*/
 
 		orders.addAll(cancelOrders);
 		return orders;

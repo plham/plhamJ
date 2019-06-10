@@ -11,8 +11,10 @@ import plham.util.JSONRandom;
 import plham.util.Random;
 import plham.util.RandomHelper;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+import plham.Cancel;
 
 /**
  * An order decision mechanism proposed in Chiarella & Iori (2004). It employs
@@ -31,6 +33,7 @@ public class DelayFCNAgent extends FCNAgent {
 	private static final long serialVersionUID = 3210976154184567934L;
 
 	public int informationDelay=0;
+	public List<Order> current_order = new ArrayList<Order>();
 
 	public DelayFCNAgent(long id, String name, Random random) {
 		super(id, name, random);
@@ -54,8 +57,20 @@ public class DelayFCNAgent extends FCNAgent {
 		return this;
 	}
 
+	@Override
+	public void orderExecuted(long marketId, long orderId, double price,
+							  double cashAmountDelta, long assetVolumeDelta) {
+		for (Order oneOrder : this.current_order){
+			if (oneOrder.orderId == orderId){
+				this.current_order.remove(oneOrder);
+				break;
+			}
+		}
+	}
+
 	public List<Order> submitOrders(Market market) {
 		List<Order> orders = new ArrayList<Order>();
+		List<Order> cancelOrders = new ArrayList<Order>();
 		if (!this.isMarketAccessible(market)) {
 			return orders;
 		}
@@ -104,6 +119,31 @@ public class DelayFCNAgent extends FCNAgent {
 				* Math.exp(expectedLogReturn * timeWindowSize);
 		assert isFinite(expectedFuturePrice) : "isFinite(expectedFuturePrice)";
 
+
+		int a_num = 0;
+		int b_num = 0;
+		for (Order oneOrder: this.current_order){
+			if (oneOrder.kind == Order.KIND_BUY_LIMIT_ORDER){
+				// buyの場合
+				if (oneOrder.price > expectedFuturePrice){
+					cancelOrders.add(new Cancel(oneOrder));
+				}else{
+					a_num += 1;
+				}
+			}else{
+				// sellの場合
+				if (oneOrder.price < expectedFuturePrice){
+					cancelOrders.add(new Cancel(oneOrder));
+				}else{
+					b_num += 1;
+				}
+			}
+		}
+
+		int max_num = 5;
+
+
+
 		if (this.marginType == MARGIN_FIXED) {
 			assert 0.0 <= this.orderMargin && this.orderMargin <= 1.0;
 
@@ -141,6 +181,14 @@ public class DelayFCNAgent extends FCNAgent {
 						orderPrice, orderVolume, timeWindowSize));
 			}
 		}
+
+
+		this.current_order.removeAll(cancelOrders);
+		this.current_order.addAll(orders);
+
+		orders.addAll(cancelOrders);
+
+
 		return orders;
 	}
 }

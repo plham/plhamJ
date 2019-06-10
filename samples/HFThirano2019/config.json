@@ -7,21 +7,21 @@
         "iterationSteps": 100,
         "withOrderPlacement": true,
         "withOrderExecution": false,
-        "maxNormalOrders": 10,
+        "maxNormalOrders": 1000,
         "withPrint": false
       },
       {	"sessionName": 1,
         "iterationSteps": 500,
         "withOrderPlacement": true,
         "withOrderExecution": true,
-        "maxNormalOrders": 10,
+        "maxNormalOrders": 1000,
         "withPrint": false
       },
       {	"sessionName": 2,
         "iterationSteps": 1500,
         "withOrderPlacement": true,
         "withOrderExecution": true,
-        "maxNormalOrders": 10,
+        "maxNormalOrders": 1000,
         "withPrint": true,
         "events": ["FundamentalPriceShock1","FundamentalPriceShock2"]
       }
@@ -55,7 +55,7 @@
 
   "DelayFCNAgents": {
     "class": "DelayFCNAgent",
-    "numAgents": 1000,
+    "numAgents": 10,
 
     "MEMO": "Agent class",
     "markets": ["Market"],

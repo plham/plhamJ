@@ -24,7 +24,7 @@ lines(marketData$price.bestbuy, col='red')
 lines(marketData$price.bestsell, col='blue')
 
 par(new = T)
-barplot(marketData$volume, axes = FALSE, ylab = "", ylim=c(0, 100), col="blue")
+barplot(marketData$volume, axes = FALSE, ylab = "", ylim=c(0, 1000), col="blue")
 axis(4)
 
 mtext("volume", side = 4, line = 2)
