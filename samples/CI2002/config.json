@@ -22,8 +22,7 @@
 		"class": "Market",
 		"tickSize": 0.00001,
 		"marketPrice": 300.0,
-		"outstandingShares": 25000,
-		"fundamentalVolatility": 0.01
+		"outstandingShares": 25000
 	},
 
 	"FCNAgents": {
