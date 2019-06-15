@@ -17,7 +17,7 @@ png(pngfile, width=640, height=480)
 
 par(oma = c(0, 0, 0, 2))
 
-plot(0, type='n', xlim=c(1, nrow(marketData)), ylim=c(360, 440), xlab='t', ylab='price')
+plot(0, type='n', xlim=c(1, nrow(marketData)), ylim=c(390, 410), xlab='t', ylab='price')
 lines(marketData$price.last, col='green')
 lines(marketData$price.fundam, col='black')
 lines(marketData$price.bestbuy, col='red')

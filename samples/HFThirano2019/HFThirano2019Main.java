@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Arrays;
 
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 public class HFThirano2019Main extends Main {
     public static void main(String[] args) {
@@ -55,6 +56,7 @@ public class HFThirano2019Main extends Main {
                     market.getPrice(t), market.getBestBuyPrice(), market.getBestSellPrice(),
                     market.getTradeVolume()));
             HashMap<Double, Long> sellBook = new HashMap<Double, Long>();
+            HashMap<Double, Long> sellBookHFT = new HashMap<Double, Long>();
             for (Order order: market.getSellOrderBook().queue){
                 if (order.isExpired(t) || market.getSellOrderBook().isCancelled(order)){
                     continue;
@@ -66,8 +68,22 @@ public class HFThirano2019Main extends Main {
                     volume += order.volume;
                     sellBook.put(order.price, volume);
                 }
+
+                List<Agent> agentList = this.agents.stream().filter(one -> one.id == order.agentId).collect(Collectors.toUnmodifiableList());
+                assert  agentList.size() == 1: "Order cannot pick up one agent";
+                Agent ag = agentList.get(0);
+                if (ag.name.equals("HFTMMAgents")){
+                    if (sellBookHFT.get(order.price) == null){
+                        sellBookHFT.put(order.price, order.volume);
+                    }else{
+                        Long volume = sellBookHFT.get(order.price);
+                        volume += order.volume;
+                        sellBookHFT.put(order.price, volume);
+                    }
+                }
             }
             HashMap<Double, Long> buyBook = new HashMap<Double, Long>();
+            HashMap<Double, Long> buyBookHFT = new HashMap<Double, Long>();
             for (Order order: market.getBuyOrderBook().queue){
                 if (order.isExpired(t) || market.getBuyOrderBook().isCancelled(order)){
                     continue;
@@ -79,20 +95,34 @@ public class HFThirano2019Main extends Main {
                     volume += order.volume;
                     buyBook.put(order.price, volume);
                 }
+                List<Agent> agentList = this.agents.stream().filter(one -> one.id == order.agentId).collect(Collectors.toUnmodifiableList());
+                assert  agentList.size() == 1: "Order cannot pick up one agent";
+                Agent ag = agentList.get(0);
+                if (ag.name.equals("HFTMMAgents")){
+                    if (buyBookHFT.get(order.price) == null){
+                        buyBookHFT.put(order.price, order.volume);
+                    }else{
+                        Long volume = buyBookHFT.get(order.price);
+                        volume += order.volume;
+                        buyBookHFT.put(order.price, volume);
+                    }
+                }
             }
 
             sellBook.entrySet().stream()
                     .sorted(java.util.Collections.reverseOrder(java.util.Map.Entry.comparingByKey()))
                     .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s %s %s %s ",
                             "OrderBook", sessionName, t, market.id, "Sell", s.getKey(),s.getValue()
-                            , "-", "-", "-")));
+                            , sellBookHFT.get(s.getKey()) == null ? 0: sellBookHFT.get(s.getKey()), "-", "-")));
 
             buyBook.entrySet().stream()
                     .sorted(java.util.Collections.reverseOrder(java.util.Map.Entry.comparingByKey()))
                     .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s %s %s %s",
                             "OrderBook", sessionName, t, market.id, "Buy", s.getKey(),s.getValue()
-                            , "-", "-", "-")));
-            System.out.println(market.getSellOrderBook().queue.size()+ market.getSellOrderBook().queue.size());
+                            , buyBookHFT.get(s.getKey()) == null ? 0: buyBookHFT.get(s.getKey()), "-", "-")));
+
+
+            //System.out.println(market.getSellOrderBook().queue.size()+ market.getSellOrderBook().queue.size());
 
         }
     }

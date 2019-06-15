@@ -1,6 +1,7 @@
 package samples.HFThirano2019;
 
 import cassia.util.JSON;
+import cassia.util.random.Gaussian;
 import plham.Agent;
 import plham.Cancel;
 import plham.Market;
@@ -145,7 +146,7 @@ public class HFTMMAgent extends FCNAgent {
 		double gamma = this.riskHedgeLevel;
 		double sigma = getVolatility(market);
 		double delta_t = this.riskTime;
-		double s = market.getFundamentalPrice();
+		double s = market.getFundamentalPrice() ;//+ Gaussian.gaussDenseValue(0,0,2);
 		//double s = getFuturPrice(market);
 		double alpha = this.getBookStrength(market);
 		double q = this.getAssetVolume(market);

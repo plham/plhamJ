@@ -55,7 +55,7 @@
 
   "DelayFCNAgents": {
     "class": "DelayFCNAgent",
-    "numAgents": 100,
+    "numAgents": 1000,
 
     "MEMO": "Agent class",
     "markets": ["Market"],
