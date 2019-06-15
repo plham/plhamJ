@@ -59,7 +59,12 @@ public class HFTMMAgent extends FCNAgent {
 	public double riskHedgeLevel;
 	public List<Order> current_orders = new ArrayList<Order>();
 
+	public long orderId = 1;
 
+	@Override
+	public long nextOrderId() {
+		return orderId++;
+	}
 	/*
 	public def this(id:Long, name:String, random:Random) = super(id, name, random);
 	*/

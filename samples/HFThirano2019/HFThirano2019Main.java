@@ -56,6 +56,9 @@ public class HFThirano2019Main extends Main {
                     market.getTradeVolume()));
             HashMap<Double, Long> sellBook = new HashMap<Double, Long>();
             for (Order order: market.getSellOrderBook().queue){
+                if (order.isExpired(t) || market.getSellOrderBook().isCancelled(order)){
+                    continue;
+                }
                 if (sellBook.get(order.price) == null){
                     sellBook.put(order.price, order.volume);
                 }else{
@@ -66,6 +69,9 @@ public class HFThirano2019Main extends Main {
             }
             HashMap<Double, Long> buyBook = new HashMap<Double, Long>();
             for (Order order: market.getBuyOrderBook().queue){
+                if (order.isExpired(t) || market.getBuyOrderBook().isCancelled(order)){
+                    continue;
+                }
                 if (buyBook.get(order.price) == null){
                     buyBook.put(order.price, order.volume);
                 }else{

@@ -33,6 +33,13 @@ import java.util.stream.Collectors;
 public class DelayFCNAgent extends FCNAgent {
 	private static final long serialVersionUID = 3210976154184567934L;
 
+	public long orderId = 1;
+
+	@Override
+	public long nextOrderId() {
+		return orderId++;
+	}
+
 	public int informationDelay=0;
 	public List<Order> current_order = new ArrayList<Order>();
 
@@ -209,10 +216,10 @@ public class DelayFCNAgent extends FCNAgent {
 
 		orders.addAll(cancelOrders);
 		//System.out.println(this.current_order.size());
-		System.out.println(orders);
-		System.out.println(cancelOrders);
+		//System.out.println(orders);
+		/*System.out.println(cancelOrders);
 		System.out.println(remove_a_orders);
-		System.out.println(remove_b_orders);
+		System.out.println(remove_b_orders);*/
 
 		return orders;
 	}
