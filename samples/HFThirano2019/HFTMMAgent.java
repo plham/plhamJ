@@ -14,6 +14,7 @@ import plham.util.Random;
 import plham.util.RandomHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -59,6 +60,64 @@ public class HFTMMAgent extends FCNAgent {
 	public double riskTime;
 	public double riskHedgeLevel;
 	public List<Order> current_orders = new ArrayList<Order>();
+
+	public class OrderData{
+		public boolean isExcuted;
+		public long tickPlace;
+		public long volume;
+		public boolean isBuy;
+		public OrderData(long tickPlace, long volume, boolean isBuy) {
+			this.isExcuted = false;
+			this.tickPlace = tickPlace;
+			this.volume = volume;
+			this.isBuy = isBuy;
+		}
+		public OrderData(Market market, Order order){
+			this.isExcuted = false;
+			double bestPrice = 0.0;
+			if (order.kind == Order.KIND_BUY_LIMIT_ORDER){
+				bestPrice = market.getBestBuyPrice();
+				this.isBuy = true;
+			}else if (order.kind == Order.KIND_SELL_LIMIT_ORDER) {
+				bestPrice = market.getBestSellPrice();
+				this.isBuy = false;
+			}else{
+				assert false : "Not Limit Order";
+			}
+			double tick = market.getTickSize();
+			assert bestPrice % tick == 0 : "BestPrice Error";
+			//bestPrice = bestPrice - (bestPrice % tick) + (bestPrice % tick > 0.5? 1:0);
+			double delta = order.price - bestPrice;
+			this.tickPlace = (int) (delta / tick) * (this.isBuy ? -1:1);
+			assert delta % tick == 0 : "Price Error";
+			this.volume = order.volume;
+			//this.dump();
+		}
+		public void excuted(){
+			this.isExcuted = true;
+		}
+		public void dump(){
+			System.out.println(String.format("OrderData: {isBuy:%s, tick:%s, volume:%s, isExcuted:%s}",this.isBuy, this.tickPlace, this.volume, this.isExcuted));
+		}
+	}
+
+	public HashMap<Order, OrderData> orderMap= new HashMap();
+
+
+	public void saveOrderData(Market market, Order order){
+		if (order.isCancel()){
+			return;
+		}
+		orderMap.put(order, new OrderData(market,order));
+	}
+	public void saveOrderData(Market market, List<Order> orders){
+		for (Order order: orders){
+			this.saveOrderData(market, order);
+		}
+	}
+	public void saveOrderDataExcuted(Order order){
+		orderMap.get(order).excuted();
+	}
 
 	public long orderId = 1;
 
@@ -121,6 +180,7 @@ public class HFTMMAgent extends FCNAgent {
 		for (Order oneOrder : this.current_orders){
 			if (oneOrder.orderId == orderId){
 				this.current_orders.remove(oneOrder);
+				saveOrderDataExcuted(oneOrder);
 				break;
 			}
 		}
@@ -224,6 +284,8 @@ public class HFTMMAgent extends FCNAgent {
 		}*/
 
 		orders.addAll(cancelOrders);
+
+		this.saveOrderData(market, orders);
 		return orders;
 	}
 

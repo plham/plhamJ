@@ -95,6 +95,6 @@
 
     "MOMO": "HFTMMAgent Class",
     "riskTime": 1,
-    "riskHedgeLevel": {"expon": [0.1]}
+    "riskHedgeLevel": {"expon": [1]}
   }
 }

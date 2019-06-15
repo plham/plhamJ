@@ -130,13 +130,55 @@ public class HFThirano2019Main extends Main {
     public void endprint(String sessionName, long iterationSteps) {
         super.endprint(sessionName, iterationSteps);
         System.out.println("# LogType SessionName Time MarketId MarketName FundamentalPrice lastPrice BestBuyPrice BestSellPrice TradeVolume");
-        for (Agent oneAgent: this.agents){
-            System.out.println(String.format("%s %s", oneAgent.name, oneAgent.getCashAmount()));
-        }
 
+        System.out.println("# Result of HFT orders >>>>>>>");
+        HashMap<Long, HashMap<String, Long>> orderPlace = new HashMap<>();
+        for (Agent agent: this.agents.stream().filter(s -> s.name.equals("HFTMMAgents")).collect(Collectors.toUnmodifiableList())){
+            assert agent.name.equals("HFTMMAgents"): "type Error";
+            HFTMMAgent agent2 = (HFTMMAgent) agent;
+            //System.out.println(agent2.name);
+            HashMap<Order, HFTMMAgent.OrderData> orderMap = agent2.orderMap;
+            for (HFTMMAgent.OrderData orderData: orderMap.values()){
+                long volume = orderData.volume;
+                long tick = orderData.tickPlace;
+                boolean isExcuted = orderData.isExcuted;
+                if (orderPlace.get(tick) == null){
+                    HashMap<String, Long> temp = new HashMap<>();
+                    temp.put("volume", volume);
+                    temp.put("volumeExcuted", (isExcuted? volume: 0));
+                    orderPlace.put(tick, temp);
+                }else{
+                    HashMap<String, Long> temp = orderPlace.get(tick);
+                    long _volume = volume + temp.get("volume");
+                    long _volumeExcuted = (isExcuted? volume: 0) + temp.get("volumeExcuted");
+                    temp.put("volume", _volume);
+                    temp.put("volumeExcuted", _volumeExcuted);
+                    orderPlace.put(tick, temp);
+                }
+            }
+        }
+        orderPlace.entrySet().stream().sorted(HashMap.Entry.comparingByKey())
+                .collect(Collectors.toUnmodifiableList()).forEach(k -> System.out.println(String.format(
+                "%s %s %s %s %s","HFTOrderPlace", k.getKey(), k.getValue().get("volume"), k.getValue().get("volumeExcuted"),
+                k.getValue().get("volumeExcuted") * 1.0 / k.getValue().get("volume")
+        )));
+
+        long plusVolume = 0;
+        long plusVolumeExcuted = 0;
+        for (long key: orderPlace.keySet()){
+            if (key < 0){
+                continue;
+            }
+            plusVolume += orderPlace.get(key).get("volume");
+            plusVolumeExcuted += orderPlace.get(key).get("volumeExcuted");
+        }
+        System.out.println(plusVolumeExcuted * 1.0 / plusVolume);
+
+
+        System.out.println("# Result of each agent >>>>>>>");
         HashMap<String, List<Double>> cashMap = new HashMap<String, List<Double>>();
         for (Agent oneAgent: this.agents){
-            System.out.println(String.format("%s %s", oneAgent.name, oneAgent.getCashAmount()));
+            //System.out.println(String.format("%s %s", oneAgent.name, oneAgent.getCashAmount()));
             List<Double> cashList = new ArrayList<Double>();
             if (cashMap.keySet().contains(oneAgent.name)){
                 cashList = cashMap.get(oneAgent.name);
@@ -148,7 +190,7 @@ public class HFThirano2019Main extends Main {
             cashList.add(price);
             cashMap.put(oneAgent.name, cashList);
         }
-        System.out.println("# Result >>>>>>>");
+        System.out.println("# Result of each agents type >>>>>>>");
         for (String key: cashMap.keySet()){
             double mean = 0;
             for (double cash: cashMap.get(key)){
