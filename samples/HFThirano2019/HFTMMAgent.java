@@ -139,6 +139,7 @@ public class HFTMMAgent extends FCNAgent {
 	@SuppressWarnings("hiding")
 	public List<Order> submitOrders(Market market) {
 
+
 		List<Order> orders = new ArrayList<Order>();
 		List<Order> cancelOrders = new ArrayList<Order>();
 		double gamma = this.riskHedgeLevel;
@@ -150,22 +151,33 @@ public class HFTMMAgent extends FCNAgent {
 		double q = this.getAssetVolume(market);
 
 		double hat_s = s - gamma * Math.pow(sigma, 2) * delta_t * q;
-		double delta = gamma * Math.pow(sigma, 2) + delta_t + 2.0 / gamma * Math.log(1 + gamma / alpha);
+		double delta = gamma * Math.pow(sigma, 2) * delta_t + 2.0 / gamma * Math.log(1 + gamma / alpha);
 		double p_b = hat_s + delta * 0.5;
 		double p_a = hat_s - delta * 0.5;
 		double tick = market.getTickSize();
 		double p_b_order = p_b - (p_b % tick) + (p_b % tick == 0 ? 0 : 1);
 		double p_a_order = p_a - (p_a % tick);
-		/*System.out.println(hat_s);
-		System.out.println(delta);
-		System.out.println(gamma);
-		System.out.println(sigma);
-		System.out.println(delta_t);
-		System.out.println(q);
-		System.out.println(p_a);
-		System.out.println(p_b);
-		System.out.println(p_a_order);
-		System.out.println(p_b_order);*/
+
+		/*System.out.println(">>>>>>>>>>>>>>>>");
+		System.out.println(String.format("ID: %s", this.id));
+		System.out.println(String.format("time: %s", market.getTime()));
+		System.out.println(String.format("hat_s: %s", hat_s));
+		System.out.println(String.format("delta: %s",delta));
+		System.out.println(String.format("delta1: %s",gamma * Math.pow(sigma, 2) * delta_t));
+		System.out.println(String.format("delta2: %s",2.0 / gamma * Math.log(1 + gamma / alpha)));
+		System.out.println(String.format("gamma: %s",gamma));
+		System.out.println(String.format("sigma: %s",sigma));
+		System.out.println(String.format("delta_t: %s",delta_t));
+		System.out.println(String.format("q: %s",q));
+		System.out.println(String.format("p_a: %s",p_a));
+		System.out.println(String.format("p_b: %s",p_b));
+		//System.out.println(String.format("p_a_o: %s",p_a_order));
+		//System.out.println(String.format("p_b_o: %s",p_b_order));*/
+
+		long t = market.getTime();
+		if (t <= 100){
+			return orders;
+		}
 
 		int a_num = 0;
 		int b_num = 0;
@@ -190,6 +202,9 @@ public class HFTMMAgent extends FCNAgent {
 
 		int volumeOnece = 1;
 		int totalVolume = 10;
+
+
+
 		if (a_num < totalVolume) {
 			orders.add(new Order(Order.KIND_BUY_LIMIT_ORDER, this, market,
 					p_a_order, volumeOnece, timeWindowSize));
@@ -212,12 +227,13 @@ public class HFTMMAgent extends FCNAgent {
 	}
 
 	public double getBookStrength(Market market){
-		return 0.6;
+		return 1.5;
 	}
 
 	public double getVolatility(Market market){
 		long t = market.getTime();
 		long timeWindowSize = Math.min(t, this.timeWindowSize);
+		//timeWindowSize = t;
 		assert timeWindowSize >= 0 : "timeWindowSize >= 0";
 
 		long t1 = t - timeWindowSize;
@@ -230,17 +246,20 @@ public class HFTMMAgent extends FCNAgent {
 		if( timeWindowSize == 0 ){
 			return 0.0;
 		}
+		//System.out.println(delta_list);
 
 		Double mean = 0.0;
 		for(int i =0; i < delta_list.size(); i++){
 			mean += delta_list.get(i);
 		}
 		mean /= timeWindowSize;
+		//System.out.println(mean);
 		Double var = 0.0;
 		for(int i = 0; i < delta_list.size(); i++){
 			var += Math.pow((delta_list.get(i) - mean),2);
 		}
 		var /= timeWindowSize;
+		//System.out.println(var);
 		return Math.sqrt(var);
 	}
 

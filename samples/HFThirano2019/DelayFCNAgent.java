@@ -91,6 +91,10 @@ public class DelayFCNAgent extends FCNAgent {
 		*/
 		long t = market.getTime();
 
+		if (t % this.informationDelay != this.id % this.informationDelay){
+			return orders;
+		}
+
 		/*****************************/
 		t = Math.max(0, t - this.informationDelay);
 

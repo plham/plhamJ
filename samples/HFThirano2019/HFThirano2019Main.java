@@ -111,7 +111,11 @@ public class HFThirano2019Main extends Main {
             if (cashMap.keySet().contains(oneAgent.name)){
                 cashList = cashMap.get(oneAgent.name);
             }
-            cashList.add(oneAgent.getCashAmount());
+            double price = oneAgent.getCashAmount();
+            for (Market market : this.markets){
+                price += oneAgent.getAssetVolume(market) * market.getPrice();
+            }
+            cashList.add(price);
             cashMap.put(oneAgent.name, cashList);
         }
         System.out.println("# Result >>>>>>>");

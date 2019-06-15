@@ -8,14 +8,14 @@
         "withOrderPlacement": true,
         "withOrderExecution": false,
         "maxNormalOrders": 1000,
-        "withPrint": true
+        "withPrint": false
       },
       {	"sessionName": 1,
         "iterationSteps": 500,
         "withOrderPlacement": true,
         "withOrderExecution": true,
         "maxNormalOrders": 1000,
-        "withPrint": true
+        "withPrint": false
       },
       {	"sessionName": 2,
         "iterationSteps": 1500,
@@ -35,14 +35,14 @@
     "outstandingShares": 25000,
     "fundamentalPrice": 400.0,
     "fundamentalDrift": 0.0,
-    "fundamentalVolatility": 0.001
+    "fundamentalVolatility": 0.0003
   },
 
   "FundamentalPriceShock1": {
     "class": "FundamentalPriceShock",
     "target": "Market",
     "triggerTime": 900,    "MEMO": "At the beginning of the session 2",
-    "priceChangeRate": -0.00,    "MEMO": "Sign: negative for down; positive for up; zero for no change",
+    "priceChangeRate": -0.00, "MEMO": "Sign: negative for down; positive for up; zero for no change",
     "enabled": true
   },
   "FundamentalPriceShock2": {
@@ -55,12 +55,12 @@
 
   "DelayFCNAgents": {
     "class": "DelayFCNAgent",
-    "numAgents": 1,
+    "numAgents": 100,
 
     "MEMO": "Agent class",
     "markets": ["Market"],
     "assetVolume": 50,
-    "cashAmount": 10000,
+    "cashAmount": 30000,
 
     "MEMO": "FCNAgent class",
     "fundamentalWeight": {"expon": [1.0]},
@@ -77,12 +77,12 @@
   "HFTMMAgents": {
     "class": "HFTMMAgent",
     "MEMO":50,
-    "numAgents": 0,
+    "numAgents": 50,
 
     "MEMO": "Agent class",
     "markets": ["Market"],
     "assetVolume": 0,
-    "cashAmount": 100000,
+    "cashAmount": 500000,
 
     "MEMO": "FCNAgent class",
     "fundamentalWeight": {"expon": [1.0]},
@@ -95,6 +95,6 @@
 
     "MOMO": "HFTMMAgent Class",
     "riskTime": 1,
-    "riskHedgeLevel": 0.005
+    "riskHedgeLevel": {"expon": [0.1]}
   }
 }
