@@ -8,14 +8,14 @@
         "withOrderPlacement": true,
         "withOrderExecution": false,
         "maxNormalOrders": 1000,
-        "withPrint": false
+        "withPrint": true
       },
       {	"sessionName": 1,
         "iterationSteps": 500,
         "withOrderPlacement": true,
         "withOrderExecution": true,
         "maxNormalOrders": 1000,
-        "withPrint": false
+        "withPrint": true
       },
       {	"sessionName": 2,
         "iterationSteps": 1500,
@@ -55,7 +55,7 @@
 
   "DelayFCNAgents": {
     "class": "DelayFCNAgent",
-    "numAgents": 100,
+    "numAgents": 1,
 
     "MEMO": "Agent class",
     "markets": ["Market"],
@@ -77,7 +77,7 @@
   "HFTMMAgents": {
     "class": "HFTMMAgent",
     "MEMO":50,
-    "numAgents": 50,
+    "numAgents": 0,
 
     "MEMO": "Agent class",
     "markets": ["Market"],
@@ -94,7 +94,7 @@
     "orderMargin": [0.0, 0.1],
 
     "MOMO": "HFTMMAgent Class",
-    "riskTime": 10,
-    "riskHedgeLevel": 0.01
+    "riskTime": 1,
+    "riskHedgeLevel": 0.005
   }
 }

@@ -86,6 +86,7 @@ public class HFThirano2019Main extends Main {
                     .forEach(s -> System.out.println(String.format("%s %s %s %s %s %s %s %s %s %s",
                             "OrderBook", sessionName, t, market.id, "Buy", s.getKey(),s.getValue()
                             , "-", "-", "-")));
+            System.out.println(market.getSellOrderBook().queue.size()+ market.getSellOrderBook().queue.size());
 
         }
     }

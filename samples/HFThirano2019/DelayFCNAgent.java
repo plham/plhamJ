@@ -15,6 +15,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import plham.Cancel;
+import java.util.stream.Collectors;
 
 /**
  * An order decision mechanism proposed in Chiarella & Iori (2004). It employs
@@ -140,9 +141,31 @@ public class DelayFCNAgent extends FCNAgent {
 			}
 		}
 
-		int max_num = 5;
+		this.current_order.removeAll(cancelOrders);
 
+		int max_a_num = 0;
+		int max_b_num = 0;
 
+		List<Order> removeList = new ArrayList<Order>();
+		int remove_a_num = this.current_order.stream().filter(one -> one.kind == Order.KIND_BUY_LIMIT_ORDER)
+				.collect(Collectors.toList()).size() - max_a_num;
+		int remove_b_num = this.current_order.stream().filter(one -> one.kind == Order.KIND_SELL_LIMIT_ORDER)
+				.collect(Collectors.toList()).size() - max_b_num;
+		remove_a_num = Math.max(0, remove_a_num);
+		remove_b_num = Math.max(0, remove_b_num);
+		List<Order> remove_a_orders = this.current_order.stream().filter(one -> one.kind == Order.KIND_BUY_LIMIT_ORDER)
+				.collect(Collectors.toList()).subList(0, remove_a_num);
+		List<Order> remove_b_orders = this.current_order.stream().filter(one -> one.kind == Order.KIND_SELL_LIMIT_ORDER)
+				.collect(Collectors.toList()).subList(0, remove_b_num);
+
+		this.current_order.removeAll(remove_a_orders);
+		this.current_order.removeAll(remove_b_orders);
+		for (Order one : remove_a_orders){
+			cancelOrders.add(new Cancel(one));
+		}
+		for (Order one : remove_b_orders){
+			cancelOrders.add(new Cancel(one));
+		}
 
 		if (this.marginType == MARGIN_FIXED) {
 			assert 0.0 <= this.orderMargin && this.orderMargin <= 1.0;
@@ -182,12 +205,14 @@ public class DelayFCNAgent extends FCNAgent {
 			}
 		}
 
-
-		this.current_order.removeAll(cancelOrders);
 		this.current_order.addAll(orders);
 
 		orders.addAll(cancelOrders);
-
+		//System.out.println(this.current_order.size());
+		System.out.println(orders);
+		System.out.println(cancelOrders);
+		System.out.println(remove_a_orders);
+		System.out.println(remove_b_orders);
 
 		return orders;
 	}
