@@ -91,7 +91,7 @@ public class DelayFCNAgent extends FCNAgent {
 		*/
 		long t = market.getTime();
 
-		if (t % this.informationDelay != this.id % this.informationDelay){
+		if (this.informationDelay != 0 && t % this.informationDelay != this.id % this.informationDelay){
 			return orders;
 		}
 
