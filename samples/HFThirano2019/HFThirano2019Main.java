@@ -131,7 +131,7 @@ public class HFThirano2019Main extends Main {
         super.endprint(sessionName, iterationSteps);
         System.out.println("# LogType SessionName Time MarketId MarketName FundamentalPrice lastPrice BestBuyPrice BestSellPrice TradeVolume");
 
-        System.out.println("# Result of HFT orders >>>>>>>");
+        System.out.println("# Result of HFT order volume >>>>>>>");
         HashMap<Long, HashMap<String, Long>> orderPlace = new HashMap<>();
         for (Agent agent: this.agents.stream().filter(s -> s.name.equals("HFTMMAgents")).collect(Collectors.toUnmodifiableList())){
             assert agent.name.equals("HFTMMAgents"): "type Error";
@@ -159,7 +159,7 @@ public class HFThirano2019Main extends Main {
         }
         orderPlace.entrySet().stream().sorted(HashMap.Entry.comparingByKey())
                 .collect(Collectors.toUnmodifiableList()).forEach(k -> System.out.println(String.format(
-                "%s %s %s %s %s","HFTOrderPlace", k.getKey(), k.getValue().get("volume"), k.getValue().get("volumeExcuted"),
+                "%s %s %s %s %s","HFTOrderVolumePlace", k.getKey(), k.getValue().get("volume"), k.getValue().get("volumeExcuted"),
                 k.getValue().get("volumeExcuted") * 1.0 / k.getValue().get("volume")
         )));
 
@@ -173,6 +173,49 @@ public class HFThirano2019Main extends Main {
             plusVolumeExcuted += orderPlace.get(key).get("volumeExcuted");
         }
         System.out.println(plusVolumeExcuted * 1.0 / plusVolume);
+
+        System.out.println("# Result of HFT orders >>>>>>>");
+        HashMap<Long, HashMap<String, Long>> orderPlace2 = new HashMap<>();
+        for (Agent agent: this.agents.stream().filter(s -> s.name.equals("HFTMMAgents")).collect(Collectors.toUnmodifiableList())){
+            assert agent.name.equals("HFTMMAgents"): "type Error";
+            HFTMMAgent agent2 = (HFTMMAgent) agent;
+            //System.out.println(agent2.name);
+            HashMap<Order, HFTMMAgent.OrderData> orderMap = agent2.orderMap;
+            for (HFTMMAgent.OrderData orderData: orderMap.values()){
+                long volume = orderData.volume;
+                long tick = orderData.tickPlace;
+                boolean isExcuted = orderData.isExcuted;
+                if (orderPlace2.get(tick) == null){
+                    HashMap<String, Long> temp = new HashMap<>();
+                    temp.put("volume", (long) 1);
+                    temp.put("volumeExcuted", (isExcuted? volume: 0));
+                    orderPlace2.put(tick, temp);
+                }else{
+                    HashMap<String, Long> temp = orderPlace2.get(tick);
+                    long _volume = (long) 1 + temp.get("volume");
+                    long _volumeExcuted = (isExcuted? volume: 0) + temp.get("volumeExcuted");
+                    temp.put("volume", _volume);
+                    temp.put("volumeExcuted", _volumeExcuted);
+                    orderPlace2.put(tick, temp);
+                }
+            }
+        }
+        orderPlace2.entrySet().stream().sorted(HashMap.Entry.comparingByKey())
+                .collect(Collectors.toUnmodifiableList()).forEach(k -> System.out.println(String.format(
+                "%s %s %s %s %s","HFTOrderPlace", k.getKey(), k.getValue().get("volume"), k.getValue().get("volumeExcuted"),
+                k.getValue().get("volumeExcuted") * 1.0 / k.getValue().get("volume")
+        )));
+
+        long plusVolume2 = 0;
+        long plusVolumeExcuted2 = 0;
+        for (long key: orderPlace2.keySet()){
+            if (key < 0){
+                continue;
+            }
+            plusVolume2 += orderPlace2.get(key).get("volume");
+            plusVolumeExcuted2 += orderPlace2.get(key).get("volumeExcuted");
+        }
+        System.out.println(plusVolumeExcuted2 * 1.0 / plusVolume2);
 
 
         System.out.println("# Result of each agent >>>>>>>");
