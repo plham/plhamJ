@@ -7,21 +7,21 @@
         "iterationSteps": 100,
         "withOrderPlacement": true,
         "withOrderExecution": false,
-        "maxNormalOrders": 1000,
+        "maxNormalOrders": 10000,
         "withPrint": false
       },
       {	"sessionName": 1,
         "iterationSteps": 500,
         "withOrderPlacement": true,
         "withOrderExecution": true,
-        "maxNormalOrders": 1000,
+        "maxNormalOrders": 10000,
         "withPrint": false
       },
       {	"sessionName": 2,
         "iterationSteps": 1500,
         "withOrderPlacement": true,
         "withOrderExecution": true,
-        "maxNormalOrders": 1000,
+        "maxNormalOrders": 10000,
         "withPrint": true,
         "events": ["FundamentalPriceShock1","FundamentalPriceShock2"]
       }
@@ -35,7 +35,7 @@
     "outstandingShares": 25000,
     "fundamentalPrice": 400.0,
     "fundamentalDrift": 0.0,
-    "fundamentalVolatility": 0.0003
+    "fundamentalVolatility": 0.0001
   },
 
   "FundamentalPriceShock1": {
@@ -65,7 +65,7 @@
     "MEMO": "FCNAgent class",
     "fundamentalWeight": {"expon": [1.0]},
     "chartWeight": {"expon": [1.0]},
-    "noiseWeight": {"expon": [0.1]},
+    "noiseWeight": {"expon": [1.0]},
     "meanReversionTime":{"uniform":[50,100]},
     "noiseScale": 0.001,
     "timeWindowSize": [100, 200],
