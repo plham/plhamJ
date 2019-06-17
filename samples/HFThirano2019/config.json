@@ -18,7 +18,7 @@
         "withPrint": false
       },
       {	"sessionName": 2,
-        "iterationSteps": 1500,
+        "iterationSteps": 10000,
         "withOrderPlacement": true,
         "withOrderExecution": true,
         "maxNormalOrders": 10000,
@@ -72,12 +72,12 @@
     "orderMargin": [0.0, 0.1],
 
     "MOMO": "DelayFCNAgent Class",
-    "informationDelay": 10
+    "informationDelay": 100
   },
   "HFTMMAgents": {
     "class": "HFTMMAgent",
     "MEMO":50,
-    "numAgents": 50,
+    "numAgents": 10,
 
     "MEMO": "Agent class",
     "markets": ["Market"],

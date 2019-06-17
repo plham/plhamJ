@@ -13,7 +13,7 @@ colnames(data) = c('logtype','session', 't', 'market.id', 'market.name', 'price.
 marketData = data[data$logtype == "MarketPrice",]
 
 
-png(pngfile, width=640, height=480)
+png(pngfile, width=640, height=480, bg = "transparent")
 
 par(oma = c(0, 0, 0, 2))
 
