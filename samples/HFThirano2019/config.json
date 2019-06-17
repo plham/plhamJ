@@ -65,7 +65,7 @@
     "MEMO": "FCNAgent class",
     "fundamentalWeight": {"expon": [1.0]},
     "chartWeight": {"expon": [1.0]},
-    "noiseWeight": {"expon": [1.0]},
+    "noiseWeight": {"expon": [0.1]},
     "meanReversionTime":{"uniform":[50,100]},
     "noiseScale": 0.001,
     "timeWindowSize": [100, 200],
