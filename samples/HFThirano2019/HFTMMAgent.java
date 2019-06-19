@@ -84,6 +84,9 @@ public class HFTMMAgent extends FCNAgent {
 			}else{
 				assert false : "Not Limit Order";
 			}
+			// 実際のデータ分析に合わせて直近約定金額からにする
+			//long t = market.getTime();
+			//bestPrice = market.getPrice(t - 1);
 			double tick = market.getTickSize();
 			assert bestPrice % tick == 0 : "BestPrice Error";
 			//bestPrice = bestPrice - (bestPrice % tick) + (bestPrice % tick > 0.5? 1:0);
