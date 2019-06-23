@@ -15,7 +15,8 @@ colnames(data) = c('logtype','session', 't', 'market.id', 'market.name', 'price.
 data = data[data$session == 2,]
 
 p = data$price.last
-msd = rollapply(p, width = 100, FUN = sd)
+p = rle(p)$values    # Remove unchanged
+r = diff(log(p), lag=1)
 
 png(pngfile, width=640, height=480)
-acf(abs(msd),1000) # With plot
+acf(abs(r)) # With plot
