@@ -267,6 +267,27 @@ public class HFTMMAgent extends FCNAgent {
 		int volumeOnece = 1;
 		int totalVolume = 10;
 
+		if (a_num == totalVolume){
+			for (Order oneOrder : this.current_orders){
+				if (oneOrder.kind == Order.KIND_BUY_LIMIT_ORDER){
+					// buyの場合
+					cancelOrders.add(new Cancel(oneOrder));
+					a_num --;
+					break;
+				}
+			}
+		}
+
+		if (b_num == totalVolume){
+			for (Order oneOrder : this.current_orders){
+				if (oneOrder.kind == Order.KIND_SELL_LIMIT_ORDER){
+					// buyの場合
+					cancelOrders.add(new Cancel(oneOrder));
+					b_num --;
+					break;
+				}
+			}
+		}
 
 
 		if (a_num < totalVolume) {
