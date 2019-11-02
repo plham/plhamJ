@@ -1,6 +1,7 @@
 package plham.util;
 
 import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -11,6 +12,19 @@ import java.util.Stack;
 
 public class GraphUtils implements Serializable {
 	private static final long serialVersionUID = 5229104023562464389L;
+
+	public static class Pair<S> extends AbstractMap.SimpleImmutableEntry<S,S> {
+		public Pair(S a, S b) { super(a,b); }
+		public S getFirst() { return getKey(); }
+		public S getSecond() { return getValue(); }
+	}
+	public static class KeyPair<S extends Comparable<S>> extends Pair<S> {
+		public KeyPair(S a, S b) { super(b.compareTo(a)<0? a:b, b.compareTo(a)<0? b:a); }
+		@Override
+		public int hashCode() {
+			return getFirst().hashCode() ^ getSecond().hashCode();
+		}
+	}
 
 	/*
 	public static def toAdjacencySet[T](nodes:Set[T], pairs:Set[Pair[T,T]]):Map[T,Set[T]] {
@@ -27,14 +41,14 @@ public class GraphUtils implements Serializable {
 	}
 	*/
 	public static <T> Map<T, Set<T>> toAdjacencySet(Set<T> nodes,
-			Set<List<T>> pairs) {
+			Set<? extends Pair<T>> pairs) {
 		Map<T, Set<T>> graph = new LinkedHashMap<T, Set<T>>();
 		for (T i : nodes) {
 			graph.put(i, new HashSet<T>());
 		}
-		for (List<T> key : pairs) {
-			T i = key.get(0);
-			T j = key.get(1);
+		for (Pair<T> key : pairs) {
+			T i = key.getFirst();
+			T j = key.getSecond();
 			graph.get(i).add(j);
 		}
 		return graph;
@@ -47,7 +61,7 @@ public class GraphUtils implements Serializable {
 	}
 	*/
 	public static <T> List<Set<T>> getConnectedComponents(Set<T> nodes,
-			Set<List<T>> pairs) {
+			Set<? extends Pair<T>> pairs) {
 		Map<T, Set<T>> graph = toAdjacencySet(nodes, pairs);
 		return getConnectedComponents(graph);
 	}

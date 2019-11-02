@@ -1,11 +1,7 @@
 package plham.util;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
-import plham.util.Random;
 import cassia.util.random.Gaussian;
 
 public class MultiGeomBrownian implements Serializable {
@@ -21,7 +17,7 @@ public class MultiGeomBrownian implements Serializable {
 	public var dim:Long;
 	public var chol:Rail[Rail[Double]];
 	public var state:Rail[Double];
-	public var logType:boolean; 
+	public var logType:boolean;
 	public var g:Rail[Double];
 	public var c:Rail[Double];
 	public var initialCheck:Boolean;
@@ -55,17 +51,17 @@ public class MultiGeomBrownian implements Serializable {
 	*/
 	public Random random;
 	public Gaussian gaussian;
-	public List<Double> s0;
-	public List<Double> mu;
-	public List<Double> sigma;
-	public List<List<Double>> cor;
+	public double[] s0;
+	public double[] mu;
+	public double[] sigma;
+	public double[][] cor;
 	public double dt;
-	public long dim;
-	public List<List<Double>> chol;
-	public List<Double> state;
+	public int dim;
+	public double[][] chol;
+	public double[] state;
 	public boolean logType;
-	public List<Double> g;
-	public List<Double> c;
+	public double[] g;
+	public double[] c;
 	public boolean initialCheck;
 
 	/*
@@ -73,7 +69,7 @@ public class MultiGeomBrownian implements Serializable {
 		this(random, dim, true);
 	}
 	*/
-	public MultiGeomBrownian(Random random, long dim) {
+	public MultiGeomBrownian(Random random, int dim) {
 		this(random, dim, true);
 	}
 
@@ -97,29 +93,29 @@ public class MultiGeomBrownian implements Serializable {
 	}
 	*/
 
-	public MultiGeomBrownian(Random random, long dim, boolean logType) {
+	public MultiGeomBrownian(Random random, int dim, boolean logType) {
 		this.random = random;
 		this.gaussian = new Gaussian(random);
-		this.mu = new ArrayList<Double>((int) dim);
-		mu.addAll(Collections.nCopies((int) dim, (Double) 0.0D));
-		this.sigma = new ArrayList<Double>((int) dim);
-		sigma.addAll(Collections.nCopies((int) dim, (Double) 0.0D));
-		this.cor = new ArrayList<List<Double>>();
-		for (int i = 0; i < (int) dim; i++) {
-			cor.add(new ArrayList<Double>());
-		}
+		this.mu = new double[dim];
+		//mu.addAll(Collections.nCopies((int) dim, (double) 0.0D));
+		this.sigma = new double[ dim];
+		//sigma.addAll(Collections.nCopies((int) dim, (double) 0.0D));
+		this.cor = new double[dim][ dim];
+		//for (int i = 0; i < (int) dim; i++) {
+		//	cor.add(new ArrayList<double>());
+		//}
 		this.chol = null;
-		this.s0 = new ArrayList<Double>((int) dim);
-		s0.addAll(Collections.nCopies((int) dim, (Double) 0.0D));
+		this.s0 = new double[dim];
+		//s0.addAll(Collections.nCopies((int) dim, (double) 0.0D));
 		this.dt = 1.0;
 		this.dim = dim;
-		this.state = new ArrayList<Double>((int) dim);
-		state.addAll(Collections.nCopies((int) dim, (Double) 0.0D));
+		this.state = new double[dim];
+		//state.addAll(Collections.nCopies((int) dim, (double) 0.0D));
 		this.initialCheck = true;
-		this.g = new ArrayList<Double>((int) dim);
-		g.addAll(Collections.nCopies((int) dim, (Double) 0.0D));
-		this.c = new ArrayList<Double>((int) dim);
-		c.addAll(Collections.nCopies((int) dim, (Double) 0.0D));
+		this.g = new double[dim];
+		//g.addAll(Collections.nCopies((int) dim, (double) 0.0D));
+		this.c = new double[dim];
+		//c.addAll(Collections.nCopies((int) dim, (double) 0.0D));
 		this.logType = logType;
 	}
 
@@ -137,8 +133,8 @@ public class MultiGeomBrownian implements Serializable {
 	}
 	*/
 
-	public List<Double> nextBrownian() {
-		List<Double> out = new ArrayList<Double>();
+	public double[] nextBrownian() {
+		double[] out;
 		if (this.logType) {
 			out = nextBrownian2();
 		} else {
@@ -171,35 +167,24 @@ public class MultiGeomBrownian implements Serializable {
 	}
 	*/
 
-	public List<Double> nextBrownian2() {
+	public double[] nextBrownian2() {
 		if (this.chol == null) {
 			this.chol = Cholesky.decompose(this.cor);
 		}
-		for (long i = 0; i < dim; i++) {
-			this.g.set((int) i, gaussian.nextGaussian());
+		int dim = this.dim;
+		for (int i =0; i < dim; i++ ) {
+			this.g[i] = gaussian.nextGaussian() ;
 		}
-		for (long i = 0; i < dim; i++) {
-			this.c.set((int) i, 0.0);
-			for (long j = 0; j < i; j++) {
-				double d = this.c.get((int) i);
-				this.c.set(
-						(int) i,
-						d + this.g.get((int) j)
-								* this.chol.get((int) i).get((int) j));
-
+		for (int i = 0; i < dim; i++) {
+			this.c[i] = 0.0;
+			for (int j = 0; j <= i; j++ ) {
+				this.c[i] += this.g[j] * this.chol[i][j];
 			}
 		}
-		for (long i = 0; i < dim; i++) {
-			double d1 = this.state.get((int) i);
-			double d2 = this.s0.get((int) i);
-			this.state.set(
-					(int) i,
-					d1
-							+ ((this.mu.get((int) i) - sigma.get((int) i)
-									* sigma.get((int) i) * 0.5)
-									* this.dt + this.sigma.get((int) i)
-									* this.c.get((int) i) * Math.sqrt(dt)));
-			this.g.set((int) i, d2 * Math.exp(this.state.get((int) i)));
+		for (int i = 0; i<dim; i++) {
+			//this.state(i) += this.mu(i) * this.dt + this.sigma(i) * this.c(i) * dt * dt;
+			this.state[i] += (this.mu[i] - sigma[i] * sigma[i] * 0.5) * this.dt + this.sigma[i] * this.c[i] * Math.sqrt(dt);
+			this.g[i] = this.s0[i] * Math.exp(this.state[i]);
 		}
 		return this.g;
 	}
@@ -237,10 +222,11 @@ public class MultiGeomBrownian implements Serializable {
 	}
 	*/
 
-	public List<Double> nextBrownian3() {
-		if (this.initialCheck) {
-			for (long i = 0; i < dim; i++) {
-				this.g.set((int) i, this.s0.get((int) i));
+	public double[] nextBrownian3() {
+		int dim = this.dim;
+		if(this.initialCheck) {
+			for (int i=0; i<dim; i++) {
+				this.g[i] = this.s0[i];
 			}
 			this.initialCheck = false;
 		}
@@ -249,30 +235,20 @@ public class MultiGeomBrownian implements Serializable {
 			this.chol = Cholesky.decompose(this.cor);
 		}
 
-		List<Double> hoge = new ArrayList<Double>((int) dim);
-		for (long i = 0; i < dim; i++) {
-			hoge.set((int) i, gaussian.nextGaussian());
+		double[] hoge = new double[dim];
+		for (int i=0; i<dim;i++) {
+			hoge[i] = gaussian.nextGaussian() ;
 		}
-		for (long i = 0; i < dim; i++) {
-			this.c.set((int) i, 0.0);
-			for (long j = 0; j < i; j++) {
-				double d = this.c.get((int) i);
-				this.c.set(
-						(int) i,
-						d
-								+ (hoge.get((int) j) * this.chol.get((int) i)
-										.get((int) j)));
+		for (int i =0; i<dim;i++) {
+			this.c[i] = 0.0;
+			for (int j=0; j<=i; j++) {
+				this.c[i] += hoge[j] * this.chol[i][j];
 			}
 		}
-		for (long i = 0; i < dim; i++) {
-			this.state.set((int) i, (this.mu.get((int) i) - sigma.get((int) i)
-					* sigma.get((int) i) * 0.5)
-					* this.dt
-					+ this.sigma.get((int) i)
-					* this.c.get((int) i)
-					* Math.sqrt(dt));
-			this.g.set((int) i,
-					this.g.get((int) i) * (1 + this.state.get((int) i)));
+		for (int i=0; i<dim; i++) {
+			//this.state(i) = this.mu(i) * this.dt + this.sigma(i) * this.c(i) * dt * dt;
+			this.state[i] = (this.mu[i] - sigma[i] * sigma[i] * 0.5) * this.dt + this.sigma[i] * this.c[i] * Math.sqrt(dt);
+			this.g[i] = this.g[i]*( 1+this.state[i] );
 		}
 		return this.g;
 	}
@@ -282,8 +258,8 @@ public class MultiGeomBrownian implements Serializable {
 		return this.g(i);
 	}
 	*/
-	public double get(long i) {
-		return this.g.get((int) i);
+	public double get(int i) {
+		return this.g[i];
 	}
 
 	/*
