@@ -1,8 +1,6 @@
 package plham.util;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Cholesky decomposition of a positive definite matrix. Reference: Numerical
@@ -45,35 +43,33 @@ public class Cholesky implements Serializable {
 		return a;
 	}
 	 */
-	public static List<List<Double>> decompose(List<List<Double>> m) {
-		int n = m.size();
-		List<List<Double>> a = new ArrayList<List<Double>>(n);
-		for (int i = 0; i < n - 1; i++) {
-			a.set(i, new ArrayList<Double>(m.get(i)));
+	public static double[][] decompose(double[][] m) {
+		int n = m.length;
+		double[][] a = new double[n][];
+		for (int i = 0; i<n; i++) {
+			a[i] = m[i].clone();
 		}
 		double sum;
-		for (int i = 0; i < n - 1; i++) {
-			assert a.get(i).size() == n;
-			for (int j = i; j < n - 1; j++) {
-				sum = a.get(i).get(j);
-				for (int k = 0; k < i - 1; k++) {
-					sum -= a.get(i).get(k) * a.get(j).get(k);
+		for (int i = 0; i<n; i++) {
+			assert a[i].length == n;
+			for (int j = i; j<n; j++) {
+				sum = a[i][j];
+				for (int k = 0; k<i; k++) {
+					sum -= a[i][k] * a[j][k];
 				}
 				if (i == j) {
 					if (sum <= 0.0) {
-						throw new NumericalException(
-								"a matrix is not positive definite");
+						throw new NumericalException("a matrix is not positive definite");
 					}
-					a.get(i).set(i, Math.sqrt(sum));
+					a[i][i] = Math.sqrt(sum);
 				} else {
-					a.get(j).set(i, sum / a.get(i).get(i));
+					a[j][i] = sum / a[i][i];
 				}
 			}
 		}
-		for (int i = 0; i < n - 1; i++) {
-			for (int j = 0; j < i - 1; j++) {
-				a.get(j).set(i, 0.0);
-
+		for (int i = 0; i<n; i++) {
+			for (int j =0; j<i; j++) {
+				a[j][i] = 0.0;
 			}
 		}
 		return a;
