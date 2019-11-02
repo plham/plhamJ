@@ -2,17 +2,15 @@ package plham;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import plham.util.Random;
-
 import java.util.Set;
 
 import plham.util.GraphUtils;
+import plham.util.GraphUtils.KeyPair;
 import plham.util.MultiGeomBrownian;
+import plham.util.Random;
 
 /**
  * A class for fundamental values of multiple markets (assets). This can
@@ -45,7 +43,7 @@ public class Fundamentals implements Serializable {
 	public Map<Long, Double> initials = new LinkedHashMap<Long, Double>();
 	public Map<Long, Double> drifts = new LinkedHashMap<Long, Double>();
 	public Map<Long, Double> volatilities = new LinkedHashMap<Long, Double>();
-	public Map<List<Long>, Double> correlations = new LinkedHashMap<List<Long>, Double>();
+	public Map<KeyPair<Long>, Double> correlations = new LinkedHashMap<KeyPair<Long>, Double>();
 
 	/*
 	static type Key = Pair[Long,Long];
@@ -166,8 +164,8 @@ public class Fundamentals implements Serializable {
 	public void setCorrelation(long id1, long id2, double correlation) {
 		addIndex(id1);
 		addIndex(id2);
-		this.correlations.put(Fundamentals.getKey(id1, id2), correlation);
-		this.correlations.put(Fundamentals.getKey(id2, id1), correlation);
+		this.correlations.put(new KeyPair<Long>(id1, id2), correlation);
+		this.correlations.put(new KeyPair<Long>(id2, id1), correlation);
 	}
 
 	/*
@@ -177,8 +175,8 @@ public class Fundamentals implements Serializable {
 	}
 	*/
 	public void removeCorrelation(long id1, long id2) {
-		this.correlations.remove(Fundamentals.getKey(id1, id2));
-		this.correlations.remove(Fundamentals.getKey(id2, id1));
+		this.correlations.remove(new KeyPair<Long>(id1, id2));
+		this.correlations.remove(new KeyPair<Long>(id2, id1));
 	}
 
 	/*
@@ -205,7 +203,7 @@ public class Fundamentals implements Serializable {
 	*/
 	public double get(long id, double orElse) {
 		if (table.containsKey(id)) {
-			return this.GBM.get(g.get(id).intValue()).get(l.get(id));
+			return this.GBM[g.get(id).intValue()].get(l.get(id));
 		}
 		return orElse;
 	}
@@ -237,9 +235,9 @@ public class Fundamentals implements Serializable {
 	public var g:Map[Long,Long];
 	public var l:Map[Long,Long];
 	*/
-	public List<MultiGeomBrownian> GBM;
-	public Map<Long, Long> g;
-	public Map<Long, Long> l;
+	public MultiGeomBrownian[] GBM;
+	public Map<Long, Integer> g;
+	public Map<Long, Integer> l;
 
 	/*
 
@@ -321,20 +319,28 @@ public class Fundamentals implements Serializable {
 		this.l = l;
 	}
 	*/
+	double getOrElse(Map<Long, Double> map, long k, double v) {
+		Double r = map.get(k);
+		return (r==null)? v: r;
+	}
+	double getOrElse2(Map<KeyPair<Long>, Double> map, KeyPair k, double v) {
+		Double r = map.get(k);
+		return (r==null)? v: r;
+	}
 	public void setup(boolean inheritance) {
 		Set<Long> nodes = table.keySet();
-		Set<List<Long>> pairs = correlations.keySet();
+		Set<KeyPair<Long>> pairs = correlations.keySet();
 		List<Set<Long>> cclist = GraphUtils
 				.getConnectedComponents(nodes, pairs);
 		// GraphUtils.dump(cclist);
 
 		@SuppressWarnings("hiding")
-		Map<Long, Long> g = new LinkedHashMap<Long, Long>();
+		Map<Long, Integer> g = new LinkedHashMap<Long, Integer>();
 		@SuppressWarnings("hiding")
-		Map<Long, Long> l = new LinkedHashMap<Long, Long>();
+		Map<Long, Integer> l = new LinkedHashMap<Long, Integer>();
 
-		long gid;
-		long lid;
+		int gid;
+		int lid;
 
 		gid = 0;
 		for (Set<Long> ccitems : cclist) {
@@ -346,81 +352,56 @@ public class Fundamentals implements Serializable {
 			gid++;
 		}
 
-		@SuppressWarnings("hiding")
-		List<MultiGeomBrownian> GBM = new ArrayList<MultiGeomBrownian>(
-				cclist.size());
-		GBM.addAll(Collections.nCopies(cclist.size(), (MultiGeomBrownian) null));
-		for (Set<Long> ccitems : cclist) {
-			long N = ccitems.size();
+		MultiGeomBrownian[] GBM = new MultiGeomBrownian[cclist.size()];
+		for (Set<Long> ccitems: cclist) {
+			int N = ccitems.size();
 			MultiGeomBrownian gbm = new MultiGeomBrownian(random, N);
 
-			List<Long> m = new ArrayList<Long>((int) N);
-			m.addAll(Collections.nCopies((int) N, (Long) null));
+			long[] m = new long[N]; // local index ==> market.id
 			for (long id : ccitems) {
-				m.set(l.get(id).intValue(), id);
+				m[l.get(id)] = id;
 			}
-			for (long i = 0; i < N; i++) {
-				gbm.s0.set((int) i, initials.get(m.get((int) i)));
+
+			for (int i=0; i<N; i++) {
+				gbm.s0[i] = this.initials.get(m[i]);
 			}
-			for (long i = 0; i < N; i++) {
-				long k = m.get((int) i);
-				if (drifts.containsKey(k)) {
-					gbm.mu.set((int) i, drifts.get(k));
-				} else {
-					gbm.mu.set((int) i, 0.0);
+			for (int i=0; i<N; i++) {
+				gbm.mu[i] = getOrElse(this.drifts, m[i], 0.0);
+			}
+			for (int i = 0; i<N; i++) {
+				gbm.sigma[i] = getOrElse(this.volatilities, m[i], 0.0);
+			}
+			for (int i=0; i<N; i++) {
+				for (int j=0; j<N; j++) {
+					gbm.cor[i][j] = getOrElse2(this.correlations, new KeyPair<Long>(m[i], m[j]), 0.0);
+					gbm.cor[j][i] = getOrElse2(this.correlations, new KeyPair<Long>(m[j], m[i]), 0.0);
 				}
 			}
-			for (long i = 0; i < N; i++) {
-				long k = m.get((int) i);
-				if (drifts.containsKey(k)) {
-					gbm.sigma.set((int) i, volatilities.get(k));
-				} else {
-					gbm.sigma.set((int) i, 0.0);
-				}
+			for (int i=0; i<N; i++) {
+				gbm.cor[i][i] = 1.0;
 			}
-			for (long i = 0; i < N; i++) {
-				gbm.cor.get((int) i).addAll(
-						Collections.nCopies((int) N, (Double) null));
-				for (long j = 0; j < N; j++) {
-					List<Long> k1 = Fundamentals.getKey(m.get((int) i),
-							m.get((int) j));
-					List<Long> k2 = Fundamentals.getKey(m.get((int) j),
-							m.get((int) i));
-					if (correlations.containsKey(k1)) {
-						gbm.cor.get((int) i).set((int) j, correlations.get(k1));
-					} else {
-						gbm.cor.get((int) i).set((int) j, 0.0);
-					}
-					if (correlations.containsKey(k2)) {
-						gbm.cor.get((int) j).set((int) i, correlations.get(k2));
-					} else {
-						gbm.cor.get((int) j).set((int) i, 0.0);
-					}
-				}
-			}
-			for (long i = 0; i < N; i++) {
-				gbm.cor.get((int) i).set((int) i, 1.0);
-			}
-			gid = cclist.size();
-			for (long id : ccitems) {
-				gid = g.get(id);
+
+			gid = cclist.size(); // Error if ccitems is empty
+			for (long id: ccitems) {
+				gid = g.get(id); // Use the 1st one (all the same)
 				break;
 			}
-			GBM.set((int) gid, gbm);
+			GBM[gid] = gbm;
 		}
 
 		// Copying the internal states.
 		if (inheritance && this.GBM != null) {
-			for (long id : nodes) {
+			for (long id: nodes) {
 				if (this.g.containsKey(id)) {
-					List<Double> state = GBM.get(g.get((int) id).intValue()).state;
-					state.set(l.get(id).intValue(), this.GBM.get(this.g.get(id)
-							.intValue()).state.get(this.l.get(id).intValue()));
+					GBM[g.get(id)].state[l.get(id)] = this.GBM[this.g.get(id)].state[this.l.get(id)];
 				}
 			}
 		}
+
 		System.out.println("#Fundamentals.setup() finished");
-		System.out.println("# #groups " + GBM.size());
+		System.out.println("# #groups " + GBM.length);
+	//		Console.OUT.println("# group id " + g);
+	//		Console.OUT.println("# local index " + l);
 
 		this.GBM = GBM;
 		this.g = g;
@@ -433,7 +414,7 @@ public class Fundamentals implements Serializable {
 		val m = 2; // # of additional markets
 
 		val id = new Rail[Long](N + m, (i:Long) => i * 10);
-		
+
 		val f = new Fundamentals(random);
 		for (i in 0..(N - 1)) {
 			f.setInitial(id(i), 100 * random.nextDouble() + 100);
