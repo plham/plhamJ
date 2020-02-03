@@ -16,15 +16,32 @@ Plham is shipped with reusable examples based on recent artirifial market studie
   * Fat finger error
   * Flash Crash shock transfer
 
-## License
+# How to Run
+
+## Compile PlhamJ
+```
+$ git clone https://github.com/plham/plhamJ.git
+$ cd plhamJ
+$ ant dist
+```
+
+## Compile and run your source code
+
+```
+$ javac -classpath plhamJ/dist/plham.jar YourMain.java
+$ java -classpath plhamJ/dist/plham.jar YourMain
+```
+
+
+# License
 
 Currently under [Eclipse Public License 1.0 (read here)](http://choosealicense.com/licenses/epl-1.0/).
 
-## History
+# History
 
 * v0.1: March 2019
 
-## Contributors
+# Contributors
 
 * Takuma Torii
 * Kiyoshi Izumi
