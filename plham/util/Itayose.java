@@ -15,13 +15,13 @@ public class Itayose implements Serializable {
 	static type AgentUpdate = Market.AgentUpdate;
 	*/
 
-    public static boolean remainExecutableOrders(Market market) {
-        if (market.getBuyOrderBook().size() == 0) return false;
-        if (market.getSellOrderBook().size() == 0) return false;
-        Order buy = market.getBuyOrderBook().getBestOrder();
-        Order sell = market.getSellOrderBook().getBestOrder();
-        return buy.isMarketOrder() || sell.isMarketOrder() || buy.price >= sell.price;
-    }
+	public static boolean remainExecutableOrders(Market market) {
+		if (market.getBuyOrderBook().size() == 0) return false;
+		if (market.getSellOrderBook().size() == 0) return false;
+		Order buy = market.getBuyOrderBook().getBestOrder();
+		Order sell = market.getSellOrderBook().getBestOrder();
+		return buy.isMarketOrder() || sell.isMarketOrder() || buy.price >= sell.price;
+	}
 
 	/*
 	public static def itayose(market:Market) {
@@ -149,11 +149,11 @@ public class Itayose implements Serializable {
 			}
 		}
 
-        // If there are only market orders in the buy or sell side, use the counter part price as the exchange price
-        if (Double.isNaN(lastBuyPrice)) lastBuyPrice = lastSellPrice;
-        if (Double.isNaN(lastSellPrice)) lastSellPrice = lastBuyPrice;
-        // If there are only market orders in the both buy and sell side, we cannot determine what price to use. It should be handled as an error.
-        assert !(Double.isNaN(lastBuyPrice) && Double.isNaN(lastSellPrice));
+		// If there are only market orders in the buy or sell side, use the counter part price as the exchange price
+		if (Double.isNaN(lastBuyPrice)) lastBuyPrice = lastSellPrice;
+		if (Double.isNaN(lastSellPrice)) lastSellPrice = lastBuyPrice;
+		// If there are only market orders in the both buy and sell side, we cannot determine what price to use. It should be handled as an error.
+		assert !(Double.isNaN(lastBuyPrice) && Double.isNaN(lastSellPrice));
 		// Or mid price???
 		double exchangePrice = (lastBuyPrice + lastSellPrice) / 2.0;
 		for (AgentUpdate update : buyUpdates) {
