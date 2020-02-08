@@ -7,13 +7,13 @@ public class ComparatorHighersFirst implements PlhamComparator<Order> {
 
 	public int compare(Order one, Order other) {
         // handle order type first.
-        if (one.isMarketOrder() && other.isMarketOrder()) {
-            return Long.compare(one.timePlaced, other.timePlaced);
-        } else if (one.isMarketOrder()) {
-            return -1;
-        } else if (other.isMarketOrder()) {
-            return +1;
-        }
+		if (one.isMarketOrder() && other.isMarketOrder()) {
+			return Long.compare(one.timePlaced, other.timePlaced);
+		} else if (one.isMarketOrder()) {
+			return -1;
+		} else if (other.isMarketOrder()) {
+			return +1;
+		}
 
 		if (one.price > other.price) {
 			return -1;
