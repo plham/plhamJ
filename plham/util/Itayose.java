@@ -15,6 +15,14 @@ public class Itayose implements Serializable {
 	static type AgentUpdate = Market.AgentUpdate;
 	*/
 
+    public static boolean remainExecutableOrders(Market market) {
+        if (market.getBuyOrderBook().size() == 0) return false;
+        if (market.getSellOrderBook().size() == 0) return false;
+        Order buy = market.getBuyOrderBook().getBestOrder();
+        Order sell = market.getSellOrderBook().getBestOrder();
+        return buy.isMarketOrder() || sell.isMarketOrder() || buy.price >= sell.price;
+    }
+
 	/*
 	public static def itayose(market:Market) {
 		val buyUpdates = new ArrayList<Market.AgentUpdate>();
@@ -99,7 +107,7 @@ public class Itayose implements Serializable {
 		double lastBuyPrice = 0.0;
 		double lastSellPrice = 0.0;
 		long sumExchangeVolume = 0;
-		while (market.getBestBuyPrice() >= market.getBestSellPrice()) {
+		while (remainExecutableOrders(market)) {
 			Order buyOrder = market.buyOrderBook.getBestOrder();
 			Order sellOrder = market.sellOrderBook.getBestOrder();
 
@@ -141,6 +149,11 @@ public class Itayose implements Serializable {
 			}
 		}
 
+        // If there are only market orders in the buy or sell side, use the counter part price as the exchange price
+        if (Double.isNaN(lastBuyPrice)) lastBuyPrice = lastSellPrice;
+        if (Double.isNaN(lastSellPrice)) lastSellPrice = lastBuyPrice;
+        // If there are only market orders in the both buy and sell side, we cannot determine what price to use. It should be handled as an error.
+        assert !(Double.isNaN(lastBuyPrice) && Double.isNaN(lastSellPrice));
 		// Or mid price???
 		double exchangePrice = (lastBuyPrice + lastSellPrice) / 2.0;
 		for (AgentUpdate update : buyUpdates) {
@@ -164,8 +177,6 @@ public class Itayose implements Serializable {
 
 		long t2 = market.sumExecutedVolumes.get((int) t);
 		market.sumExecutedVolumes.set((int) t, t2 + sumExchangeVolume);
-		
-		System.out.println("# Itayose exchangePrice " + exchangePrice);
 		
 		for (AgentUpdate update : buyUpdates) {
 			market.handleAgentUpdate(update);

@@ -78,6 +78,9 @@ public class Order implements Serializable {
 		this.timeLength = timeLength;
 		this.timePlaced = timePlaced;
 		this.orderId = orderId;
+        if (this.kind == KIND_BUY_MARKET_ORDER || this.kind == KIND_SELL_MARKET_ORDER) {
+            this.price = Double.NaN;
+        }
 	}
 
 	/*
