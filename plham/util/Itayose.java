@@ -153,8 +153,8 @@ public class Itayose implements Serializable {
 		if (Double.isNaN(lastBuyPrice)) lastBuyPrice = lastSellPrice;
 		if (Double.isNaN(lastSellPrice)) lastSellPrice = lastBuyPrice;
 		// If there are only market orders in the both buy and sell side, we cannot determine what price to use. It should be handled as an error.
-		if (! (Double.isNaN(lastBuyPrice) && Double.isNaN(lastSellPrice))) {
-			System.out.println("#WARNING: there are only market orders in the orderbook.");
+		if (Double.isNaN(lastBuyPrice) && Double.isNaN(lastSellPrice)) {
+			System.out.println("#WARNING: there remains only market orders in the " + market.name + " market orderbook.");
 		}
 		// Or mid price???
 		double exchangePrice = (lastBuyPrice + lastSellPrice) / 2.0;
