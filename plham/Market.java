@@ -565,6 +565,9 @@ public class Market implements Serializable {
 				}
 			}
 		}
+		if (buyOrder.getVolume() > 0) {
+			this.buyOrderBook.add(buyOrder);
+		}
 	}
 
 	/*
@@ -606,6 +609,9 @@ public class Market implements Serializable {
 					this.buyOrderBook.remove(buyOrder);
 				}
 			}
+		}
+		if (sellOrder.getVolume() > 0) {
+			this.sellOrderBook.add(sellOrder);
 		}
 	}
 

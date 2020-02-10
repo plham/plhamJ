@@ -68,16 +68,20 @@ public class Order implements Serializable {
 	*/
 	public Order(long kind, long agentId, long marketId, double price,
 			long volume, long timeLength, long timePlaced, long orderId) {
-		assert price >= 0.0 : "price >= 0.0";
 		assert volume >= 0 : "volume >= 0";
 		this.kind = kind;
 		this.agentId = agentId;
 		this.marketId = marketId;
-		this.price = price;
 		this.volume = volume;
 		this.timeLength = timeLength;
 		this.timePlaced = timePlaced;
 		this.orderId = orderId;
+		if (this.kind == KIND_BUY_MARKET_ORDER || this.kind == KIND_SELL_MARKET_ORDER) {
+			this.price = Double.NaN;
+		} else {
+			assert price >= 0.0 : "price >= 0.0";
+			this.price = price;
+		}
 	}
 
 	/*
