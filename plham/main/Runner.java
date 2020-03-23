@@ -302,6 +302,7 @@ public abstract class Runner<T> implements Serializable {
 		}
 		for (Market market : markets) {
 			market.itayoseOrderBooks();
+			System.out.println("# Itayose exchangePrice " + market.lastExecutedPrices.get((int) market.getTime()));
 		}
 		for (Market market : markets) {
 			market.check();
