@@ -115,15 +115,15 @@ public final class Random {
 	public float nextFloat() {
 		long nextSeed = seed + gamma;
 		seed = nextSeed;
-		long l1 = nextSeed >>> (int) 33L;
+		long l1 = nextSeed >>> 33;
 		long l2 = nextSeed ^ l1;
 		nextSeed = l2 * -49064778989728563L;
-		long l3 = nextSeed >>> (int) 33L;
+		long l3 = nextSeed >>> 33;
 		long l4 = nextSeed ^ l3;
 		nextSeed = l4 * -4265267296055464877L;
-		long l5 = nextSeed >>> (int) 32L;
+		long l5 = nextSeed >>> 32;
 		int l6 = (int) l5;
-		int l7 = l6 >>> (int) 8L;
+		int l7 = l6 >>> 8;
 		float l8 = l7;
 		return l8 * FLOAT_ULP;
 	}
@@ -131,15 +131,15 @@ public final class Random {
 	public double nextDouble() {
 		long nextSeed = seed + gamma;
 		seed = nextSeed;
-		long l1 = nextSeed >>> (int) 33L;
+		long l1 = nextSeed >>> 33;
 		long l2 = nextSeed ^ l1;
 		nextSeed = l2 * -49064778989728563L;
-		long l3 = nextSeed >>> (int) 33L;
+		long l3 = nextSeed >>> 33;
 		long l4 = nextSeed ^ l3;
 		nextSeed = l4 * -4265267296055464877L;
-		long l5 = nextSeed >>> (int) 33L;
+		long l5 = nextSeed >>> 33;
 		long l6 = nextSeed ^ l5;
-		long l7 = l6 >>> (int) 11L;
+		long l7 = l6 >>> 11;
 		double l8 = l7;
 		return l8 * DOUBLE_ULP;
 	}
@@ -171,38 +171,38 @@ public final class Random {
 
 	private static long mix64(long z) {
 		long l = z;
-		long l1 = l >>> (int) 33L;
+		long l1 = l >>> 33;
 		long l2 = l ^ l1;
 		l = l2 * -49064778989728563L;
-		long l3 = l >>> (int) 33L;
+		long l3 = l >>> 33;
 		long l4 = l ^ l3;
 		l = l4 * -4265267296055464877L;
-		long l5 = l >>> (int) 33L;
+		long l5 = l >>> 33;
 		long l6 = l ^ l5;
 		return l6;
 	}
 
 	private static int mix32(long z) {
 		long l = z;
-		long l1 = l >>> (int) 33L;
+		long l1 = l >>> 33;
 		long l2 = l ^ l1;
 		l = l2 * -49064778989728563L;
-		long l3 = l >>> (int) 33L;
+		long l3 = l >>> 33;
 		long l4 = l ^ l3;
 		l = l4 * -4265267296055464877L;
-		long l5 = l >>> (int) 32L;
+		long l5 = l >>> 32;
 		return (int) l5;
 	}
 
 	private static long mix64variant13(long z) {
 		long l = z;
-		long l1 = l >>> (int) 30L;
+		long l1 = l >>> 30;
 		long l2 = l ^ l1;
 		l = l2 * -4658895280553007687L;
-		long l3 = l >>> (int) 27L;
+		long l3 = l >>> 27;
 		long l4 = l ^ l3;
 		l = l4 * -7723592293110705685L;
-		long l5 = l >>> (int) 31L;
+		long l5 = l >>> 31;
 		long l6 = l ^ l5;
 		return l6;
 	}
@@ -211,7 +211,7 @@ public final class Random {
 		long l = z;
 		long l1 = mix64variant13((l));
 		l = l1 | 1L;
-		long l2 = l >>> (int) 1L;
+		long l2 = l >>> 1;
 		long l3 = l ^ l2;
 		int n = Long.bitCount(l3);
 		long l4 = n;

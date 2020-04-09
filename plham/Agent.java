@@ -173,7 +173,7 @@ public class Agent implements Serializable {
 	*/
 
 	/**
-	 * randomを取得します。
+	 * get Random
 	 * 
 	 * @return random
 	 */

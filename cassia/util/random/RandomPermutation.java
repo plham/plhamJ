@@ -47,11 +47,12 @@ public class RandomPermutation<T> implements Iterable<T>, Serializable {
 	*/
 	public void shuffle() {
 		int size = this.array.size();
-		for (long i = size - 1; i > 0; i--) {
-			long j = random.nextLong(i + 1);
-			T temp = this.array.get((int) j);
-			this.array.set((int) j, this.array.get((int) i));
-			this.array.set((int) i, temp);
+		for (int i = size - 1; i > 0; i--) {
+			// FIXME: the following is redundant, but keep the code for result compatibility.
+			int j = (int)random.nextLong(i + 1);
+			T temp = this.array.get(j);
+			this.array.set(j, this.array.get(i));
+			this.array.set(i, temp);
 		}
 	}
 

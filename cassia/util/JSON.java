@@ -127,8 +127,8 @@ public class JSON implements Serializable {
 				throw new JSONException("No key: " + s);
 			}
 			if (this.isList()) {
-				long i = Long.valueOf(s.toString());
-				return this.asList().get((int) i);
+				int i = Integer.valueOf(s.toString());
+				return this.asList().get(i);
 			}
 			if (this.isMap()) {
 				return this.asMap().get(s.toString());
@@ -201,12 +201,12 @@ public class JSON implements Serializable {
 		@SuppressWarnings("hiding")
 		public void put(String s, Value v) {
 			if (this.isList()) {
-				long i = Long.valueOf(s.toString());
-				this.asList().set((int) i, v);
+				int i = Integer.valueOf(s);
+				this.asList().set(i, v);
 				return;
 			}
 			if (this.isMap()) {
-				this.asMap().put(s.toString(), v);
+				this.asMap().put(s, v);
 				return;
 			}
 			throw new JSONException("Cannot assign to " + s + ": " + v);
@@ -258,9 +258,9 @@ public class JSON implements Serializable {
 		*/
 		@SuppressWarnings("hiding")
 		public Value any(List<Value> s) {
-			for (long i = 0; i < s.size(); i++) {
-				if (this.has(s.get((int) i))) {
-					return this.get(s.get((int) i));
+			for (int i = 0; i < s.size(); i++) {
+				if (this.has(s.get(i))) {
+					return this.get(s.get(i));
 				}
 			}
 			throw new JSONException("No key: " + s);
