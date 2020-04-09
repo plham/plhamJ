@@ -247,7 +247,7 @@ public class JSONUtils implements Serializable {
 	*/
 	public static Map<String, Set<String>> getDependencyGraph(JSON.Value root,
 			JSON.Value list, List<String> keywords) {
-		// FIXME: sort の順序が x10.util.HashMap の順序に依存している
+		// FIXME: the sort oder depends of the order of HashMap (implementation depend)
 		Map<String, Set<String>> graph = new LinkedHashMap<String, Set<String>>();
 		Stack<String> stack = new Stack<String>();
 		for (long i = 0; i < list.size(); i++) {

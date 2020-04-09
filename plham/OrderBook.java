@@ -183,8 +183,8 @@ public class OrderBook implements Serializable {
 	}
 
 	public synchronized boolean removeAllWhere(RemoveAllWhere p) {
-		long size = this.queue.size();
-		Order[] orders = this.queue.toArray(new Order[(int) size]);
+		int size = this.queue.size();
+		Order[] orders = this.queue.toArray(new Order[size]);
 		LinkedList<Order> list = new LinkedList<Order>(this.queue);
 		for (int i = 0; i < orders.length; i++) {
 			Order order = orders[i];
@@ -246,42 +246,6 @@ public class OrderBook implements Serializable {
 	public boolean isCancelled(Order order) {
 		return cancelCache.contains(OrderBook.getKey(order));
 	}
-
-	/*
-	public static LOWERS_FIRST = (one:Order, other:Order) => {
-		if (one.price < other.price) {
-			return -1n;
-		}
-		if (one.price > other.price) {
-			return +1n;
-		}
-		if (one.timePlaced < other.timePlaced) {
-			return -1n;
-		}
-		if (one.timePlaced > other.timePlaced) {
-			return +1n;
-		}
-		return 0n;
-	};
-	
-	public static HIGHERS_FIRST = (one:Order, other:Order) => {
-		if (one.price > other.price) {
-			return -1n;
-		}
-		if (one.price < other.price) {
-			return +1n;
-		}
-		if (one.timePlaced < other.timePlaced) {
-			return -1n;
-		}
-		if (one.timePlaced > other.timePlaced) {
-			return +1n;
-		}
-		return 0n;
-	};
-	
-	=> 別クラスに移動
-	 */
 
 	/*
 	protected static struct Key {
