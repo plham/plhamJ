@@ -1,0 +1,22 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>plham</groupId>
+		<artifactId>configuration</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../configuration/pom.xml</relativePath>
+	</parent>
+	<artifactId>core</artifactId>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.handist</groupId>
+			<artifactId>collections</artifactId>
+			<version>v1.0.0</version>
+		</dependency>
+	</dependencies>
+	<name>Plham - core</name>
+	<description>Core runtime of the Plham Financial Market Simulator. </description>
+</project>
