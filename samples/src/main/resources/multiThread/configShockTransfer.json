@@ -1,0 +1,97 @@
+{
+        "simulation": {
+                "markets": ["SpotMarket-N", "IndexMarket-I"],
+                "agents": ["FCNAgents-N", "FCNAgents-I", "ArbitrageAgents"],
+                "sessions": [
+                        {       "sessionName": 1,
+                                "iterationSteps": 500,
+                                "withOrderPlacement": true,
+                                "withOrderExecution": true,
+                                "withPrint": true,
+                                "maxNormalOrders": 10000000000, "MEMO": "EVERYONE",
+                                "maxHifreqOrders": 1,
+                                "events": ["FundamentalPriceShock"]
+                        }
+                ]
+        },
+
+        "FundamentalPriceShock": {
+                "class": "FundamentalPriceShock",
+                "target": "SpotMarket-1",
+                "triggerTime": 0,    "MEMO": "At the beginning of the session 2",
+                "priceChangeRate": -0.1,    "MEMO2": "Sign: negative for down; positive for up; zero for no change",
+                "enabled": true
+        },
+
+        "SpotMarket": {
+                "class": "Market",
+                "tickSize": 0.00001,
+                "marketPrice": 300.0,
+                "outstandingShares": 25000
+        },
+        "SpotMarket-N": {
+                "class":  "SimpleMarketGenerator",
+                "prefix": "SpotMarket-",
+                "from": 1, "to": 2,
+                "base": {
+                        "extends": "SpotMarket"
+                }
+        },
+
+        "IndexMarket-I": {
+                "class": "IndexMarket",
+                "tickSize": 0.00001,
+                "marketPrice": 300.0,
+                "outstandingShares": 25000,
+                "markets": [ "SpotMarket-N" ]
+        },
+
+        "FCNAgent": {
+                "class": "FCNAgent",
+                "numAgents": 5,
+
+                "MEMO": "Agent class",
+                "markets": ["Market"],
+                "assetVolume": 50,
+                "cashAmount": 10000,
+
+                "MEMO2": "FCNAgent class",
+                "fundamentalWeight": {"expon": [1.0]},
+                "chartWeight": {"expon": [0.0]},
+                "noiseWeight": {"expon": [1.0]},
+                "noiseScale": 0.001,
+                "timeWindowSize": [100, 200],
+                "orderMargin": [0.0, 0.1]
+        },
+        "FCNAgents-N": {
+                "class": "AgentGeneratorForEachMarket",
+                "markets": [ "SpotMarket-N"],
+                "base" : {
+                        "extends": "FCNAgent",
+                        "fundamentalWeight": {"expon": [1.0]},
+                        "chartWeight": {"expon": [0.0]},
+                        "noiseWeight": {"expon": [1.0]}
+                }
+        },
+        "FCNAgents-I": {
+                "extends": "FCNAgent",
+                "numAgents": 4,
+                "markets": ["IndexMarket-I"],
+                "fundamentalWeight": {"expon": [0.5]},
+                "chartWeight": {"expon": [0.0]},
+                "noiseWeight": {"expon": [1.0]}
+        },
+
+        "ArbitrageAgents": {
+                "class": "ArbitrageAgent",
+                "schedule": "arbitrager",
+                "numAgents": 1,
+
+                "markets": ["IndexMarket-I"],
+                "assetVolume": 50,      "NOTE":"per market",
+                "cashAmount": 150000,    "NOTE2":"total",
+
+                "orderVolume": 1,
+                "orderThresholdPrice": 1.0
+        }
+}
