@@ -27,3 +27,6 @@ out/
 hs_err_pid*
 # MAVEN build direcotry
 target/
+
+# Eclipse project configuration files
+**.settings/
