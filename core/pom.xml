@@ -14,7 +14,7 @@
 		<dependency>
 			<groupId>com.github.handist</groupId>
 			<artifactId>collections</artifactId>
-			<version>v1.0.0</version>
+			<version>develop-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<name>Plham - core</name>

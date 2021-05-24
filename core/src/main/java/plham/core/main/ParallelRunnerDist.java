@@ -1,6 +1,7 @@
 package plham.core.main;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
@@ -337,7 +338,7 @@ public final class ParallelRunnerDist extends Runner {
 		// TODO
 		// maybe contracted.forEach() become faster
 		bh.allAgents.forEach(/* pool, NTHREADS, */ (long index, Agent agent) -> {
-			List<AgentUpdate> cs = bh.contractedOrders.get(index);
+			Collection<AgentUpdate> cs = bh.contractedOrders.get(index);
 			if (cs == null)
 				return;
 			cs.forEach((AgentUpdate c) -> {
@@ -550,7 +551,7 @@ public final class ParallelRunnerDist extends Runner {
 			long t1 = System.nanoTime();
 			System.out.println("CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
 
-			bh.orders.gather(bh.placeGroup.get(0));
+			bh.orders.GLOBAL.gather(bh.placeGroup.get(0));
 
 			// handleOrders(bag.convertToList(), maxHifreqOrders); // FIXME
 			long t2 = System.nanoTime();
