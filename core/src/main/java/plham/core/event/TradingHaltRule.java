@@ -122,4 +122,9 @@ public class TradingHaltRule implements MarketEvent, OrderEvent {
 		this.update(market);
 	}
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
 }

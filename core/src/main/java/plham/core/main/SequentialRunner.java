@@ -9,6 +9,7 @@ import plham.core.Agent;
 import plham.core.Fundamentals;
 import plham.core.Market;
 import plham.core.Order;
+import plham.core.SimulationOutput;
 import plham.core.main.Simulator.Session;
 import plham.core.util.Random;
 
@@ -18,8 +19,8 @@ import plham.core.util.Random;
 public class SequentialRunner extends Runner implements Serializable {
 	private static final long serialVersionUID = -4747415797682000153L;
 
-	public SequentialRunner(SimulatorFactory sim, Simulator simulator) {
-		super(simulator, sim);
+	public SequentialRunner(SimulatorFactory sim, SimulationOutput output) {
+		super(output, sim);
 	}
 
 	public List<List<Order>> collectOrders(long MAX_NORMAL_ORDERS) {
@@ -143,7 +144,7 @@ public class SequentialRunner extends Runner implements Serializable {
 			}
 			// System.out.println("#hoge1-5");
 			if (s.withPrint) {
-				sim.print(s.sessionName);
+				output.print(null, s.sessionName, sim.markets, sim.agents, sim.sessionEvents);
 			}
 			// System.out.println("#hoge1-6");
 			for (Market market : markets) {
@@ -157,7 +158,7 @@ public class SequentialRunner extends Runner implements Serializable {
 			// System.out.println("#hoge1-8");
 		}
 		if (s.withPrint) {
-			sim.endprint(s.sessionName, s.iterationSteps);
+			output.endprint(null, s.sessionName, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
 		}
 	}
 
@@ -165,20 +166,22 @@ public class SequentialRunner extends Runner implements Serializable {
 	public void run(long seed) {
 		long TIME_INIT = System.nanoTime();
 
-		factory.makeNewSimulation(sim, seed);
+		sim = factory.makeNewSimulation(seed);
 
 		long TIME_THE_BEGINNING = System.nanoTime();
 
-		sim.beginSimulation();
+		output.beginSimulation(null, sim.markets, sim.agents);
 
 		for (Session session : sim.sessions) {
 			session.print();
-			sim.GLOBAL.put("events", factory.createEventsForASession(session, sim));
-			sim.beginSession(session.sessionName);
-			iterateMarketUpdates(session, (Fundamentals) sim.GLOBAL.get("fundamentals"));
-			sim.endSession(session.sessionName);
+//			sim.GLOBAL.put("events", factory.createEventsForASession(session, sim));
+			sim.sessionEvents = factory.createEventsForASession(session, sim);
+			output.beginSession(null, session.sessionName, sim.markets, sim.agents, sim.sessionEvents);
+//			iterateMarketUpdates(session, (Fundamentals) sim.GLOBAL.get("fundamentals"));
+			iterateMarketUpdates(session, sim.fundamentals);
+			output.endSession(null, session.sessionName, sim.markets, sim.agents, sim.sessionEvents);
 		}
-		sim.endSimulation();
+		output.endSimulation(null, sim.markets, sim.agents);
 
 		long TIME_THE_END = System.nanoTime();
 		System.out.println("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));

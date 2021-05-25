@@ -27,6 +27,7 @@ import plham.core.Fundamentals;
 import plham.core.Market;
 import plham.core.Market.AgentUpdate;
 import plham.core.Order;
+import plham.core.SimulationOutput;
 import plham.core.util.AllocManager;
 
 @SuppressWarnings("unused")
@@ -157,11 +158,11 @@ public final class ParallelRunnerDist extends Runner {
 	transient private ExecutorService pool;
 	long TIME_THE_BEGINNING;
 
-	public ParallelRunnerDist(Simulator sim, SimulatorFactory factory) {
+	public ParallelRunnerDist(SimulationOutput sim, SimulatorFactory factory) {
 		this(sim, factory, initializeNThreads());
 	}
 
-	public ParallelRunnerDist(Simulator simulation, SimulatorFactory factory, int nthreads) {
+	public ParallelRunnerDist(SimulationOutput simulation, SimulatorFactory factory, int nthreads) {
 		super(simulation, factory);
 		NTHREADS = nthreads;
 		here = Constructs.here().toString();
@@ -289,7 +290,7 @@ public final class ParallelRunnerDist extends Runner {
 				}
 				long t1 = System.nanoTime();
 				if (withPrint) {
-					sim.print(sessionName);
+//					sim.print(sessionName); // FIXME
 				}
 				long t2 = System.nanoTime();
 				for (Market market : sim.markets) {
@@ -311,7 +312,7 @@ public final class ParallelRunnerDist extends Runner {
 			}
 		}
 		if (isMaster && withPrint) {
-			sim.endprint(sessionName, iterationSteps);
+//			sim.endprint(sessionName, iterationSteps); // FIXME
 		}
 	}
 

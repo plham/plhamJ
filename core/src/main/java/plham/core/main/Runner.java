@@ -2,6 +2,8 @@ package plham.core.main;
 
 import java.io.Serializable;
 
+import plham.core.SimulationOutput;
+
 /**
  * A base class for execution models. See
  * {@link plham.core.main.SimulatorFactory} for simulation models. This class is
@@ -18,9 +20,11 @@ public abstract class Runner implements Serializable {
 
 	SimulatorFactory factory;
 	Simulator sim;
+	SimulationOutput output;
 
-	public Runner(Simulator simulation, SimulatorFactory f) {
-		sim = simulation;
+	public Runner(SimulationOutput out, SimulatorFactory f) {
+//		sim = s;
+		output = out;
 		factory = f;
 	}
 

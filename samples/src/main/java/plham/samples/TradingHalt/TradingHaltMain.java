@@ -2,15 +2,23 @@ package plham.samples.TradingHalt;
 
 import java.util.List;
 
+import plham.core.Agent;
+import plham.core.Event;
 import plham.core.Market;
+import plham.core.OutputCollector;
+import plham.core.SimulationOutput;
 import plham.core.main.SequentialRunner;
-import plham.core.main.Simulator;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
 
-public class TradingHaltMain extends Simulator {
+public class TradingHaltMain extends SimulationOutput {
 
-	public static void main(String[] args) {
+	/**
+     * 
+     */
+    private static final long serialVersionUID = 4527490578477086915L;
+
+    public static void main(String[] args) {
 		try {
 			final TradingHaltMain sim = new TradingHaltMain();
 			SimulatorFactory factory = new SimulatorFactory(args[0]);
@@ -30,8 +38,8 @@ public class TradingHaltMain extends Simulator {
 	}
 
 	@Override
-	public void print(String sessionName) {
-		List<Market> markets = getMarketsByName("markets");
+	public void print(OutputCollector output, String sessionName, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
+//		List<Market> markets = getMarketsByName("markets");
 		for (Market market : markets) {
 			long t = market.getTime();
 			System.out.println(String.format("%s %s %s %s %s %s %s  ", sessionName, t, market.id, market.name,

@@ -53,8 +53,10 @@ public class OrderMistakeShock implements MarketEvent {
 	public OrderMistakeShock setup(JSON.Value json, SimulatorFactory sim) {
 		Simulator s = sim.getSimulatorInConstruction();
 		Market market = s.getMarketByName(json.get("target"));
-		Agent agent = s.getAgentsByName("agents").get(0); // Use the first
-															// one.
+//		Agent agent = s.getAgentsByName("agents").get(0); // Use the first
+//															// one.
+		Agent agent = s.agents.get(0); // Directly get the first agent instead of calling getAgentsByName
+		
 		long t = market.getTime();
 		marketId = market.id;
 		agentId = agent.id;
@@ -87,4 +89,9 @@ public class OrderMistakeShock implements MarketEvent {
 			market.handleOrder(order);
 		}
 	}
+
+    @Override
+    public String getName() {
+        return name;
+    }
 }

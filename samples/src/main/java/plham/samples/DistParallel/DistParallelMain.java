@@ -9,7 +9,12 @@ import plham.samples.ShockTransfer.ShockTransferMain;
 
 public class DistParallelMain extends ShockTransferMain {
 
-	public static void main(final String[] args) {
+	/**
+     * 
+     */
+    private static final long serialVersionUID = 4103707038034011459L;
+
+    public static void main(final String[] args) {
 //		final ParallelRunnerDist runner = new ParallelRunnerDist(
 //				new DistParallelMain().loadClasses());
 //		runner.run(args);

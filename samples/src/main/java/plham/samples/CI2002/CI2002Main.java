@@ -2,15 +2,21 @@ package plham.samples.CI2002;
 
 import java.util.List;
 
+import plham.core.Agent;
+import plham.core.Event;
 import plham.core.Market;
+import plham.core.OutputCollector;
+import plham.core.SimulationOutput;
 import plham.core.main.SequentialRunner;
-import plham.core.main.Simulator;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
 
-public class CI2002Main extends Simulator {
+public class CI2002Main extends SimulationOutput {
 
-	public static void main(String[] args) {
+	/** Serial Version UID */
+    private static final long serialVersionUID = 2493462616283426664L;
+
+    public static void main(String[] args) {
 		try {
 			final CI2002Main sim = new CI2002Main();
 			SimulatorFactory factory = new SimulatorFactory(args[0]);
@@ -30,8 +36,7 @@ public class CI2002Main extends Simulator {
 	}
 
 	@Override
-	public void print(String sessionName) {
-		List<Market> markets = getMarketsByName("markets");
+	public void print(OutputCollector output, String sessionName, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
 		for (Market market : markets) {
 			long t = market.getTime();
 			System.out.println(String.format("%s %s %s %s %s %s  ", sessionName, t, market.id, market.name,

@@ -51,7 +51,8 @@ public class Simulator {
 	}
 
 	public List<Agent> agents;
-	public Map<String, Object> GLOBAL;
+	//public Map<String, Object> GLOBAL;
+	public List<Event> sessionEvents;
 	public List<Agent> hifreqAgents;
 	public Map<String, List<LongRange>> marketName2Ranges;
 
@@ -63,107 +64,73 @@ public class Simulator {
 
 	public List<Session> sessions;
 
+	public Fundamentals fundamentals;
+	
 	public Simulator() {
 	}
 
-	/**
-	 * Method called at the beginning of a session. By default, does not print
-	 * anything. Override this method if you want to print some information at the
-	 * beginning of a session.
-	 *
-	 * @param sessionName
-	 */
-	public void beginSession(String sessionName) {
-	}
-
-	/**
-	 * Method called at the beginning of the simulation. By default, does not print
-	 * anything. Override this method if you want to print some information at the
-	 * beginning of the simulation.
-	 */
-	public void beginSimulation() {
-	}
-
-	/**
-	 * Method called at the end of a session that holds the "withprint" operation.
-	 * By default this method does not do anything. Override this method to print
-	 * some information.
-	 *
-	 * @param sessionName    name of the session being run
-	 * @param iterationSteps the number of steps that have just run
-	 */
-	public void endprint(String sessionName, long iterationSteps) {
-	}
-
-	/**
-	 * Method called at the end of a session. By default does not print anything.
-	 * Override this method if you want to print some information at the end of a
-	 * session.
-	 *
-	 * @param sessionName
-	 */
-	public void endSession(String sessionName) {
-	}
-
-	/**
-	 * Method called at the end of the simulation. By default, does not print
-	 * anything. Override this method if you want to print some information at the
-	 * end of the simulation.
-	 */
-	public void endSimulation() {
-	}
+	
 
 	public Agent getAgentByName(JSON.Value json) {
-		return this.<Agent>getItemByName(json);
+//		return this.<Agent>getItemByName(json);
+	    return getAgentByName(json.toString());
 	}
 
 	public Agent getAgentByName(String name) {
-		return getItemByName(name);
+	    return agents.stream().filter(a->{return a.name.equals(name);}).findFirst().get();
 	}
 
-	public List<Agent> getAgentsByName(JSON.Value json) {
-		return this.<Agent>getItemsByName(json);
-	}
+//	public List<Agent> getAgentsByName(JSON.Value json) {
+//		return this.<Agent>getItemsByName(json);
+//	}
 
-	public List<Agent> getAgentsByName(List<String> names) {
-		return getItemsByName(names, (long) names.size());
-	}
+//	public List<Agent> getAgentsByName(List<String> names) {
+//		return getItemsByName(names, (long) names.size());
+//	}
 
 	public List<Agent> getAgentsByName(String name) {
-		return getItemsByName(name);
+//		return getItemsByName(name);
+	    ArrayList<Agent> toReturn = new ArrayList<>();
+	    agents.stream().filter(a->{return a.name.equals(name);}).forEach(a -> toReturn.add(a));
+	    return toReturn;
 	}
 
 	public Event getEventByName(JSON.Value json) {
-		return this.<Event>getItemByName(json);
+//		return this.<Event>getItemByName(json);
+	    return getEventByName(json.toString());
 	}
 
 	public Event getEventByName(String name) {
-		return getItemByName(name);
+//		return getItemByName(name);
+	    return sessionEvents.stream().filter(e -> {return e.getName().equals(name);}).findFirst().get();
 	}
 
-	public List<Event> getEventsByName(JSON.Value json) {
-		return this.<Event>getItemsByName(json);
-	}
-
-	public List<Event> getEventsByName(List<String> names) {
-		return getItemsByName(names, (long) names.size());
-	}
+//	public List<Event> getEventsByName(JSON.Value json) {
+//		return this.<Event>getItemsByName(json);
+//	}
+//
+//	public List<Event> getEventsByName(List<String> names) {
+//		return getItemsByName(names, (long) names.size());
+//	}
 
 	public List<Event> getEventsByName(String name) {
-		return getItemsByName(name);
+//		return getItemsByName(name);
+	    ArrayList<Event> toReturn = new ArrayList<>();
+        sessionEvents.stream().filter(a->{return a.getName().equals(name);}).forEach(a -> toReturn.add(a));
+        return toReturn;
 	}
 
-	public <T> T getItemByName(JSON.Value json) {
-		List<T> items = getItemsByName(json);
-		assert items.size() == 1 : "getItemByName() got more than one object";
-		return items.get(0);
-	}
+//	public <T> T getItemByName(JSON.Value json) {
+//		List<T> items = getItemsByName(json);
+//		assert items.size() == 1 : "getItemByName() got more than one object";
+//		return items.get(0);
+//	}
 
-	public <T> T getItemByName(String name) {
-		List<T> items = getItemsByName(name);
-		assert items.size() == 1 : "getItemByName() got more than one object";
-		return items.get(0);
-	}
+//	public <T> T getItemByName(String name) {
+//		List<T> items = getItemsByName(name);
+//		assert items.size() == 1 : "getItemByName() got more than one object";
+//		return items.get(0);
+//	}
 
 	public <T> T getItemByName0(Map<String, List<T>> kv, JSON.Value json) {
 		List<T> items = getItemsByName0(kv, json);
@@ -177,29 +144,29 @@ public class Simulator {
 		return items.get(0);
 	}
 
-	public <T> List<T> getItemsByName(JSON.Value json) {
-		if (json.isList()) {
-			List<T> items = new ArrayList<>();
-			for (final JSON.Value name : json.asList()) {
-				items.add(getItemByName(name.toString()));
-			}
-			return items;
-		}
-		return getItemsByName(json.toString());
-	}
+//	public <T> List<T> getItemsByName(JSON.Value json) {
+//		if (json.isList()) {
+//			List<T> items = new ArrayList<>();
+//			for (final JSON.Value name : json.asList()) {
+//				items.add(getItemByName(name.toString()));
+//			}
+//			return items;
+//		}
+//		return getItemsByName(json.toString());
+//	}
+//
+//	public <T> List<T> getItemsByName(List<String> names, long n) {
+//		List<T> items = new ArrayList<>();
+//		for (long i = 0; i < n; i++) {
+//			items.addAll(getItemsByName(names.get((int) i)));
+//		}
+//		return items;
+//	}
 
-	public <T> List<T> getItemsByName(List<String> names, long n) {
-		List<T> items = new ArrayList<>();
-		for (long i = 0; i < n; i++) {
-			items.addAll(getItemsByName(names.get((int) i)));
-		}
-		return items;
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> List<T> getItemsByName(String name) {
-		return (List<T>) GLOBAL.get(name);
-	}
+//	@SuppressWarnings("unchecked")
+//	public <T> List<T> getItemsByName(String name) {
+//		return (List<T>) GLOBAL.get(name);
+//	}
 
 	public <T> List<T> getItemsByName0(Map<String, List<T>> kv, JSON.Value json) {
 		if (json.isList()) {
@@ -267,16 +234,7 @@ public class Simulator {
 		return result;
 	}
 
-	/**
-	 * Prints information about the current state of the simulation at each
-	 * iteration during a session. It is only called in sessions that have the
-	 * "withPrint" option. By default does not print anything. Override this method
-	 * to make the desired outputs.
-	 *
-	 * @param sessionName the name of the ongoing session
-	 */
-	public void print(String sessionName) {
-	}
+	
 
 	public void updateFundamentals(Fundamentals f) {
 		f.update();

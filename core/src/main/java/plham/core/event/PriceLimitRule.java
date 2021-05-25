@@ -77,4 +77,9 @@ public class PriceLimitRule implements OrderEvent {
 			}
 		}
 	}
+
+    @Override
+    public String getName() {
+        return name;
+    }
 }

@@ -316,7 +316,7 @@ public class SimulatorFactory {
 				List<Market> markets = new ArrayList<>((int) numMarkets);
 				Market market = initializer.initialize(id, name, random, json);
 				markets.add(market);
-				factory.getSimulatorInConstruction().GLOBAL.put(name, markets);
+//				factory.getSimulatorInConstruction().GLOBAL.put(name, markets);
 				return markets;
 			}
 		};
@@ -472,7 +472,7 @@ public class SimulatorFactory {
 				events.add(ev);
 			}
 			allEvents.addAll(events);
-			inConstruction.GLOBAL.put(name, events);
+//			inConstruction.GLOBAL.put(name, events);
 		}
 		return allEvents;
 	}
@@ -552,7 +552,7 @@ public class SimulatorFactory {
 			String className = CONFIG.get(name).get("class").toString();
 			if (className.equals("EventGroup")) {
 				List<Event> eventGroup = createItemGroup(CONFIG.get(name), "EventGroup", "events");
-				inConstruction.GLOBAL.put(name, eventGroup);
+//				inConstruction.GLOBAL.put(name, eventGroup);
 				events.addAll(eventGroup);
 			} else {
 				assert eventInitializers.containsKey(className) : className + "'s initializer is not registered.";
@@ -566,7 +566,7 @@ public class SimulatorFactory {
 					throw e;
 				}
 				events.add(ev);
-				inConstruction.GLOBAL.put(name, ev);
+//				inConstruction.GLOBAL.put(name, ev);
 			}
 		}
 		inConstruction = null;
@@ -611,8 +611,8 @@ public class SimulatorFactory {
 			JSON.Value edges = json.get("pairwise");
 			for (long k = 0; k < edges.size(); k++) {
 				JSON.Value triple = edges.get(k);
-				Market mi = inConstruction.getItemByName(triple.get(0));
-				Market mj = inConstruction.getItemByName(triple.get(1));
+				Market mi = inConstruction.getMarketByName(triple.get(0));
+				Market mj = inConstruction.getMarketByName(triple.get(1));
 				f.setCorrelation(mi, mj, random.nextRandom(triple.get(2)));
 			}
 		}
@@ -632,8 +632,8 @@ public class SimulatorFactory {
 		if (json.get("class").toString().equals(className)) { // A dummy class
 			List<JSON.Value> list = json.get(keyword).asList();
 			for (long i = 0; i < list.size(); i++) {
-				String name = list.get((int) i).toString();
-				items.add((T) inConstruction.GLOBAL.get(name)); // SEE:
+//				String name = list.get((int) i).toString();
+//				items.add((T) inConstruction.GLOBAL.get(name)); // SEE:
 				// getDependencySortedList()
 			}
 		}
@@ -668,14 +668,16 @@ public class SimulatorFactory {
 	 * Takes all the accumulated initializers of this class, calls them, and stores
 	 * the result in the provided Simulator instance.
 	 *
-	 * @param sim the instance into which the created objects that will participate
-	 *            in the simulation need to be stored
+	 * @param seed the seed used to initiliaze all the objects that participate in the computation
+	 * @return a build {@link Simulator} instance
 	 */
-	public void makeNewSimulation(Simulator sim, long seed) {
-		inConstruction = sim; // Allows access of the various initializers to the Simulator
+	public Simulator makeNewSimulation(long seed) {
+		inConstruction = new Simulator();
+		Simulator sim = inConstruction;
+		// Allows access of the various initializers to the Simulator
 		// instance directly through method SimulationFactory#getSimulatorInConstruction
 
-		sim.GLOBAL = new LinkedHashMap<>();
+//		sim.GLOBAL = new LinkedHashMap<>();
 		// JSON.extendDeeply(CONFIG, CONFIG);
 		sim.RANDOM = new Random(seed);
 
@@ -688,12 +690,13 @@ public class SimulatorFactory {
 		// Agent initialization
 		AllocManager.Centric<Agent> dm = new AllocManager.Centric<>();
 		createAllAgents(CONFIG.get("simulation").get("agents"), dm);
-		sim.GLOBAL.put("agents", dm.getBody());
+//		sim.GLOBAL.put("agents", dm.getBody());
 
 		// Fundamentals
 		Fundamentals fundamentals = createFundamentals(markets,
 				CONFIG.get("simulation").getOrElse("fundamentalCorrelations", "{}"));
-		sim.GLOBAL.put("fundamentals", fundamentals);
+		sim.fundamentals = fundamentals;
+//		sim.GLOBAL.put("fundamentals", fundamentals);
 
 		// Small correction to separate Agents and HighFrequencyAgents
 		setupEnv(sim.markets, dm.getBody());
@@ -729,6 +732,7 @@ public class SimulatorFactory {
 		}
 
 		inConstruction = null;
+		return sim;
 	}
 
 	private long parseIterationSteps(Value json) {

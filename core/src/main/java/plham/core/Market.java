@@ -79,11 +79,24 @@ public class Market implements Serializable {
 	}
 
 	public interface MarketEvent extends Event {
-		void update(Market market);
+
+        /**
+         * Method which performs the modification on the state of the simulation 
+         * @param market the market on which this event may act on
+         */
+        public abstract void update(Market market);
+		
 	}
 
 	public interface OrderEvent extends Event {
-		void update(Market market, Order order);
+
+	    /**
+	     * Method which performs the modification on the state of the simulation
+	     * @param market the market on which this event can act
+	     * @param order the order on which this event can act
+	     */
+        public abstract void update(Market market, Order order);
+		
 	}
 
 	private static final long serialVersionUID = -5679918172876739712L;
@@ -105,7 +118,7 @@ public class Market implements Serializable {
 				markets.add(market);
 
 				Simulator s = sim.getSimulatorInConstruction();
-				s.GLOBAL.put(markets.get(0).name, markets);
+//				s.GLOBAL.put(markets.get(0).name, markets);
 				List<LongRange> r = new ArrayList<>();
 				r.add(new LongRange(id, id + 1));
 				s.marketName2Ranges.put(name, r);
