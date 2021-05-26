@@ -7,6 +7,7 @@ import plham.core.Event;
 import plham.core.Market;
 import plham.core.OutputCollector;
 import plham.core.main.SequentialRunner;
+import plham.core.main.Simulator.Session;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
 import plham.samples.CI2002.CI2002Main;
@@ -36,8 +37,8 @@ public class FatFingerMain extends CI2002Main {
 	}
 
 	@Override
-	public void print(OutputCollector output, String sessionName, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
-		super.print(output, sessionName, markets, agents, sessionEvents); // Calls CI2002Main#print
+	public void print(OutputCollector output, Session s, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
+		super.print(output, s, markets, agents, sessionEvents); // Calls CI2002Main#print
 
 		// Print additional information compared to CI2002Main
 //		List<Market> markets = getMarketsByName("markets");

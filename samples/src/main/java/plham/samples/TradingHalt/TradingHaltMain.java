@@ -8,6 +8,7 @@ import plham.core.Market;
 import plham.core.OutputCollector;
 import plham.core.SimulationOutput;
 import plham.core.main.SequentialRunner;
+import plham.core.main.Simulator.Session;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
 
@@ -38,11 +39,11 @@ public class TradingHaltMain extends SimulationOutput {
 	}
 
 	@Override
-	public void print(OutputCollector output, String sessionName, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
+	public void print(OutputCollector output, Session s, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
 //		List<Market> markets = getMarketsByName("markets");
 		for (Market market : markets) {
 			long t = market.getTime();
-			System.out.println(String.format("%s %s %s %s %s %s %s  ", sessionName, t, market.id, market.name,
+			System.out.println(String.format("%s %s %s %s %s %s %s  ", s.sessionName, t, market.id, market.name,
 					market.getPrice(t), market.getFundamentalPrice(t), market.isRunning()));
 		}
 	}

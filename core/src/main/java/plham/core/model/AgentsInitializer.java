@@ -10,6 +10,6 @@ import plham.core.util.Random;
 
 public interface AgentsInitializer extends Serializable {
 
-	void initialize(String name, RangedList<Random> randoms, LongRange longRange, JSON.Value json,
-			RangedList<Agent> agents);
+    void initialize(String name, RangedList<Random> randoms, LongRange longRange, JSON.Value json,
+            RangedList<Agent> agents);
 }

@@ -17,171 +17,171 @@ import plham.core.SimulationOutput;
 @SuppressWarnings("unused")
 public final class ParallelRunnerMT extends Runner {
 
-	static class Step {
-		long epoch;
-		long id;
-		StringBuilder sb = new StringBuilder();
+    static class Step {
+        long epoch;
+        long id;
+        StringBuilder sb = new StringBuilder();
 
-		public Step(long id, long epoch) {
-			this.id = id;
-			this.epoch = epoch;
-		}
+        public Step(long id, long epoch) {
+            this.id = id;
+            this.epoch = epoch;
+        }
 
-		void log(String message) {
-			long stamp = System.currentTimeMillis() - epoch;
-			synchronized (this) {
-				sb.append(this + " " + message + " " + stamp + "\n");
-			}
-		}
+        void log(String message) {
+            long stamp = System.currentTimeMillis() - epoch;
+            synchronized (this) {
+                sb.append(this + " " + message + " " + stamp + "\n");
+            }
+        }
 
-		void message() {
-			System.err.print(sb);
-		}
+        void message() {
+            System.err.print(sb);
+        }
 
-		@Override
-		public String toString() {
-			return "#" + /* here() + " " + */ id;
-		}
-	}
+        @Override
+        public String toString() {
+            return "#" + /* here() + " " + */ id;
+        }
+    }
 
-	private static final long serialVersionUID = -8642146572725786897L;
+    private static final long serialVersionUID = -8642146572725786897L;
 
-	/**
-	 * Utility method which checks how many threads this runner should run with
-	 *
-	 * @return the level of parallelism desired
-	 */
-	private static int initializeNThreads() {
-		String NTHREADS_ENV = System.getenv("NTHREADS");
-		if (NTHREADS_ENV != null) {
-			try {
-				return Integer.parseInt(NTHREADS_ENV);
-			} catch (RuntimeException e) {
-				System.err.println("[Env: NTHREADS] " + NTHREADS_ENV + " is not integer (parse error).");
-			}
-		}
-		return 1;
-	}
+    /**
+     * Utility method which checks how many threads this runner should run with
+     *
+     * @return the level of parallelism desired
+     */
+    private static int initializeNThreads() {
+        String NTHREADS_ENV = System.getenv("NTHREADS");
+        if (NTHREADS_ENV != null) {
+            try {
+                return Integer.parseInt(NTHREADS_ENV);
+            } catch (RuntimeException e) {
+                System.err.println("[Env: NTHREADS] " + NTHREADS_ENV + " is not integer (parse error).");
+            }
+        }
+        return 1;
+    }
 
-	ChunkedList<Agent> cAgents;
+    ChunkedList<Agent> cAgents;
 
-	int NTHREADS;
+    int NTHREADS;
 
-	private ExecutorService pool;
+    private ExecutorService pool;
 
-	public ParallelRunnerMT(SimulationOutput sim, SimulatorFactory factory) {
-		this(sim, factory, initializeNThreads());
-	}
+    public ParallelRunnerMT(SimulationOutput sim, SimulatorFactory factory) {
+        this(sim, factory, initializeNThreads());
+    }
 
-	public ParallelRunnerMT(SimulationOutput sim, SimulatorFactory factory, int nthreads) {
-		super(sim, factory);
-		NTHREADS = nthreads;
-		pool = Executors.newFixedThreadPool(nthreads);
-	}
+    public ParallelRunnerMT(SimulationOutput sim, SimulatorFactory factory, int nthreads) {
+        super(sim, factory);
+        NTHREADS = nthreads;
+        pool = Executors.newFixedThreadPool(nthreads);
+    }
 
-	private void debug(Object o) {
-		System.err.println(o);
-	}
+    private void debug(Object o) {
+        System.err.println(o);
+    }
 
-	public void iterateMarketUpdates(String sessionName, long iterationSteps, boolean withOrderPlacement,
-			boolean withOrderExecution, boolean withPrint, boolean forDummyTimeseries, long maxNormalOrders,
-			long maxHifreqOrders, Fundamentals fundamentals) {
-		// TODO
-		boolean isMaster = true;
-		if (isMaster)
-			marketSetup(sim.markets, withOrderExecution);
-		long epoch = System.currentTimeMillis();
-		for (long id = 0; id < iterationSteps; id++) {
-			assert withOrderPlacement;
-			// System.out.println("------------IterateLoop " + id + " @"+here);
-			Step step = new Step(id, epoch);
-			long begin = System.nanoTime();
-			if (isMaster)
-				iterSetup(fundamentals);
-			if (withOrderPlacement) {
-				updateMarketsInBatch(id, step, maxHifreqOrders);
-			}
-			if (isMaster) {
-				long t0 = System.nanoTime();
-				if (forDummyTimeseries) {
-					sim.updateMarketsUsingFundamentalPrice(sim.markets, fundamentals);
-				} else {
-					sim.updateMarketsUsingMarketPrice(sim.markets, fundamentals);
-				}
-				long t1 = System.nanoTime();
-				if (withPrint) {
+    public void iterateMarketUpdates(String sessionName, long iterationSteps, boolean withOrderPlacement,
+            boolean withOrderExecution, boolean withPrint, boolean forDummyTimeseries, long maxNormalOrders,
+            long maxHifreqOrders, Fundamentals fundamentals) {
+        // TODO
+        boolean isMaster = true;
+        if (isMaster)
+            marketSetup(sim.markets, withOrderExecution);
+        long epoch = System.currentTimeMillis();
+        for (long id = 0; id < iterationSteps; id++) {
+            assert withOrderPlacement;
+            // System.out.println("------------IterateLoop " + id + " @"+here);
+            Step step = new Step(id, epoch);
+            long begin = System.nanoTime();
+            if (isMaster)
+                iterSetup(fundamentals);
+            if (withOrderPlacement) {
+                updateMarketsInBatch(id, step, maxHifreqOrders);
+            }
+            if (isMaster) {
+                long t0 = System.nanoTime();
+                if (forDummyTimeseries) {
+                    sim.updateMarketsUsingFundamentalPrice(sim.markets, fundamentals);
+                } else {
+                    sim.updateMarketsUsingMarketPrice(sim.markets, fundamentals);
+                }
+                long t1 = System.nanoTime();
+                if (withPrint) {
 //					sim.print(sessionName); // FIXME
-				}
-				long t2 = System.nanoTime();
-				for (Market market : sim.markets) {
-					market.triggerAfterSimulationStepEvents();
-				}
-				long t3 = System.nanoTime();
-				for (Market market : sim.markets) {
-					market.updateTime();
-					market.updateOrderBooks();
-				}
-				long t4 = System.nanoTime();
-				long end = System.nanoTime();
-				System.out.println("CYCLE upMarket: " + ((t1 - t0) * 1e-9));
-				System.out.println("CYCLE print: " + ((t2 - t1) * 1e-9));
-				System.out.println("CYCLE triEvent: " + ((t3 - t2) * 1e-9));
-				System.out.println("CYCLE upTime: " + ((t4 - t3) * 1e-9));
-				System.out.println("CYCLE all" + ((end - begin) * 1e-9));
+                }
+                long t2 = System.nanoTime();
+                for (Market market : sim.markets) {
+                    market.triggerAfterSimulationStepEvents();
+                }
+                long t3 = System.nanoTime();
+                for (Market market : sim.markets) {
+                    market.updateTime();
+                    market.updateOrderBooks();
+                }
+                long t4 = System.nanoTime();
+                long end = System.nanoTime();
+                System.out.println("CYCLE upMarket: " + ((t1 - t0) * 1e-9));
+                System.out.println("CYCLE print: " + ((t2 - t1) * 1e-9));
+                System.out.println("CYCLE triEvent: " + ((t3 - t2) * 1e-9));
+                System.out.println("CYCLE upTime: " + ((t4 - t3) * 1e-9));
+                System.out.println("CYCLE all" + ((end - begin) * 1e-9));
 
-			}
-		}
-		if (isMaster && withPrint) {
+            }
+        }
+        if (isMaster && withPrint) {
 //			sim.endprint(sessionName, iterationSteps); // FIXME
-		}
-	}
+        }
+    }
 
-	void iterSetup(Fundamentals fundamentals) {
-		sim.updateFundamentals(fundamentals);
-		for (Market market : sim.markets) {
-			market.triggerBeforeSimulationStepEvents(); // Assuming the markets in dependency order.
-		}
-	}
+    void iterSetup(Fundamentals fundamentals) {
+        sim.updateFundamentals(fundamentals);
+        for (Market market : sim.markets) {
+            market.triggerBeforeSimulationStepEvents(); // Assuming the markets in dependency order.
+        }
+    }
 
-	void marketSetup(List<Market> markets, boolean withOrderExecution) {
-		markets.forEach((Market market) -> {
-			market.setRunning(withOrderExecution);
-		});
-		markets.forEach((Market market) -> {
-			market.itayoseOrderBooks();
-		});
-		markets.forEach((Market market) -> {
-			market.check();
-		});
-	}
+    void marketSetup(List<Market> markets, boolean withOrderExecution) {
+        markets.forEach((Market market) -> {
+            market.setRunning(withOrderExecution);
+        });
+        markets.forEach((Market market) -> {
+            market.itayoseOrderBooks();
+        });
+        markets.forEach((Market market) -> {
+            market.check();
+        });
+    }
 
-	@Override
-	public void run(long seed) {
-		// TODO Auto-generated method stub
-		// The main simulation procedure should be written here
-	}
+    @Override
+    public void run(long seed) {
+        // TODO Auto-generated method stub
+        // The main simulation procedure should be written here
+    }
 
-	void submitOrders(long iterStep, Bag<List<Order>> bag) {
-		List<Market> markets = sim.markets;
-		cAgents.forEach(/* pool, NTHREADS, */
-				(Agent a, Consumer<? super List<Order>> receiver) -> {
-					List<Order> orders = a.submitOrders(markets);
-					if (!orders.isEmpty()) {
-						receiver.accept(orders);
-					}
-				}, bag.getReceiver());
-	}
+    void submitOrders(long iterStep, Bag<List<Order>> bag) {
+        List<Market> markets = sim.markets;
+        cAgents.forEach(/* pool, NTHREADS, */
+                (Agent a, Consumer<? super List<Order>> receiver) -> {
+                    List<Order> orders = a.submitOrders(markets);
+                    if (!orders.isEmpty()) {
+                        receiver.accept(orders);
+                    }
+                }, bag.getReceiver());
+    }
 
-	void updateAgents(Step step) {
-		for (Market m : sim.markets) {
-			List<List<AgentUpdate>> updatesHistory = m.agentUpdates;
-			assert updatesHistory.get(updatesHistory.size() - 1).isEmpty();
-		}
-	}
+    void updateAgents(Step step) {
+        for (Market m : sim.markets) {
+            List<List<AgentUpdate>> updatesHistory = m.agentUpdates;
+            assert updatesHistory.get(updatesHistory.size() - 1).isEmpty();
+        }
+    }
 
-	public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders, boolean diffPass) {
-		throw new Error("should not called");
-	}
+    public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders, boolean diffPass) {
+        throw new Error("should not called");
+    }
 
 //	@Override
 //	public void run(String[] args) {
@@ -286,17 +286,17 @@ public final class ParallelRunnerMT extends Runner {
 //		pool.shutdown();
 //	}
 
-	public void updateMarketsInBatch(long id, Step step, long maxHifreqOrders) {
-		Bag<List<Order>> bag = new Bag<>();
-		// TODO tuning
-		long t0 = System.nanoTime();
-		submitOrders(id, bag);
-		long t1 = System.nanoTime();
-		System.out.println("CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
-		// handleOrders(bag.convertToList(), maxHifreqOrders); // FIXME
-		long t2 = System.nanoTime();
-		System.out.println("CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
-		updateAgents(step);
-	}
+    public void updateMarketsInBatch(long id, Step step, long maxHifreqOrders) {
+        Bag<List<Order>> bag = new Bag<>();
+        // TODO tuning
+        long t0 = System.nanoTime();
+        submitOrders(id, bag);
+        long t1 = System.nanoTime();
+        System.out.println("CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
+        // handleOrders(bag.convertToList(), maxHifreqOrders); // FIXME
+        long t2 = System.nanoTime();
+        System.out.println("CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
+        updateAgents(step);
+    }
 
 }

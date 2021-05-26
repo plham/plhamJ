@@ -8,6 +8,7 @@ import plham.core.Market;
 import plham.core.OutputCollector;
 import plham.core.SimulationOutput;
 import plham.core.main.SequentialRunner;
+import plham.core.main.Simulator.Session;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
 
@@ -35,11 +36,20 @@ public class CI2002Main extends SimulationOutput {
 		}
 	}
 
+//    @Override
+//    public void marketOutput(OutputCollector out, SimulationStage stage, Market market) {
+//        if (stage == SimulationStage.WITH_PRINT_DURING_SESSION) {
+//            long t = market.getTime();
+//            System.out.println(String.format("%s %s %s %s %s %s  ", session.sessionName, t, market.id, market.name,
+//                    market.getPrice(t), market.getFundamentalPrice(t)));
+//        }
+//    }
+    
 	@Override
-	public void print(OutputCollector output, String sessionName, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
+	public void print(OutputCollector output, Session session, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
 		for (Market market : markets) {
 			long t = market.getTime();
-			System.out.println(String.format("%s %s %s %s %s %s  ", sessionName, t, market.id, market.name,
+			System.out.println(String.format("%s %s %s %s %s %s  ", session.sessionName, t, market.id, market.name,
 					market.getPrice(t), market.getFundamentalPrice(t)));
 		}
 	}

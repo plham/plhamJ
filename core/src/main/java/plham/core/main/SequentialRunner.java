@@ -17,179 +17,181 @@ import plham.core.util.Random;
  * A Runner class for sequential execution.
  */
 public class SequentialRunner extends Runner implements Serializable {
-	private static final long serialVersionUID = -4747415797682000153L;
+    private static final long serialVersionUID = -4747415797682000153L;
 
-	public SequentialRunner(SimulatorFactory sim, SimulationOutput output) {
-		super(output, sim);
-	}
+    public SequentialRunner(SimulatorFactory sim, SimulationOutput output) {
+        super(output, sim);
+    }
 
-	public List<List<Order>> collectOrders(long MAX_NORMAL_ORDERS) {
-		Simulator env = super.sim;
-		List<Market> markets = env.markets;
-		List<Agent> agents = env.normalAgents;
+    public List<List<Order>> collectOrders(long MAX_NORMAL_ORDERS) {
+        Simulator env = super.sim;
+        List<Market> markets = env.markets;
+        List<Agent> agents = env.normalAgents;
 
-		long beginTime = System.nanoTime();
-		List<List<Order>> allOrders = new ArrayList<>();
+        long beginTime = System.nanoTime();
+        List<List<Order>> allOrders = new ArrayList<>();
 
-		Random random = sim.getRandom();
-		RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random, agents);
+        Random random = sim.getRandom();
+        RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random, agents);
 
-		long k = 0;
-		randomAgents.shuffle();
-		for (Agent agent : randomAgents) {
-			if (k >= MAX_NORMAL_ORDERS) {
-				break;
-			}
-			List<Order> orders = agent.submitOrders(markets);
-			if (orders.size() > 0) {
-				allOrders.add(orders);
-				k++;
-			}
-		}
-		long endTime = System.nanoTime();
-		if (_PROFILE) {
-			System.out.println("#PROFILE ORDER-MAKE TOTAL " + ((endTime - beginTime) / 1e+9) + " sec");
-			System.out.println("#PROFILE MAX-NORMAL-ORDERS " + MAX_NORMAL_ORDERS);
-			System.out.println("#PROFILE NUM-NORMAL-ORDERS " + allOrders.size());
-		}
-		return allOrders;
-	}
+        long k = 0;
+        randomAgents.shuffle();
+        for (Agent agent : randomAgents) {
+            if (k >= MAX_NORMAL_ORDERS) {
+                break;
+            }
+            List<Order> orders = agent.submitOrders(markets);
+            if (orders.size() > 0) {
+                allOrders.add(orders);
+                k++;
+            }
+        }
+        long endTime = System.nanoTime();
+        if (_PROFILE) {
+            System.out.println("#PROFILE ORDER-MAKE TOTAL " + ((endTime - beginTime) / 1e+9) + " sec");
+            System.out.println("#PROFILE MAX-NORMAL-ORDERS " + MAX_NORMAL_ORDERS);
+            System.out.println("#PROFILE NUM-NORMAL-ORDERS " + allOrders.size());
+        }
+        return allOrders;
+    }
 
-	public List<List<Order>> handleOrders(List<List<Order>> localOrders, long MAX_HIFREQ_ORDERS) {
-		long beginTime = System.nanoTime();
-		List<List<Order>> allOrders = new ArrayList<>();
-		List<Market> markets = sim.markets;
+    public List<List<Order>> handleOrders(List<List<Order>> localOrders, long MAX_HIFREQ_ORDERS) {
+        long beginTime = System.nanoTime();
+        List<List<Order>> allOrders = new ArrayList<>();
+        List<Market> markets = sim.markets;
 
-		Random random = sim.getRandom();
-		Random tmpRandom = new Random(System.nanoTime());
-		List<Agent> agents = sim.hifreqAgents;
-		RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random, agents);
-		RandomPermutation<List<Order>> randomOrders = new RandomPermutation<>(random, localOrders);
+        Random random = sim.getRandom();
+        Random tmpRandom = new Random(System.nanoTime());
+        List<Agent> agents = sim.hifreqAgents;
+        RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random, agents);
+        RandomPermutation<List<Order>> randomOrders = new RandomPermutation<>(random, localOrders);
 
-		randomOrders.shuffle();
-		for (List<Order> someOrders : randomOrders) {
-			// This handles one order-list submitted by an agent per loop.
-			// TODO: If needed, one-market one-order handling.
-			for (Order order : someOrders) {
-				Market m = sim.markets.get(((int) order.marketId));
-				m.triggerBeforeOrderHandlingEvents(order);
-				m.handleOrder(order); // NOTE: DO it now.
-				m.triggerAfterOrderHandlingEvents(order);
-				m.tickUpdateMarketPrice();
-			}
+        randomOrders.shuffle();
+        for (List<Order> someOrders : randomOrders) {
+            // This handles one order-list submitted by an agent per loop.
+            // TODO: If needed, one-market one-order handling.
+            for (Order order : someOrders) {
+                Market m = sim.markets.get(((int) order.marketId));
+                m.triggerBeforeOrderHandlingEvents(order);
+                m.handleOrder(order); // NOTE: DO it now.
+                m.triggerAfterOrderHandlingEvents(order);
+                m.tickUpdateMarketPrice();
+            }
 
-			if (HIFREQ_SUBMIT_RATE < tmpRandom.nextDouble()) {
-				continue;
-			}
+            if (HIFREQ_SUBMIT_RATE < tmpRandom.nextDouble()) {
+                continue;
+            }
 
-			long k = 0;
-			randomAgents.shuffle();
-			for (Agent agent : randomAgents) {
-				if (k >= MAX_HIFREQ_ORDERS) {
-					break;
-				}
-				List<Order> orders = agent.submitOrders(markets);
-				if (!orders.isEmpty())
-					allOrders.add(orders);
+            long k = 0;
+            randomAgents.shuffle();
+            for (Agent agent : randomAgents) {
+                if (k >= MAX_HIFREQ_ORDERS) {
+                    break;
+                }
+                List<Order> orders = agent.submitOrders(markets);
+                if (!orders.isEmpty())
+                    allOrders.add(orders);
 
-				if (orders.size() > 0) {
-					for (Order order : orders) {
-						Market m = sim.markets.get((int) order.marketId);
-						m.triggerBeforeOrderHandlingEvents(order);
-						m.handleOrder(order);
-						m.triggerAfterOrderHandlingEvents(order);
-						m.tickUpdateMarketPrice();
-					}
-					k++;
-				}
-			}
-		}
+                if (orders.size() > 0) {
+                    for (Order order : orders) {
+                        Market m = sim.markets.get((int) order.marketId);
+                        m.triggerBeforeOrderHandlingEvents(order);
+                        m.handleOrder(order);
+                        m.triggerAfterOrderHandlingEvents(order);
+                        m.tickUpdateMarketPrice();
+                    }
+                    k++;
+                }
+            }
+        }
 
-		long endTime = System.nanoTime();
-		if (_PROFILE) {
-			System.err.println("# handle orders took " + (endTime - beginTime));
-		}
-		return allOrders;
-	}
+        long endTime = System.nanoTime();
+        if (_PROFILE) {
+            System.err.println("# handle orders took " + (endTime - beginTime));
+        }
+        return allOrders;
+    }
 
-	public void iterateMarketUpdates(Session s, Fundamentals fundamentals) {
-		List<Market> markets = sim.markets;
-		for (Market market : markets) {
-			market.setRunning(s.withOrderExecution);
-		}
-		for (Market market : markets) {
-			market.itayoseOrderBooks();
-			System.out.println("# Itayose exchangePrice " + market.lastExecutedPrices.get((int) market.getTime()));
-		}
-		for (Market market : markets) {
-			market.check();
-		}
-		// System.out.println("#hoge1-2SessionName:"+sessionName+",itestep:"+iterationSteps+",withplacement:"+withOrderPlacement);
-		for (long t = 1; t <= s.iterationSteps; t++) {
-			sim.updateFundamentals(fundamentals);
-			for (Market market : markets) {
-				market.triggerBeforeSimulationStepEvents(); // Assuming the
-															// markets in
-															// dependency order.
-			}
-			// System.out.println("#hoge1-3:t="+t);
-			if (s.withOrderPlacement) {
-				updateMarkets(s.maxNormalOrders, s.maxHighFreqOrders, t > 0);
-			}
-			// System.out.println("#hoge1-4");
-			if (s.forDummyTimeseries) {
-				sim.updateMarketsUsingFundamentalPrice(markets, fundamentals);
-			} else {
-				sim.updateMarketsUsingMarketPrice(markets, fundamentals);
-			}
-			// System.out.println("#hoge1-5");
-			if (s.withPrint) {
-				output.print(null, s.sessionName, sim.markets, sim.agents, sim.sessionEvents);
-			}
-			// System.out.println("#hoge1-6");
-			for (Market market : markets) {
-				market.triggerAfterSimulationStepEvents();
-			}
-			// System.out.println("#hoge1-7");
-			for (Market market : markets) {
-				market.updateTime();
-				market.updateOrderBooks();
-			}
-			// System.out.println("#hoge1-8");
-		}
-		if (s.withPrint) {
-			output.endprint(null, s.sessionName, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
-		}
-	}
+    @SuppressWarnings("deprecation")
+    public void iterateMarketUpdates(Session s, Fundamentals fundamentals) {
+        List<Market> markets = sim.markets;
+        for (Market market : markets) {
+            market.setRunning(s.withOrderExecution);
+        }
+        for (Market market : markets) {
+            market.itayoseOrderBooks();
+            System.out.println("# Itayose exchangePrice " + market.lastExecutedPrices.get((int) market.getTime()));
+        }
+        for (Market market : markets) {
+            market.check();
+        }
+        // System.out.println("#hoge1-2SessionName:"+sessionName+",itestep:"+iterationSteps+",withplacement:"+withOrderPlacement);
+        for (long t = 1; t <= s.iterationSteps; t++) {
+            sim.updateFundamentals(fundamentals);
+            for (Market market : markets) {
+                market.triggerBeforeSimulationStepEvents(); // Assuming the
+                                                            // markets in
+                                                            // dependency order.
+            }
+            // System.out.println("#hoge1-3:t="+t);
+            if (s.withOrderPlacement) {
+                updateMarkets(s.maxNormalOrders, s.maxHighFreqOrders, t > 0);
+            }
+            // System.out.println("#hoge1-4");
+            if (s.forDummyTimeseries) {
+                sim.updateMarketsUsingFundamentalPrice(markets, fundamentals);
+            } else {
+                sim.updateMarketsUsingMarketPrice(markets, fundamentals);
+            }
+            // System.out.println("#hoge1-5");
+            if (s.withPrint) {
+                output.print(null, s, sim.markets, sim.agents, sim.sessionEvents);
+            }
+            // System.out.println("#hoge1-6");
+            for (Market market : markets) {
+                market.triggerAfterSimulationStepEvents();
+            }
+            // System.out.println("#hoge1-7");
+            for (Market market : markets) {
+                market.updateTime();
+                market.updateOrderBooks();
+            }
+            // System.out.println("#hoge1-8");
+        }
+        if (s.withPrint) {
+            output.endprint(null, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
+        }
+    }
 
-	@Override
-	public void run(long seed) {
-		long TIME_INIT = System.nanoTime();
+    @SuppressWarnings("deprecation")
+    @Override
+    public void run(long seed) {
+        long TIME_INIT = System.nanoTime();
 
-		sim = factory.makeNewSimulation(seed);
+        sim = factory.makeNewSimulation(seed);
 
-		long TIME_THE_BEGINNING = System.nanoTime();
+        long TIME_THE_BEGINNING = System.nanoTime();
 
-		output.beginSimulation(null, sim.markets, sim.agents);
+        output.beginSimulation(null, sim.markets, sim.agents);
 
-		for (Session session : sim.sessions) {
-			session.print();
+        for (Session session : sim.sessions) {
+            session.print();
 //			sim.GLOBAL.put("events", factory.createEventsForASession(session, sim));
-			sim.sessionEvents = factory.createEventsForASession(session, sim);
-			output.beginSession(null, session.sessionName, sim.markets, sim.agents, sim.sessionEvents);
+            sim.sessionEvents = factory.createEventsForASession(session, sim);
+            output.beginSession(null, session, sim.markets, sim.agents, sim.sessionEvents);
 //			iterateMarketUpdates(session, (Fundamentals) sim.GLOBAL.get("fundamentals"));
-			iterateMarketUpdates(session, sim.fundamentals);
-			output.endSession(null, session.sessionName, sim.markets, sim.agents, sim.sessionEvents);
-		}
-		output.endSimulation(null, sim.markets, sim.agents);
+            iterateMarketUpdates(session, sim.fundamentals);
+            output.endSession(null, session, sim.markets, sim.agents, sim.sessionEvents);
+        }
+        output.endSimulation(null, sim.markets, sim.agents);
 
-		long TIME_THE_END = System.nanoTime();
-		System.out.println("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
-		System.out.println("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
-	}
+        long TIME_THE_END = System.nanoTime();
+        System.out.println("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
+        System.out.println("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
+    }
 
-	public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders, boolean diffPass) {
-		List<List<Order>> orders = collectOrders(maxNormalOrders);
-		return handleOrders(orders, maxHifreqOrders);
-	}
+    public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders, boolean diffPass) {
+        List<List<Order>> orders = collectOrders(maxNormalOrders);
+        return handleOrders(orders, maxHifreqOrders);
+    }
 }
