@@ -2,6 +2,7 @@ package plham.core;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import plham.core.main.Simulator.Session;
 
@@ -198,5 +199,19 @@ public class SimulationOutput implements Serializable {
      * @param s     session being run from which information may be taken and logged
      */
     public void sessionOutput(OutputCollector out, SimulationStage stage, Session s) {
+    }
+    
+    /**
+     * Allows for outputs to be made based on information gathered from various objects participating in the computation
+     * <p>
+     * By default, prints the contents stored using method {@link OutputCollector#log(String, Object)} in the previous stage. Override this method if you want to make outputs combining information from multiple participants in the simulation.
+     * @param output the object into which the outputs to make about the simulation need to be registered
+     * @param stage the stage of the simulation about which outputs are being made
+     * @param logs the map containing the entries registered using method {@link OutputCollector#log(String, Object)}
+     */
+    public void postProcess(OutputCollector output, SimulationStage stage, Map<String, Object> logs) {
+        for (Map.Entry<String, Object> entry : logs.entrySet()) {
+            output.print(entry.getKey() + " : : " + entry.getValue());
+        }
     }
 }

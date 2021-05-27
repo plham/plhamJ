@@ -13,7 +13,6 @@ import handist.collections.RangedList;
 /**
  * This generates a sequence of Randoms split from a given Random, and only allows sequential access to its elements.
  */
-
 final public class RandomSequenceBySplit extends RangedList<Random> {
     public static class It implements Iterator<Random> {
         private RandomSequenceBySplit al;
@@ -215,6 +214,16 @@ final public class RandomSequenceBySplit extends RangedList<Random> {
 
     @Override
     public List<Random> toList(LongRange r) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected Object[] getBody() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected long getBodyOffset() {
         throw new UnsupportedOperationException();
     }
 }

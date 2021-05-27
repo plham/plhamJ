@@ -2,6 +2,7 @@ package plham.core.main;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import cassia.util.random.RandomPermutation;
@@ -9,7 +10,9 @@ import plham.core.Agent;
 import plham.core.Fundamentals;
 import plham.core.Market;
 import plham.core.Order;
+import plham.core.OutputCollector;
 import plham.core.SimulationOutput;
+import plham.core.SimulationOutput.SimulationStage;
 import plham.core.main.Simulator.Session;
 import plham.core.util.Random;
 
@@ -17,6 +20,30 @@ import plham.core.util.Random;
  * A Runner class for sequential execution.
  */
 public class SequentialRunner extends Runner implements Serializable {
+    
+    /**
+     * Basic {@link OutputCollector} implementation for the sequential runner.
+     * As there are no management of remote objects and no risk of concurrent outptuts, direct printing to {@link System#out}as part of method {@link #print(String)} is acceptable. 
+     * @author Patrick Finnerty
+     *
+     */
+    public class SequentialOutput implements OutputCollector {
+
+        HashMap<String, Object> map = new HashMap<>();
+        
+        @Override
+        public void print(String message) {
+            System.out.println(message);
+        }
+        
+        @Override
+        public void log(String topic, Object o) {
+            map.put(topic, o);
+        }
+        
+    }
+    
+    
     private static final long serialVersionUID = -4747415797682000153L;
 
     public SequentialRunner(SimulatorFactory sim, SimulationOutput output) {
@@ -113,7 +140,7 @@ public class SequentialRunner extends Runner implements Serializable {
     }
 
     @SuppressWarnings("deprecation")
-    public void iterateMarketUpdates(Session s, Fundamentals fundamentals) {
+    public void iterateMarketUpdates(SequentialOutput out, Session s, Fundamentals fundamentals) {
         List<Market> markets = sim.markets;
         for (Market market : markets) {
             market.setRunning(s.withOrderExecution);
@@ -145,7 +172,9 @@ public class SequentialRunner extends Runner implements Serializable {
             }
             // System.out.println("#hoge1-5");
             if (s.withPrint) {
-                output.print(null, s, sim.markets, sim.agents, sim.sessionEvents);
+                output.print(out, s, sim.markets, sim.agents, sim.sessionEvents);
+                output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION, out.map);
+                out.map.clear();
             }
             // System.out.println("#hoge1-6");
             for (Market market : markets) {
@@ -159,7 +188,9 @@ public class SequentialRunner extends Runner implements Serializable {
             // System.out.println("#hoge1-8");
         }
         if (s.withPrint) {
-            output.endprint(null, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
+            output.endprint(out, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
+            output.postProcess(out, SimulationStage.WITH_PRINT_END_SESSION, out.map);
+            out.map.clear();
         }
     }
 
@@ -167,23 +198,32 @@ public class SequentialRunner extends Runner implements Serializable {
     @Override
     public void run(long seed) {
         long TIME_INIT = System.nanoTime();
+        SequentialOutput out = new SequentialOutput();
 
         sim = factory.makeNewSimulation(seed);
 
         long TIME_THE_BEGINNING = System.nanoTime();
 
-        output.beginSimulation(null, sim.markets, sim.agents);
+        output.beginSimulation(out, sim.markets, sim.agents);
+        output.postProcess(out, SimulationStage.BEGIN_SIMULATION, out.map);
+        out.map.clear();
 
         for (Session session : sim.sessions) {
             session.print();
 //			sim.GLOBAL.put("events", factory.createEventsForASession(session, sim));
             sim.sessionEvents = factory.createEventsForASession(session, sim);
-            output.beginSession(null, session, sim.markets, sim.agents, sim.sessionEvents);
+            output.beginSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
+            output.postProcess(out, SimulationStage.BEGIN_SESSION, out.map);
+            out.map.clear();
 //			iterateMarketUpdates(session, (Fundamentals) sim.GLOBAL.get("fundamentals"));
-            iterateMarketUpdates(session, sim.fundamentals);
-            output.endSession(null, session, sim.markets, sim.agents, sim.sessionEvents);
+            iterateMarketUpdates(out, session, sim.fundamentals);
+            output.endSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
+            output.postProcess(out, SimulationStage.END_SESSION, out.map);
+            out.map.clear();
         }
-        output.endSimulation(null, sim.markets, sim.agents);
+        output.endSimulation(out, sim.markets, sim.agents);
+        output.postProcess(out, SimulationStage.END_SIMULATION, out.map);
+        out.map.clear();
 
         long TIME_THE_END = System.nanoTime();
         System.out.println("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
