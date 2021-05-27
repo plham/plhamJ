@@ -100,7 +100,7 @@ public class SimulationOutput implements Serializable {
 
         if (sessionEvents != null) {
             for (Event e : sessionEvents) {
-                eventOutput(output, SimulationStage.BEGIN_SESSION, e);
+                eventOutput(output, SimulationStage.WITH_PRINT_END_SESSION, e);
             }
         }
     }
@@ -125,7 +125,7 @@ public class SimulationOutput implements Serializable {
 
         if (sessionEvents != null) {
             for (Event e : sessionEvents) {
-                eventOutput(output, SimulationStage.BEGIN_SESSION, e);
+                eventOutput(output, SimulationStage.END_SESSION, e);
             }
         }
     }
@@ -187,7 +187,7 @@ public class SimulationOutput implements Serializable {
 
         if (sessionEvents != null) {
             for (Event e : sessionEvents) {
-                eventOutput(output, SimulationStage.BEGIN_SESSION, e);
+                eventOutput(output, SimulationStage.WITH_PRINT_DURING_SESSION, e);
             }
         }
     }
@@ -204,7 +204,8 @@ public class SimulationOutput implements Serializable {
     /**
      * Allows for outputs to be made based on information gathered from various objects participating in the computation
      * <p>
-     * By default, prints the contents stored using method {@link OutputCollector#log(String, Object)} in the previous stage. Override this method if you want to make outputs combining information from multiple participants in the simulation.
+     * By default, prints the contents stored using method {@link OutputCollector#log(String, Object)} in the previous stage. 
+     * Override this method if you want to make outputs combining information from multiple participants in the simulation.
      * @param output the object into which the outputs to make about the simulation need to be registered
      * @param stage the stage of the simulation about which outputs are being made
      * @param logs the map containing the entries registered using method {@link OutputCollector#log(String, Object)}
