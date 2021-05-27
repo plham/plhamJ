@@ -211,7 +211,7 @@ public class SimulationOutput implements Serializable {
      */
     public void postProcess(OutputCollector output, SimulationStage stage, Map<String, Object> logs) {
         for (Map.Entry<String, Object> entry : logs.entrySet()) {
-            output.print(entry.getKey() + " : : " + entry.getValue());
+            output.print(entry.getKey() + " : " + entry.getValue());
         }
     }
 }
