@@ -1,5 +1,6 @@
 package plham.samples.CI2002;
 
+import java.util.List;
 import java.util.Map;
 
 import plham.core.Market;
@@ -61,15 +62,15 @@ public class NewCI2002Main extends SimulationOutput {
     }
     
     @Override
-    public void postProcess(OutputCollector output, SimulationStage stage, Map<String, Object> logs) {
+    public void postProcess(OutputCollector output, SimulationStage stage, Map<String, List<Object>> logs) {
         switch (stage) {
         case WITH_PRINT_DURING_SESSION:
             // Here we combine the session name with the state of each market in a single line
             // First remove the session name from the "logs" Map
-            String sessionName = (String) logs.remove("_SESSION_NAME_");
+            String sessionName = (String) logs.remove("_SESSION_NAME_").get(0);
             // All remaining entries in the "logs" correspond to the markets taking part in the simulation
-            for (Object o : logs.values()) {
-                String marketSuffix = (String) o;
+            for (List<Object> lo : logs.values()) {
+                String marketSuffix = (String) lo.get(0);
                 output.print(sessionName + " " + marketSuffix);
             }
             break;
@@ -77,14 +78,4 @@ public class NewCI2002Main extends SimulationOutput {
                 // No grouped outputs in all other stages
         }
     }
-    
-//  OLD OUTPUT METHOD HAS NOW BEEN REPLACED WITH THE THREE METHODS ABOVE    
-//	@Override
-//	public void print(OutputCollector output, Session session, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
-//		for (Market market : markets) {
-//			long t = market.getTime();
-//			System.out.println(String.format("%s %s %s %s %s %s  ", session.sessionName, t, market.id, market.name,
-//					market.getPrice(t), market.getFundamentalPrice(t)));
-//		}
-//	}
 }

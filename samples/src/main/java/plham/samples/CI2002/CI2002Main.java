@@ -35,15 +35,6 @@ public class CI2002Main extends SimulationOutput {
 			return;
 		}
 	}
-
-//    @Override
-//    public void marketOutput(OutputCollector out, SimulationStage stage, Market market) {
-//        if (stage == SimulationStage.WITH_PRINT_DURING_SESSION) {
-//            long t = market.getTime();
-//            System.out.println(String.format("%s %s %s %s %s %s  ", session.sessionName, t, market.id, market.name,
-//                    market.getPrice(t), market.getFundamentalPrice(t)));
-//        }
-//    }
     
 	@Override
 	public void print(OutputCollector output, Session session, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {

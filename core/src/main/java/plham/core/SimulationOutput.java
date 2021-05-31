@@ -46,6 +46,7 @@ public class SimulationOutput implements Serializable {
      * @param sessionName the name of the current session
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
+    @Deprecated
     public void beginSession(OutputCollector output, Session session, List<Market> markets, List<Agent> agents,
             List<Event> sessionEvents) {
         sessionOutput(output, SimulationStage.BEGIN_SESSION, session);
@@ -67,6 +68,7 @@ public class SimulationOutput implements Serializable {
      * Method called at the beginning of the simulation. By default, calls on methods {@link #marketOutput(OutputCollector, SimulationStage, Market)} and {@link #agentOutput(OutputCollector, SimulationStage, Agent)} for all markets and agents participating in the computation.
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}  
      */
+    @Deprecated
     public void beginSimulation(OutputCollector output, List<Market> markets, List<Agent> agents) {
         for (Market m : markets) {
             marketOutput(output, SimulationStage.BEGIN_SIMULATION, m);
@@ -87,6 +89,7 @@ public class SimulationOutput implements Serializable {
      * @param iterationSteps the number of steps that have just run (for legacy outputs only)
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
+    @Deprecated
     public void endprint(OutputCollector output, Session session, List<Market> markets, List<Agent> agents,
             List<Event> sessionEvents, long iterationStep) {
         sessionOutput(output, SimulationStage.WITH_PRINT_END_SESSION, session);
@@ -112,6 +115,7 @@ public class SimulationOutput implements Serializable {
      * @param sessionName
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
+    @Deprecated
     public void endSession(OutputCollector output, Session session, List<Market> markets, List<Agent> agents,
             List<Event> sessionEvents) {
         sessionOutput(output, SimulationStage.END_SESSION, session);
@@ -136,6 +140,7 @@ public class SimulationOutput implements Serializable {
      * 
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
+    @Deprecated
     public void endSimulation(OutputCollector output, List<Market> markets, List<Agent> agents) {
         for (Market m : markets) {
             marketOutput(output, SimulationStage.END_SIMULATION, m);
@@ -174,6 +179,7 @@ public class SimulationOutput implements Serializable {
      * @param sessionName the name of the ongoing session
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
+    @Deprecated
     public void print(OutputCollector output, Session session, List<Market> markets, List<Agent> agents,
             List<Event> sessionEvents) {
         sessionOutput(output, SimulationStage.WITH_PRINT_DURING_SESSION, session);
@@ -210,9 +216,13 @@ public class SimulationOutput implements Serializable {
      * @param stage the stage of the simulation about which outputs are being made
      * @param logs the map containing the entries registered using method {@link OutputCollector#log(String, Object)}
      */
-    public void postProcess(OutputCollector output, SimulationStage stage, Map<String, Object> logs) {
-        for (Map.Entry<String, Object> entry : logs.entrySet()) {
-            output.print(entry.getKey() + " : " + entry.getValue());
+    public void postProcess(OutputCollector output, SimulationStage stage, Map<String, List<Object>> logs) {
+        for (Map.Entry<String, List<Object>> entry : logs.entrySet()) {
+            StringBuilder sb = new StringBuilder(entry.getKey() + " : ");
+            for (Object o : entry.getValue()) {
+                sb.append(o.toString()+ " ");
+            }
+            output.print(sb.toString());
         }
     }
 }

@@ -29,7 +29,7 @@ public class SequentialRunner extends Runner implements Serializable {
      */
     public class SequentialOutput implements OutputCollector {
 
-        HashMap<String, Object> map = new HashMap<>();
+        HashMap<String, List<Object>> map = new HashMap<>();
         
         @Override
         public void print(String message) {
@@ -38,7 +38,8 @@ public class SequentialRunner extends Runner implements Serializable {
         
         @Override
         public void log(String topic, Object o) {
-            map.put(topic, o);
+            List<Object> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
+            listOfTopic.add(o);
         }
         
     }
