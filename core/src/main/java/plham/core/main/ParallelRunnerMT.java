@@ -1,6 +1,9 @@
 package plham.core.main;
 
 import java.util.List;
+
+import cassia.util.JSON;
+import cassia.util.random.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -11,12 +14,24 @@ import plham.core.Agent;
 import plham.core.Fundamentals;
 import plham.core.Market;
 import plham.core.Market.AgentUpdate;
+import plham.core.SimulationOutput.SimulationStage;
+import plham.core.main.Simulator.Session;
+import plham.core.util.Random;
 import plham.core.Order;
+import plham.core.OutputCollector;
 import plham.core.SimulationOutput;
 
 @SuppressWarnings("unused")
 public final class ParallelRunnerMT extends Runner {
 
+    /**
+     * Temporary implementation for the multithreaded output collector. Support for parallel collection of program output is coming.
+     * @author Patrick Finnerty
+     *
+     */
+    static class ParallelOutputCollector extends SequentialRunner.SequentialOutput{
+    }
+    
     static class Step {
         long epoch;
         long id;
@@ -83,34 +98,38 @@ public final class ParallelRunnerMT extends Runner {
         System.err.println(o);
     }
 
-    public void iterateMarketUpdates(String sessionName, long iterationSteps, boolean withOrderPlacement,
-            boolean withOrderExecution, boolean withPrint, boolean forDummyTimeseries, long maxNormalOrders,
-            long maxHifreqOrders, Fundamentals fundamentals) {
+    @SuppressWarnings("deprecation")
+    public void iterateMarketUpdates(ParallelOutputCollector out, Session s, Fundamentals fundamentals) {
         // TODO
         boolean isMaster = true;
-        if (isMaster)
-            marketSetup(sim.markets, withOrderExecution);
+        if (isMaster) {
+            marketSetup(sim.markets, s.withOrderExecution);
+        }
+            
         long epoch = System.currentTimeMillis();
-        for (long id = 0; id < iterationSteps; id++) {
-            assert withOrderPlacement;
+        for (long id = 0; id < s.iterationSteps; id++) {
+            assert s.withOrderPlacement;
+
             // System.out.println("------------IterateLoop " + id + " @"+here);
             Step step = new Step(id, epoch);
             long begin = System.nanoTime();
             if (isMaster)
                 iterSetup(fundamentals);
-            if (withOrderPlacement) {
-                updateMarketsInBatch(id, step, maxHifreqOrders);
+            if (s.withOrderPlacement) {
+                updateMarketsInBatch(id, step, s.maxHighFreqOrders);
             }
             if (isMaster) {
                 long t0 = System.nanoTime();
-                if (forDummyTimeseries) {
+                if (s.forDummyTimeseries) {
                     sim.updateMarketsUsingFundamentalPrice(sim.markets, fundamentals);
                 } else {
                     sim.updateMarketsUsingMarketPrice(sim.markets, fundamentals);
                 }
                 long t1 = System.nanoTime();
-                if (withPrint) {
-//					sim.print(sessionName); // FIXME
+                if (s.withPrint) {
+                    output.print(out, s, sim.markets, sim.agents, sim.sessionEvents);
+                    output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION, out.map);
+                    out.map.clear();
                 }
                 long t2 = System.nanoTime();
                 for (Market market : sim.markets) {
@@ -131,8 +150,10 @@ public final class ParallelRunnerMT extends Runner {
 
             }
         }
-        if (isMaster && withPrint) {
-//			sim.endprint(sessionName, iterationSteps); // FIXME
+        if (isMaster && s.withPrint) {
+			output.endprint(out, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
+            output.postProcess(out, SimulationStage.WITH_PRINT_END_SESSION, out.map);
+            out.map.clear();
         }
     }
 
@@ -155,10 +176,39 @@ public final class ParallelRunnerMT extends Runner {
         });
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void run(long seed) {
-        // TODO Auto-generated method stub
-        // The main simulation procedure should be written here
+        long TIME_INIT = System.nanoTime();
+        ParallelOutputCollector out = new ParallelOutputCollector();
+        
+        sim = factory.makeNewSimulation(seed);
+        
+        long TIME_THE_BEGINNING = System.nanoTime();
+        
+        output.beginSimulation(out, sim.markets, sim.agents);
+        output.postProcess(out, SimulationStage.BEGIN_SIMULATION, out.map);
+        out.map.clear();
+        
+        
+        for (Session session : sim.sessions) {
+            session.print();
+            sim.sessionEvents = factory.createEventsForASession(session, sim);
+            output.beginSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
+            output.postProcess(out, SimulationStage.BEGIN_SESSION, out.map);
+            out.map.clear();
+            iterateMarketUpdates(out, session, sim.fundamentals);
+            output.endSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
+            output.postProcess(out, SimulationStage.END_SESSION, out.map);
+            out.map.clear();
+        }
+        output.endSimulation(out, sim.markets, sim.agents);
+        output.postProcess(out, SimulationStage.END_SIMULATION, out.map);
+        out.map.clear();
+
+        long TIME_THE_END = System.nanoTime();
+        System.out.println("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
+        System.out.println("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
     }
 
     void submitOrders(long iterStep, Bag<List<Order>> bag) {
@@ -183,7 +233,6 @@ public final class ParallelRunnerMT extends Runner {
         throw new Error("should not called");
     }
 
-//	@Override
 //	public void run(String[] args) {
 //
 //		if (args.length < 1) {
@@ -201,7 +250,7 @@ public final class ParallelRunnerMT extends Runner {
 //		System.out.println("#HIFREQ_SUBMIT_RATE=" + Runner.HIFREQ_SUBMIT_RATE);
 //
 //		long TIME_THE_BEGINNING = System.nanoTime();
-//
+
 //		Map<String, Object> GLOBAL = new LinkedHashMap<String, Object>();
 //		sim.GLOBAL = GLOBAL;
 //		JSON.Value CONFIG = JSON.parse(new File(args[0]));
@@ -211,7 +260,7 @@ public final class ParallelRunnerMT extends Runner {
 //		Random RANDOM = new Random(seed);
 //		sim.RANDOM = RANDOM;
 //		System.out.println("# Random.seed " + seed);
-//
+
 //		// ////// MARKETS INSTANTIATION ////////
 //		List<Market> markets = sim.createAllMarkets(CONFIG.get("simulation").get("markets"));
 //		List<LongRange> mrange = new ArrayList<LongRange>();
@@ -219,7 +268,7 @@ public final class ParallelRunnerMT extends Runner {
 //		sim.marketName2Ranges.put("markets", mrange);
 //
 //		System.out.println("# #(markets) " + markets.size());
-//
+
 //		// ////// AGENTS INSTANTIATION ////////
 //		AllocManager.Centric<Agent> dm = new AllocManager.Centric<Agent>();
 //		sim.createAllAgents(CONFIG.get("simulation").get("agents"), dm);
@@ -227,24 +276,23 @@ public final class ParallelRunnerMT extends Runner {
 //		// TODO tmp hack
 //		this.cAgents = new ChunkedList<>();
 //		cAgents.add(dm.getChunk());
-//
-//
+
+
 //		// ////// MULTIVARIATE GEOMETRIC BROWNIAN ////////
-//
 //		Fundamentals fundamentals = sim.createFundamentals(markets,
 //				CONFIG.get("simulation").getOrElse("fundamentalCorrelations", "{}"));
 //		sim.updateFundamentals(fundamentals);
 //		GLOBAL.put("fundamentals", fundamentals);
-//
-//		// ////// SERIAL/PARALLEL ENV SETUP ////////
-//
+
+		// ////// SERIAL/PARALLEL ENV SETUP ////////
+
 //		setupEnv(markets, dm.getBody());
-//
-//		// ////// MAIN SIMULATION PROCEDURE ////////
-//
+
+		// ////// MAIN SIMULATION PROCEDURE ////////
+
 //		sim.beginSimulation();
 //
-//		JSON.Value sessions = CONFIG.get("simulation").get("sessions");
+//		JSON.Value sessions = null; // CONFIG.get("simulation").get("sessions");
 //		for (long i = 0; i < sessions.size(); i++) {
 //			JSON.Value json = sessions.get(i);
 //			String sessionName = json.get("sessionName").toString();

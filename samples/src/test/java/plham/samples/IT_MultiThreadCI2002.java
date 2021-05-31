@@ -1,10 +1,7 @@
 package plham.samples;
 
-import org.junit.Ignore;
-
 import plham.samples.multiThread.MultiThreadCI2002;
 
-@Ignore
 public class IT_MultiThreadCI2002 extends PlhamOutputTester {
 
 	final static String CONFIG = "src/test/resources/CI2002/config.json";

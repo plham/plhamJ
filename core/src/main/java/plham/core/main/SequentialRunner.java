@@ -27,7 +27,7 @@ public class SequentialRunner extends Runner implements Serializable {
      * @author Patrick Finnerty
      *
      */
-    public class SequentialOutput implements OutputCollector {
+    public static class SequentialOutput implements OutputCollector {
 
         HashMap<String, List<Object>> map = new HashMap<>();
         
