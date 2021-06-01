@@ -1,11 +1,17 @@
 package plham.samples;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import plham.core.main.ParallelRunnerMT;
 import plham.samples.multiThread.MultiThreadCI2002;
 
+@RunWith(Parameterized.class)
 public class IT_MultiThreadCI2002 extends PlhamOutputTester {
 
 	final static String CONFIG = "src/test/resources/CI2002/config.json";
@@ -14,8 +20,11 @@ public class IT_MultiThreadCI2002 extends PlhamOutputTester {
 
 	final static String SEED = "100";
 
-	public IT_MultiThreadCI2002() {
+	final String NB_THREADS;
+	
+	public IT_MultiThreadCI2002(String parallelism) {
 		super(MultiThreadCI2002.class, CONFIG, SEED, EXPECTED_OUTPUT);
+		NB_THREADS = parallelism;
 	}
 	
 	/**
@@ -23,37 +32,17 @@ public class IT_MultiThreadCI2002 extends PlhamOutputTester {
 	 * the multithreaded runner operates.
 	 */
 	@Before
-	public void before() {
-	    System.clearProperty(ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY);
+	public void setupEnvironment() {
+	    System.setProperty(ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY, NB_THREADS);
 	}
 	
-	/**
-	 * Tests the multithreaded CI2002 program with a single thread
-	 * @throws Exception is thrown as part of this test
-	 */
-	@Test
-	public void test1Thread() throws Exception {
-	    System.setProperty(ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY, "1");
-	    super.defaultTest();
+	@Parameters(name="Thread count: {0}")
+	public static Collection<Object[]> constructorParameters() {
+	    return Arrays.asList(new Object [][]{
+	        {"1"},
+	        {"2"},
+	        {"4"}
+	    });
 	}
 	
-	/**
-     * Tests the multithreaded CI2002 program with 2 threads
-     * @throws Exception is thrown as part of this test
-     */
-	@Test
-    public void test2Threads() throws Exception {
-        System.setProperty(ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY, "2");
-        super.defaultTest();
-    }
-    
-    /**
-     * Tests the multithreaded CI2002 program with 4 threads
-     * @throws Exception is thrown as part of this test
-     */
-	@Test
-    public void test4Thread() throws Exception {
-        System.setProperty(ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY, "4");
-        super.defaultTest();
-    }
 }
