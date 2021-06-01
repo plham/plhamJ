@@ -17,7 +17,7 @@ public class MultiThreadCI2002 {
         } else {
             seed = new Random().nextLong(Long.MAX_VALUE / 2); // MEMO: main()
         }
-		
+		System.err.println("# Running with seed: " + seed);
 		final ParallelRunnerMT runner = new ParallelRunnerMT(sim, factory);
 		runner.run(seed);
 	}

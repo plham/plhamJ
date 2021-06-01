@@ -45,6 +45,10 @@ public abstract class PlhamOutputTester {
 		removeComments(obtainedLines);
 		removeComments(expectedLines);
 
+//		for (String line : obtainedLines) {
+//		    System.out.println(line);
+//		}
+		
 		boolean sameNumberOfLines = expectedLines.size() == obtainedLines.size();
 		Iterator<String> expectedIt = expectedLines.iterator();
 		Iterator<String> obtainedIt = obtainedLines.iterator();
@@ -101,7 +105,6 @@ public abstract class PlhamOutputTester {
 	 *                           output for the specified program
 	 */
 	public PlhamOutputTester(Class<?> mainClass, String config, String seed, String expectedFileOutput) {
-		// TODO Auto-generated constructor stub
 		main = mainClass;
 		args = new String[2];
 		args[0] = config;
@@ -140,14 +143,15 @@ public abstract class PlhamOutputTester {
 	 *                                   file in which the expected output resides.
 	 */
 	@Test
-	public void test() throws NoSuchMethodException, SecurityException, IllegalAccessException,
+	public void defaultTest() throws NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, IOException {
 		FileOutputStream output = new FileOutputStream(temporaryOutput);
 		Method m = main.getMethod("main", String[].class);
+		PrintStream stdOut = System.out;
 		System.setOut(new PrintStream(output));
 		Object[] arguments = { args };
 		m.invoke(null, arguments); // Call the main method
-		System.setOut(System.out);
+		System.setOut(stdOut);
 
 		output.flush();
 		output.close();

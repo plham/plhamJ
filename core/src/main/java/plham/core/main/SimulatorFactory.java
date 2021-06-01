@@ -677,8 +677,8 @@ public class SimulatorFactory {
         sim.marketName2Ranges.put("markets", mrange);
 
         // Agent initialization
-        AllocManager.Centric<Agent> dm = new AllocManager.Centric<>();
-        createAllAgents(CONFIG.get("simulation").get("agents"), dm);
+        sim.dm = new AllocManager.Centric<>();
+        createAllAgents(CONFIG.get("simulation").get("agents"), sim.dm);
 //		sim.GLOBAL.put("agents", dm.getBody());
 
         // Fundamentals
@@ -688,7 +688,7 @@ public class SimulatorFactory {
 //		sim.GLOBAL.put("fundamentals", fundamentals);
 
         // Small correction to separate Agents and HighFrequencyAgents
-        setupEnv(sim.markets, dm.getBody());
+        setupEnv(sim.markets, sim.dm.getBody());
 
         // Parse all the sessions one by one
         sim.sessions = new ArrayList<>();

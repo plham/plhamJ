@@ -11,6 +11,7 @@ import plham.core.Event;
 import plham.core.Fundamentals;
 import plham.core.IndexMarket;
 import plham.core.Market;
+import plham.core.util.AllocManager;
 import plham.core.util.Random;
 
 public class Simulator {
@@ -67,6 +68,9 @@ public class Simulator {
 
     public Fundamentals fundamentals;
 
+    // Allocation manager for the Agents
+    AllocManager.Centric<Agent> dm;
+    
     public Simulator() {
     }
 
