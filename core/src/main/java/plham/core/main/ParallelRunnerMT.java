@@ -64,7 +64,7 @@ public final class ParallelRunnerMT extends Runner {
     private static final long serialVersionUID = -8642146572725786897L;
     
     public static final String PARALLEL_RUNNER_THREAD_PROPERTY = "parallelrunnerthreads";
-    public static final String DEFAULT_THREAD_COUNT = "2";
+    public static final String DEFAULT_THREAD_COUNT = "1";
 
     /**
      * Utility method which checks how many threads this runner should run with

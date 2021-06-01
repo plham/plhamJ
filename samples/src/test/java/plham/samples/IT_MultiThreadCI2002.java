@@ -1,5 +1,6 @@
 package plham.samples;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import plham.core.main.ParallelRunnerMT;
@@ -15,6 +16,15 @@ public class IT_MultiThreadCI2002 extends PlhamOutputTester {
 
 	public IT_MultiThreadCI2002() {
 		super(MultiThreadCI2002.class, CONFIG, SEED, EXPECTED_OUTPUT);
+	}
+	
+	/**
+	 * Clear the potential "old value" of the property which determines with how many threads
+	 * the multithreaded runner operates.
+	 */
+	@Before
+	public void before() {
+	    System.clearProperty(ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY);
 	}
 	
 	/**
