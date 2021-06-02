@@ -5,9 +5,12 @@ import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
 import plham.samples.CI2002.CI2002Main;
 
-public class PriceLimitMain {
+public class PriceLimitMain extends CI2002Main {
 
-	public static void main(String[] args) {
+	/** Serial Version UID */
+    private static final long serialVersionUID = -3803161130329252082L;
+
+    public static void main(String[] args) {
 		try {
 			final CI2002Main sim = new CI2002Main();
 			SimulatorFactory factory = new SimulatorFactory(args[0]);

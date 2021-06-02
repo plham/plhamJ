@@ -29,7 +29,7 @@ import org.junit.Test;
 public abstract class PlhamOutputTester {
 
 	/**
-	 * Helper method in charge of comparing the excpected output with the output
+	 * Helper method in charge of comparing the expected output with the output
 	 * received
 	 *
 	 * @param expectedOutputFile file containing the expected output
@@ -143,7 +143,7 @@ public abstract class PlhamOutputTester {
 	 *                                   file in which the expected output resides.
 	 */
 	@Test
-	public void defaultTest() throws NoSuchMethodException, SecurityException, IllegalAccessException,
+	public void checkProgramOutput() throws NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, IOException {
 		FileOutputStream output = new FileOutputStream(temporaryOutput);
 		Method m = main.getMethod("main", String[].class);
