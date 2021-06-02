@@ -62,7 +62,7 @@ public final class ParallelRunnerMT extends Runner {
     }
 
     private static final long serialVersionUID = -8642146572725786897L;
-    
+
     public static final String PARALLEL_RUNNER_THREAD_PROPERTY = "parallelrunnerthreads";
     public static final String DEFAULT_THREAD_COUNT = "1";
 
@@ -72,14 +72,14 @@ public final class ParallelRunnerMT extends Runner {
      * @return the level of parallelism desired
      */
     private static int initializeNThreads() {
-//        String NTHREADS_ENV = System.getenv("NTHREADS");
-//        if (NTHREADS_ENV != null) {
-//            try {
-//                return Integer.parseInt(NTHREADS_ENV);
-//            } catch (RuntimeException e) {
-//                System.err.println("[Env: NTHREADS] " + NTHREADS_ENV + " is not integer (parse error).");
-//            }
-//        } else {
+        //        String NTHREADS_ENV = System.getenv("NTHREADS");
+        //        if (NTHREADS_ENV != null) {
+        //            try {
+        //                return Integer.parseInt(NTHREADS_ENV);
+        //            } catch (RuntimeException e) {
+        //                System.err.println("[Env: NTHREADS] " + NTHREADS_ENV + " is not integer (parse error).");
+        //            }
+        //        } else {
         return Integer.parseInt(System.getProperty(PARALLEL_RUNNER_THREAD_PROPERTY, DEFAULT_THREAD_COUNT));
     }
 
@@ -148,11 +148,11 @@ public final class ParallelRunnerMT extends Runner {
                 }
                 long t4 = System.nanoTime();
                 long end = System.nanoTime();
-//                System.out.println("CYCLE upMarket: " + ((t1 - t0) * 1e-9));
-//                System.out.println("CYCLE print: " + ((t2 - t1) * 1e-9));
-//                System.out.println("CYCLE triEvent: " + ((t3 - t2) * 1e-9));
-//                System.out.println("CYCLE upTime: " + ((t4 - t3) * 1e-9));
-//                System.out.println("CYCLE all" + ((end - begin) * 1e-9));
+                //                System.out.println("CYCLE upMarket: " + ((t1 - t0) * 1e-9));
+                //                System.out.println("CYCLE print: " + ((t2 - t1) * 1e-9));
+                //                System.out.println("CYCLE triEvent: " + ((t3 - t2) * 1e-9));
+                //                System.out.println("CYCLE upTime: " + ((t4 - t3) * 1e-9));
+                //                System.out.println("CYCLE all" + ((end - begin) * 1e-9));
 
             }
         }
@@ -350,10 +350,10 @@ public final class ParallelRunnerMT extends Runner {
         long t0 = System.nanoTime();
         submitOrders(id, bag);
         long t1 = System.nanoTime();
-//        System.out.println("# CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
+        //        System.out.println("# CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
         handleOrders(bag.convertToList(), maxHifreqOrders);
         long t2 = System.nanoTime();
-//        System.out.println("# CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
+        //        System.out.println("# CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
         updateAgents(step);
     }
 
@@ -418,5 +418,80 @@ public final class ParallelRunnerMT extends Runner {
             System.err.println("# handle orders took " + (endTime - beginTime));
         }
         return allOrders;
+    }
+
+    /**
+     * Launches a simulation with the specified output, JSON configuration, and seed using the multithreaded
+     * runner.
+     * Arguments are:
+     * <ol>
+     * <li>Output class (defines the outputs to extract from the simulation)
+     * <li>JSON configuration file
+     * <li>seed
+     * @param args program arguments
+     */
+    public static void main(String [] args) {
+        if (args.length < 3) {
+            System.err.println("Program arguments for ParallelRunnerMT:");
+            System.err.println("\tOutput class (defines the outputs to extract from the simulation)");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed");
+            System.err.println("\tparallelism level (optional)");
+        }
+
+        String outputClassName = args[0];
+        String JsonConfigurationFile = args[1];
+        String seedArg = args[2];
+
+        SimulationOutput simulationOutput = null;
+
+        try {
+            Class<?> outputClass = Class.forName(outputClassName);
+            simulationOutput = (SimulationOutput) outputClass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            System.err.println("Could not create an instance of outputClassName");
+            e.printStackTrace();
+            return;
+        } catch (ClassNotFoundException e) {
+            System.err.println("Could not find class " + outputClassName);
+            System.err.println("Check you classpath and for any typo");
+            e.printStackTrace();
+            return;
+        }
+        
+        SimulatorFactory factory;
+        
+        try {
+            factory = new SimulatorFactory(JsonConfigurationFile);
+        } catch (Exception e) {
+            System.err.println("Problem encountered when attemting to open file " + JsonConfigurationFile);
+            e.printStackTrace();
+            return;
+        }
+        
+        long seed;
+        try {
+            seed = Long.parseLong(seedArg);
+        } catch (NumberFormatException e) {
+            System.err.println("Could not parse the seed " + seedArg);
+            e.printStackTrace();
+            return;
+        }
+        
+        ParallelRunnerMT runner; 
+        
+        try {
+            if (3 < args.length) {
+                runner = new ParallelRunnerMT(simulationOutput, factory, Integer.parseInt(args[3]));
+            } else {
+                runner = new ParallelRunnerMT(simulationOutput, factory);
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Failed to parse the parallelism level to use for the ParallelRunnerMT");
+            e.printStackTrace();
+            return;
+        }
+        
+        runner.run(seed);
     }
 }
