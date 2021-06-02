@@ -1,48 +1,73 @@
 package plham.samples;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import plham.core.main.ParallelRunnerMT;
-import plham.samples.multiThread.MultiThreadCI2002;
+import plham.samples.CI2002.CI2002Main;
+import plham.samples.CI2002.NewCI2002Main;
+import plham.samples.DarkPool.DarkPoolMain;
+import plham.samples.FatFinger.FatFingerMain;
+import plham.samples.MarketShare.MarketShareMain;
+import plham.samples.PriceLimit.PriceLimitMain;
+import plham.samples.ShockTransfer.ShockTransferMain;
+import plham.samples.TradingHalt.TradingHaltMain;
 
 @RunWith(Parameterized.class)
 public class IT_MultiThreadCI2002 extends PlhamOutputTester {
-
-	final static String CONFIG = "src/test/resources/CI2002/config.json";
-
-	final static String EXPECTED_OUTPUT = "src/test/resources/MultithreadedOutputs/CI2002.txt";
-
-	final static String SEED = "100";
-
-	final String NB_THREADS;
 	
-	public IT_MultiThreadCI2002(String parallelism) {
-		super(MultiThreadCI2002.class, CONFIG, SEED, EXPECTED_OUTPUT);
-		NB_THREADS = parallelism;
+	public IT_MultiThreadCI2002(String testName, Class<?> outputClass, String jsonConfig, String seed, String expectedOutput, String parallelism) {
+		super(ParallelRunnerMT.class, expectedOutput, outputClass.getCanonicalName(), jsonConfig, seed, parallelism);
 	}
 	
-	/**
-	 * Clear the potential "old value" of the property which determines with how many threads
-	 * the multithreaded runner operates.
-	 */
-	@Before
-	public void setupEnvironment() {
-	    System.setProperty(ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY, NB_THREADS);
-	}
-	
-	@Parameters(name="Thread count: {0}")
+	@Parameters(name="{0} with {5} threads")
 	public static Collection<Object[]> constructorParameters() {
-	    return Arrays.asList(new Object [][]{
-	        {"1"},
-	        {"2"},
-	        {"4"}
+	    // in the 2D array below are the configurations for each sample program
+	    Collection<Object[]> parameters = Arrays.asList(new Object [][]{
+	        /* SimulatorOutput,                JSON configuration file,  SEED,        expected output */
+            {"CI2002", CI2002Main.class, "src/test/resources/CI2002/config.json", "100", "src/test/resources/MultithreadedOutputs/CI2002.txt"},
+            {"New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100", "src/test/resources/MultithreadedOutputs/CI2002.txt"},
+            {"CancelTest", CI2002Main.class, "src/test/resources/CancelTest/config.json", "100", "src/test/resources/MultithreadedOutputs/CancelTest.txt"},
+            {"MarketShare", MarketShareMain.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
+            {"FatTail", CI2002Main.class, "src/test/resources/FatTail/config.json", "100", "src/test/resources/MultithreadedOutputs/FatTail.txt"},
+            {"TradingHalt", TradingHaltMain.class, "src/test/resources/TradingHalt/config.json", "100", "src/test/resources/MultithreadedOutputs/TradingHalt.txt"},
+            {"ShockTransfer", ShockTransferMain.class, "src/test/resources/ShockTransfer/config.json", "100", "src/test/resources/MultithreadedOutputs/ShockTransfer.txt"},
+            {"PriceLimit", PriceLimitMain.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
+            {"FatFinger", FatFingerMain.class, "src/test/resources/FatFinger/config.json", "100", "src/test/resources/MultithreadedOutputs/FatFinger.txt"},
+            {"DarkPool", DarkPoolMain.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
+        });
+	    
+	    // We create 3 configurations per sample, 
+	    // - 1 thread 
+	    // - 2 threads 
+	    // - 4 threads
+	    Collection<Object[]> toReturn = new ArrayList<>(parameters.size()*3);
+	    parameters.forEach(a -> {
+	        Object [] thread1 = Arrays.copyOf(a, a.length + 1);
+	        Object [] thread2 = Arrays.copyOf(a, a.length + 1);
+	        Object [] thread4 = Arrays.copyOf(a, a.length + 1);
+	        
+	        thread1[a.length] = "1";
+	        thread2[a.length] = "2";
+	        thread4[a.length] = "4";
+	        
+	        toReturn.add(thread1);
+	        toReturn.add(thread2);
+	        toReturn.add(thread4);
 	    });
+	    
+	    return toReturn;
 	}
 	
+	
+	@BeforeClass
+	public static void beforeClass() {
+	    System.setProperty(PLHAMOUTPUTTEST_CREATE_OUTPUT, "true");
+	}
 }

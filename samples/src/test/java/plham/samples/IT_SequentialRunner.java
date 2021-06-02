@@ -22,7 +22,7 @@ import plham.samples.TradingHalt.TradingHaltMain;
 public class IT_SequentialRunner extends PlhamOutputTester {
 
     public IT_SequentialRunner(Class<?> mainClass, String config, String seed, String expectedOutput) {
-        super(mainClass, config, seed, expectedOutput);
+        super(mainClass, expectedOutput, config, seed);
     }
     
     @Parameters(name="{0}")

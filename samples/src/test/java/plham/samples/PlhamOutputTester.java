@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -28,7 +29,9 @@ import org.junit.Test;
  */
 public abstract class PlhamOutputTester {
 
-	/**
+	public static final String PLHAMOUTPUTTEST_CREATE_OUTPUT = "plhamoutputtest.createOutput";
+
+    /**
 	 * Helper method in charge of comparing the expected output with the output
 	 * received
 	 *
@@ -38,11 +41,21 @@ public abstract class PlhamOutputTester {
 	 * @throws IOException if thrown while attempting to read/parse files
 	 */
 	private static void compareOutputFile(File expectedOutputFile, File temporaryOutput) throws IOException {
-		// Compare the ouptuts line by line
-		List<String> expectedLines = FileUtils.readLines(expectedOutputFile);
 		List<String> obtainedLines = FileUtils.readLines(temporaryOutput);
-
 		removeComments(obtainedLines);
+		
+		List<String> expectedLines = null;
+        try {
+            expectedLines = FileUtils.readLines(expectedOutputFile);
+        } catch (FileNotFoundException e) {
+            // If the "createOutput" option is activated, write the "expected output file"
+            if (Boolean.parseBoolean(System.getProperty(PLHAMOUTPUTTEST_CREATE_OUTPUT, "false"))) {
+                FileUtils.writeLines(expectedOutputFile, obtainedLines);
+                fail("\"Expected Output\" file created, run this test again to make sure the program output is the same");
+            } else {
+                fail("Problem when trying to read contents from file " + expectedOutputFile); 
+            }
+        }
 		removeComments(expectedLines);
 
 //		for (String line : obtainedLines) {
@@ -104,11 +117,9 @@ public abstract class PlhamOutputTester {
 	 * @param expectedFileOutput the path to the file which contains the expected
 	 *                           output for the specified program
 	 */
-	public PlhamOutputTester(Class<?> mainClass, String config, String seed, String expectedFileOutput) {
+	public PlhamOutputTester(Class<?> mainClass, String expectedFileOutput, String ... arguments) {
 		main = mainClass;
-		args = new String[2];
-		args[0] = config;
-		args[1] = seed;
+		args = arguments;
 		expectedOutput = expectedFileOutput;
 	}
 
@@ -142,7 +153,7 @@ public abstract class PlhamOutputTester {
 	 *                                   the execution and comparing it with the
 	 *                                   file in which the expected output resides.
 	 */
-	@Test
+	@Test(timeout=30000)
 	public void checkProgramOutput() throws NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, IOException {
 		FileOutputStream output = new FileOutputStream(temporaryOutput);
