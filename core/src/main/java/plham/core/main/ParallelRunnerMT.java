@@ -479,7 +479,7 @@ public final class ParallelRunnerMT extends Runner {
             long priority = random.getNthLong(agentId);
             sorted.put(new Ox(priority, agentId, orderSet), orderSet);
         }
-        out.log("simRandom@myShuffle", sorted.keySet().toString());
+        out.log("# simRandom@myShuffle", sorted.keySet().toString());
         return sorted.values();
     }
 

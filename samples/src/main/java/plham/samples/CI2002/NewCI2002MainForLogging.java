@@ -1,7 +1,6 @@
 package plham.samples.CI2002;
 
 import plham.core.*;
-import plham.core.agent.FCNAgent;
 import plham.core.main.SequentialRunner;
 import plham.core.main.Simulator.Session;
 import plham.core.main.SimulatorFactory;

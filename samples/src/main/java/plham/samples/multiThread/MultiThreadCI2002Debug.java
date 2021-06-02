@@ -3,7 +3,6 @@ package plham.samples.multiThread;
 import plham.core.main.ParallelRunnerMT;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
-import plham.samples.CI2002.NewCI2002Main;
 import plham.samples.CI2002.NewCI2002MainForLogging;
 
 public class MultiThreadCI2002Debug {
