@@ -172,4 +172,11 @@ public class FCNAgent extends plham.core.Agent {
         }
         return orders;
     }
+    public String toString() {
+        return "Agent:"+id + "[rnd:" + random +",cw:" + chartWeight + ",fw:" + fundamentalWeight
+                + ",following:"+ isChartFollowing +
+                ", mtype: " + marginType + ", mrt:" + meanReversionTime +
+                ", ns:" + noiseScale + ", nw:" + noiseWeight + ", om:" + orderMargin +
+                ", tws:" + timeWindowSize + ", cash:" + cashAmount + "]";
+    }
 }

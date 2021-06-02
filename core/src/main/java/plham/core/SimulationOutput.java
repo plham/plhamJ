@@ -206,7 +206,17 @@ public class SimulationOutput implements Serializable {
      */
     public void sessionOutput(OutputCollector out, SimulationStage stage, Session s) {
     }
-    
+
+    /**
+     * Allows for information about order submission to be logged. By default does not log anything. Override this method to log information into the provided {@link OutputCollector}.
+     * @param out
+     * @param stage
+     * @param a
+     * @param orders
+     * @param markets
+     */
+    public void orderSubmissionOutput(OutputCollector out, SimulationStage stage, Agent a, List<Order> orders, List<Market> markets) {
+    }
     /**
      * Allows for outputs to be made based on information gathered from various objects participating in the computation
      * <p>
