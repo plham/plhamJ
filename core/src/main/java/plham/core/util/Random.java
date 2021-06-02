@@ -219,8 +219,22 @@ public final class Random {
         seed += gamma;
         return seed;
     }
-
+    public long getNthLong(long i) {
+        return mix64(seed + (i+1) * gamma);
+    }
     public Random split() {
         return new Random(mix64(nextSeed()), mixGamma(nextSeed()));
+    }
+
+    public Random copy() { return new Random(this.seed, this.gamma); }
+    public boolean equals(Object obj0) {
+        if(obj0 instanceof Random) {
+            Random obj = (Random) obj0;
+            return this.seed == obj.seed && this.gamma == obj.gamma;
+        }
+        return false;
+    }
+    public String toString() {
+        return "Random["+ seed +","+gamma+"]";
     }
 }

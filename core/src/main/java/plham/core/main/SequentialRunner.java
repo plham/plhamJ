@@ -51,7 +51,8 @@ public class SequentialRunner extends Runner implements Serializable {
         super(output, sim);
     }
 
-    public List<List<Order>> collectOrders(long MAX_NORMAL_ORDERS) {
+    public List<List<Order>> collectOrders(long MAX_NORMAL_ORDERS,
+                                           Session s, OutputCollector out) {
         Simulator env = super.sim;
         List<Market> markets = env.markets;
         List<Agent> agents = env.normalAgents;
@@ -69,6 +70,8 @@ public class SequentialRunner extends Runner implements Serializable {
                 break;
             }
             List<Order> orders = agent.submitOrders(markets);
+            if(s.withPrint)
+                output.orderSubmissionOutput(out, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
             if (orders.size() > 0) {
                 allOrders.add(orders);
                 k++;
@@ -163,7 +166,7 @@ public class SequentialRunner extends Runner implements Serializable {
             }
             // System.out.println("#hoge1-3:t="+t);
             if (s.withOrderPlacement) {
-                updateMarkets(s.maxNormalOrders, s.maxHighFreqOrders, t > 0);
+                updateMarkets(s.maxNormalOrders, s.maxHighFreqOrders, s, out);
             }
             // System.out.println("#hoge1-4");
             if (s.forDummyTimeseries) {
@@ -231,8 +234,9 @@ public class SequentialRunner extends Runner implements Serializable {
         System.out.println("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
     }
 
-    public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders, boolean diffPass) {
-        List<List<Order>> orders = collectOrders(maxNormalOrders);
+    public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders,
+                                           Session s, OutputCollector out) {
+        List<List<Order>> orders = collectOrders(maxNormalOrders, s, out);
         return handleOrders(orders, maxHifreqOrders);
     }
 }

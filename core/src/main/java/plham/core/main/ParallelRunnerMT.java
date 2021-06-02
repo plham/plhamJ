@@ -1,10 +1,11 @@
 package plham.core.main;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import cassia.util.JSON;
 import cassia.util.random.*;
+
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -26,12 +27,86 @@ import plham.core.SimulationOutput;
 @SuppressWarnings("unused")
 public final class ParallelRunnerMT extends Runner {
 
+    private ParallelOutputCollector out;
+
     /**
      * Temporary implementation for the multithreaded output collector. Support for parallel collection of program output is coming.
      * @author Patrick Finnerty
      *
      */
-    static class ParallelOutputCollector extends SequentialRunner.SequentialOutput{
+    public static class ParallelOutputCollector implements OutputCollector {
+        protected ConcurrentHashMap<String, List<Object>> map = new ConcurrentHashMap<>();
+        @Override
+        public void print(String message) {
+            System.out.println(message);
+        }
+        @Override
+        public void log(String topic, Object o) {
+            List<Object> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
+            listOfTopic.add(o);
+        }
+        public void clear(){
+            map.clear();
+        };
+    }
+
+    public static class ParallelOutputLogger extends ParallelOutputCollector {
+        LinkedList<ConcurrentHashMap<String,  List<Object>>> arch = new LinkedList<>();
+        @Override
+        public void clear() {
+            arch.add(map);
+            map = new ConcurrentHashMap<>();
+        }
+    }
+    public static class ParallelOutputChecker extends ParallelOutputCollector {
+        LinkedList<ConcurrentHashMap<String,  List<Object>>> arch = new LinkedList<>();
+        ConcurrentHashMap<String, List<Object>> omap;
+        public ParallelOutputChecker(ParallelOutputLogger base) {
+            this(base.arch);
+        }
+        public ParallelOutputChecker(LinkedList<ConcurrentHashMap<String, List<Object>>> arch) {
+            try {
+                this.arch = arch;
+                this.omap = arch.removeFirst();
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(0);
+            }
+        };
+        public void diffFound(String key, Object o1, List<Object> o2) {
+            System.err.println("OutputChecker found different entry for key" + key + ". new entry:" + o1 + ", prev entries:" + o2);
+        }
+        @Override
+        public void log(String topic, Object o) {
+            try {
+                super.log(topic, o);
+                List<Object> listOfTopic = omap.get(topic);
+                if (listOfTopic == null) diffFound(topic, o, null);
+                boolean flag = listOfTopic.remove(o);
+                if (!flag) diffFound(topic, o, listOfTopic);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(0);
+            }
+        }
+        @Override
+        public void clear() {
+            try {
+                super.clear();
+                for (String key : omap.keySet()) {
+                    List<Object> objs = omap.get(key);
+                    if (!objs.isEmpty()) diffFound(key, null, objs);
+                }
+                if (!arch.isEmpty()) {
+                    this.omap = arch.removeFirst();
+                } else {
+                    this.omap = new ConcurrentHashMap<>();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(0);
+            }
+        }
     }
 
     static class Step {
@@ -97,12 +172,19 @@ public final class ParallelRunnerMT extends Runner {
         super(sim, factory);
         NTHREADS = nthreads;
         pool = Executors.newFixedThreadPool(nthreads);
+        out = new ParallelOutputCollector();
         System.err.println(ParallelRunnerMT.class.getName() + " running with " + NTHREADS + " threads");
+    }
+    public void setLogger(ParallelOutputCollector out) {
+        this.out = out;
     }
 
     private void debug(Object o) {
         System.err.println(o);
     }
+
+
+
 
     @SuppressWarnings("deprecation")
     public void iterateMarketUpdates(ParallelOutputCollector out, Session s, Fundamentals fundamentals) {
@@ -122,7 +204,7 @@ public final class ParallelRunnerMT extends Runner {
             if (isMaster)
                 iterSetup(fundamentals);
             if (s.withOrderPlacement) {
-                updateMarketsInBatch(id, step, s.maxHighFreqOrders);
+                updateMarketsInBatch(id, step, s.maxHighFreqOrders, s, output);
             }
             if (isMaster) {
                 long t0 = System.nanoTime();
@@ -135,7 +217,7 @@ public final class ParallelRunnerMT extends Runner {
                 if (s.withPrint) {
                     output.print(out, s, sim.markets, sim.agents, sim.sessionEvents);
                     output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION, out.map);
-                    out.map.clear();
+                    out.clear();
                 }
                 long t2 = System.nanoTime();
                 for (Market market : sim.markets) {
@@ -159,7 +241,7 @@ public final class ParallelRunnerMT extends Runner {
         if (isMaster && s.withPrint) {
             output.endprint(out, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
             output.postProcess(out, SimulationStage.WITH_PRINT_END_SESSION, out.map);
-            out.map.clear();
+            out.clear();
         }
     }
 
@@ -186,7 +268,7 @@ public final class ParallelRunnerMT extends Runner {
     @Override
     public void run(long seed) {
         long TIME_INIT = System.nanoTime();
-        ParallelOutputCollector out = new ParallelOutputCollector();
+        ParallelOutputCollector out = this.out;
 
         sim = factory.makeNewSimulation(seed);
         AllocManager.Centric<Agent> dm = new AllocManager.Centric<Agent>();
@@ -197,7 +279,7 @@ public final class ParallelRunnerMT extends Runner {
 
         output.beginSimulation(out, sim.markets, sim.agents);
         output.postProcess(out, SimulationStage.BEGIN_SIMULATION, out.map);
-        out.map.clear();
+        out.clear();
 
 
         for (Session session : sim.sessions) {
@@ -205,15 +287,15 @@ public final class ParallelRunnerMT extends Runner {
             sim.sessionEvents = factory.createEventsForASession(session, sim);
             output.beginSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
             output.postProcess(out, SimulationStage.BEGIN_SESSION, out.map);
-            out.map.clear();
+            out.clear();
             iterateMarketUpdates(out, session, sim.fundamentals);
             output.endSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
             output.postProcess(out, SimulationStage.END_SESSION, out.map);
-            out.map.clear();
+            out.clear();
         }
         output.endSimulation(out, sim.markets, sim.agents);
         output.postProcess(out, SimulationStage.END_SIMULATION, out.map);
-        out.map.clear();
+        out.clear();
 
         long TIME_THE_END = System.nanoTime();
         System.out.println("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
@@ -222,15 +304,24 @@ public final class ParallelRunnerMT extends Runner {
     }
 
     @SuppressWarnings("deprecation")
-    void submitOrders(long iterStep, Bag<List<Order>> bag) {
+    void submitOrders(long iterStep, Bag<List<Order>> bag,
+                      Session s, SimulationOutput output) {
         List<Market> markets = sim.markets;
-        cAgents.forEach(pool, NTHREADS,
-                (Agent a, Consumer<? super List<Order>> receiver) -> {
-                    List<Order> orders = a.submitOrders(markets);
-                    if (!orders.isEmpty()) {
-                        receiver.accept(orders);
-                    }
-                }, bag);
+        try {
+            cAgents.forEach(pool, NTHREADS,
+                    (Agent a, Consumer<? super List<Order>> receiver) -> {
+                        List<Order> orders = a.submitOrders(markets);
+                        if (s.withPrint)
+                            output.orderSubmissionOutput(out, SimulationStage.WITH_PRINT_DURING_SESSION, a, orders, markets);
+                        if (!orders.isEmpty()) {
+                            receiver.accept(orders);
+                        }
+                    }, bag);
+        } catch(Exception e) {
+            e.printStackTrace(System.out);
+            System.out.println("-----cause of errors--------------");
+            e.getCause().printStackTrace(System.out);
+        }
     }
 
     void updateAgents(Step step) {
@@ -238,10 +329,6 @@ public final class ParallelRunnerMT extends Runner {
             List<List<AgentUpdate>> updatesHistory = m.agentUpdates;
             assert updatesHistory.get(updatesHistory.size() - 1).isEmpty();
         }
-    }
-
-    private List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders, boolean diffPass) {
-        throw new Error("should not called");
     }
 
     //	public void run(String[] args) {
@@ -345,11 +432,12 @@ public final class ParallelRunnerMT extends Runner {
     //		pool.shutdown();
     //	}
 
-    public void updateMarketsInBatch(long id, Step step, long maxHifreqOrders) {
+    public void updateMarketsInBatch(long id, Step step, long maxHifreqOrders,
+                                     Session s, SimulationOutput output) {
         Bag<List<Order>> bag = new Bag<>();
         // TODO tuning
         long t0 = System.nanoTime();
-        submitOrders(id, bag);
+        submitOrders(id, bag, s, output);
         long t1 = System.nanoTime();
         //        System.out.println("# CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
         handleOrders(bag.convertToList(), maxHifreqOrders);
@@ -357,6 +445,45 @@ public final class ParallelRunnerMT extends Runner {
         //        System.out.println("# CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
         updateAgents(step);
     }
+
+    // tmporal impl, maybe we should apply this randomize during Bag gathering
+    static class Ox implements Comparable<Ox> {
+        long priority;
+
+        public Ox(long priority, long agentid, List<Order> orders) {
+            this.priority = priority;
+            this.agentid = agentid;
+            this.orders = orders;
+        }
+
+        long agentid;
+        List<Order> orders;
+
+        @Override
+        public int compareTo(Ox o) {
+            int result = Long.compare(priority, o.priority);
+            if(result==0) Long.compare(agentid, o.agentid);
+            return result;
+        }
+        @Override
+        public String toString() {
+            return " " + agentid;
+        }
+    }
+
+    private Collection<List<Order>> myShuffle(Random random, List<List<Order>> orders) {
+        TreeMap<Ox, List<Order>> sorted = new TreeMap<>();
+        for(List<Order> orderSet: orders) {
+            if (orderSet.isEmpty()) continue;
+            long agentId = orderSet.get(0).agentId;
+            long priority = random.getNthLong(agentId);
+            sorted.put(new Ox(priority, agentId, orderSet), orderSet);
+        }
+        out.log("simRandom@myShuffle", sorted.keySet().toString());
+        return sorted.values();
+    }
+
+
 
     /**
      * COPIED FROM SEQUENTIAL RUNNER
@@ -368,14 +495,28 @@ public final class ParallelRunnerMT extends Runner {
         long beginTime = System.nanoTime();
         List<List<Order>> allOrders = new ArrayList<>();
         List<Market> markets = sim.markets;
+//        StringBuffer buf0 = new StringBuffer();
+//        for (List<Order> someOrders : localOrders) {
+//            buf0.append(" "+someOrders.get(0).agentId);
+//        }
+//        out.log("localOrders", buf0.toString());
 
         Random random = sim.getRandom();
         Random tmpRandom = new Random(System.nanoTime());
         List<Agent> agents = sim.hifreqAgents;
         RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random, agents);
-        RandomPermutation<List<Order>> randomOrders = new RandomPermutation<>(random, localOrders);
+        //RandomPermutation<List<Order>> randomOrders = new RandomPermutation<>(random, localOrders);
+        //randomOrders.shuffle();
 
-        randomOrders.shuffle();
+        Collection<List<Order>> randomOrders = myShuffle(random, localOrders);
+
+        //out.log("simRandom@handleOrders", random.toString());
+
+//        StringBuffer buf = new StringBuffer();
+//        for (List<Order> someOrders : randomOrders) {
+//            buf.append(" "+someOrders.get(0).agentId);
+//        }
+//        out.log("handleOrdersAgent", buf.toString());
         for (List<Order> someOrders : randomOrders) {
             // This handles one order-list submitted by an agent per loop.
             // TODO: If needed, one-market one-order handling.
