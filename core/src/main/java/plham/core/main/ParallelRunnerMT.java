@@ -218,6 +218,7 @@ public final class ParallelRunnerMT extends Runner {
         long TIME_THE_END = System.nanoTime();
         System.out.println("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
         System.out.println("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
+        pool.shutdown();
     }
 
     @SuppressWarnings("deprecation")
