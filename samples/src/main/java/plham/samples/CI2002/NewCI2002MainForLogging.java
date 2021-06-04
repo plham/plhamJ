@@ -106,9 +106,10 @@ public class NewCI2002MainForLogging extends SimulationOutput {
     }
     
     @Override
-    public void postProcess(OutputCollector output, SimulationStage stage, Map<String, List<Object>> logs) {
+    public void postProcess(OutputCollector output, SimulationStage stage) {
         switch (stage) {
         case WITH_PRINT_DURING_SESSION:
+            Map<String,List<Object>> logs = output.getLogs();
             // Here we combine the session name with the state of each market in a single line
             // First remove the session name from the "logs" Map
             String sessionName = (String) logs.get("_SESSION_NAME_").get(0);

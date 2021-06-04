@@ -17,8 +17,8 @@ public abstract class Runner implements Serializable {
     private static final long serialVersionUID = 4487185718113921593L;
     public boolean _PROFILE = false;
 
-    SimulatorFactory factory;
-    Simulator sim;
+    transient SimulatorFactory factory;
+    transient Simulator sim;
     SimulationOutput output;
 
     public Runner(SimulationOutput out, SimulatorFactory f) {

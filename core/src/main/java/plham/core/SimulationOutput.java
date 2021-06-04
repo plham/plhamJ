@@ -43,7 +43,7 @@ public class SimulationOutput implements Serializable {
      * Method called at the beginning of a session. By default, does not print anything. Override this method if you
      * want to print some information at the beginning of a session.
      *
-     * @param sessionName the name of the current session
+     * @param session the current session
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
@@ -86,7 +86,7 @@ public class SimulationOutput implements Serializable {
      * @param markets the markets taking part in the computation
      * @param agents the agent taking part in the computation
      * @param sessionEvents the events that were part of this session, may be null
-     * @param iterationSteps the number of steps that have just run (for legacy outputs only)
+     * @param iterationStep the number of steps that have just run (for legacy outputs only)
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
@@ -112,7 +112,7 @@ public class SimulationOutput implements Serializable {
      * Method called at the end of a session. By default does not print anything. Override this method if you want to
      * print some information at the end of a session.
      *
-     * @param sessionName
+     * @param session
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
@@ -157,7 +157,7 @@ public class SimulationOutput implements Serializable {
      * 
      * @param out   object in which the various outputs need to be recorded
      * @param stage the current stage of the simulation
-     * @param a     agent taking part in the computation from which information may be logged
+     * @param e     agent taking part in the computation from which information may be logged
      */
     public void eventOutput(OutputCollector out, SimulationStage stage, Event e) {
     }
@@ -176,7 +176,7 @@ public class SimulationOutput implements Serializable {
      * called in sessions that have the "withPrint" option. By default does not print anything. Override this method to
      * make the desired outputs.
      *
-     * @param sessionName the name of the ongoing session
+     * @param session the ongoing session
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
@@ -224,10 +224,9 @@ public class SimulationOutput implements Serializable {
      * Override this method if you want to make outputs combining information from multiple participants in the simulation.
      * @param output the object into which the outputs to make about the simulation need to be registered
      * @param stage the stage of the simulation about which outputs are being made
-     * @param logs the map containing the entries registered using method {@link OutputCollector#log(String, Object)}
      */
-    public void postProcess(OutputCollector output, SimulationStage stage, Map<String, List<Object>> logs) {
-        for (Map.Entry<String, List<Object>> entry : logs.entrySet()) {
+    public void postProcess(OutputCollector output, SimulationStage stage) {
+        for (Map.Entry<String, List<Object>> entry : output.getLogs().entrySet()) {
             StringBuilder sb = new StringBuilder(entry.getKey() + " : ");
             for (Object o : entry.getValue()) {
                 sb.append(o.toString()+ " ");

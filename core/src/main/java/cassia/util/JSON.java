@@ -45,7 +45,8 @@ public class JSON implements Serializable {
     /**
      * A mapping inside a JSON file from a {@link String} to a {@link Value}
      */
-    public static final class Entry {
+    public static final class Entry implements Serializable {
+        private static final long serialVersionUID = -3779036329712130474L;
         String key;
         Value value;
 
@@ -63,7 +64,8 @@ public class JSON implements Serializable {
         }
     }
 
-    static class Reader {
+    static class Reader implements Serializable {
+        private static final long serialVersionUID = -7921714488726932920L;
         public int i;
         public String text;
 
@@ -85,7 +87,8 @@ public class JSON implements Serializable {
         }
     }
 
-    public static class Value {
+    public static class Value implements Serializable {
+        private static final long serialVersionUID = 4052324372079507843L;
         int i;
         Reader p;
         Object value; // String, List, or Map (never Boolean, Long, Double, etc)

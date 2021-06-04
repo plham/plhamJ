@@ -1,8 +1,8 @@
 package plham.core.main;
 
+import java.io.ByteArrayOutputStream;
 import java.util.*;
 
-import cassia.util.JSON;
 import cassia.util.random.*;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 
 import handist.collections.Bag;
 import handist.collections.ChunkedList;
+import handist.collections.dist.util.ObjectOutput;
 import plham.core.Agent;
 import plham.core.Fundamentals;
 import plham.core.Market;
@@ -48,6 +49,7 @@ public final class ParallelRunnerMT extends Runner {
         public void clear(){
             map.clear();
         };
+        public Map<String, List<Object>> getLogs() { return map; }
     }
 
     public static class ParallelOutputLogger extends ParallelOutputCollector {
@@ -216,7 +218,7 @@ public final class ParallelRunnerMT extends Runner {
                 long t1 = System.nanoTime();
                 if (s.withPrint) {
                     output.print(out, s, sim.markets, sim.agents, sim.sessionEvents);
-                    output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION, out.map);
+                    output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION);
                     out.clear();
                 }
                 long t2 = System.nanoTime();
@@ -240,7 +242,7 @@ public final class ParallelRunnerMT extends Runner {
         }
         if (isMaster && s.withPrint) {
             output.endprint(out, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
-            output.postProcess(out, SimulationStage.WITH_PRINT_END_SESSION, out.map);
+            output.postProcess(out, SimulationStage.WITH_PRINT_END_SESSION);
             out.clear();
         }
     }
@@ -278,7 +280,7 @@ public final class ParallelRunnerMT extends Runner {
         long TIME_THE_BEGINNING = System.nanoTime();
 
         output.beginSimulation(out, sim.markets, sim.agents);
-        output.postProcess(out, SimulationStage.BEGIN_SIMULATION, out.map);
+        output.postProcess(out, SimulationStage.BEGIN_SIMULATION);
         out.clear();
 
 
@@ -286,15 +288,15 @@ public final class ParallelRunnerMT extends Runner {
             session.print();
             sim.sessionEvents = factory.createEventsForASession(session, sim);
             output.beginSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
-            output.postProcess(out, SimulationStage.BEGIN_SESSION, out.map);
+            output.postProcess(out, SimulationStage.BEGIN_SESSION);
             out.clear();
             iterateMarketUpdates(out, session, sim.fundamentals);
             output.endSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
-            output.postProcess(out, SimulationStage.END_SESSION, out.map);
+            output.postProcess(out, SimulationStage.END_SESSION);
             out.clear();
         }
         output.endSimulation(out, sim.markets, sim.agents);
-        output.postProcess(out, SimulationStage.END_SIMULATION, out.map);
+        output.postProcess(out, SimulationStage.END_SIMULATION);
         out.clear();
 
         long TIME_THE_END = System.nanoTime();

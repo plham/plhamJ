@@ -1,11 +1,13 @@
 package plham.core.util;
 
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Ported from x10.util.Random
  */
-public final class Random {
+public final class Random implements Serializable {
+    private static final long serialVersionUID = -145083846754384274L;
     private static AtomicLong defaultGen = new AtomicLong(System.nanoTime());
     private static double DOUBLE_ULP = 1.0 / 9007199254740992L;
     private static float FLOAT_ULP = 1.0f / 16777216L;

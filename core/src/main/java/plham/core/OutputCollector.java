@@ -1,5 +1,8 @@
 package plham.core;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Interface supplied to programmers of {@link SimulationOutput}. The implementation of the methods is left to the
  * Runner (sequential, parallel, distributed) used.
@@ -22,4 +25,7 @@ public interface OutputCollector {
      * @param message the message to print
      */
     public void print(String message);
+
+    public Map<String, List<Object>> getLogs();
+    public void clear();
 }

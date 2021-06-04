@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import cassia.util.random.RandomPermutation;
 import plham.core.Agent;
@@ -35,7 +36,17 @@ public class SequentialRunner extends Runner implements Serializable {
         public void print(String message) {
             System.out.println(message);
         }
-        
+
+        @Override
+        public Map<String, List<Object>> getLogs() {
+            return map;
+        }
+
+        @Override
+        public void clear() {
+            map.clear();
+        }
+
         @Override
         public void log(String topic, Object o) {
             List<Object> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
@@ -177,7 +188,7 @@ public class SequentialRunner extends Runner implements Serializable {
             // System.out.println("#hoge1-5");
             if (s.withPrint) {
                 output.print(out, s, sim.markets, sim.agents, sim.sessionEvents);
-                output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION, out.map);
+                output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION);
                 out.map.clear();
             }
             // System.out.println("#hoge1-6");
@@ -193,7 +204,7 @@ public class SequentialRunner extends Runner implements Serializable {
         }
         if (s.withPrint) {
             output.endprint(out, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
-            output.postProcess(out, SimulationStage.WITH_PRINT_END_SESSION, out.map);
+            output.postProcess(out, SimulationStage.WITH_PRINT_END_SESSION);
             out.map.clear();
         }
     }
@@ -209,7 +220,7 @@ public class SequentialRunner extends Runner implements Serializable {
         long TIME_THE_BEGINNING = System.nanoTime();
 
         output.beginSimulation(out, sim.markets, sim.agents);
-        output.postProcess(out, SimulationStage.BEGIN_SIMULATION, out.map);
+        output.postProcess(out, SimulationStage.BEGIN_SIMULATION);
         out.map.clear();
 
         for (Session session : sim.sessions) {
@@ -217,16 +228,16 @@ public class SequentialRunner extends Runner implements Serializable {
 //			sim.GLOBAL.put("events", factory.createEventsForASession(session, sim));
             sim.sessionEvents = factory.createEventsForASession(session, sim);
             output.beginSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
-            output.postProcess(out, SimulationStage.BEGIN_SESSION, out.map);
+            output.postProcess(out, SimulationStage.BEGIN_SESSION);
             out.map.clear();
 //			iterateMarketUpdates(session, (Fundamentals) sim.GLOBAL.get("fundamentals"));
             iterateMarketUpdates(out, session, sim.fundamentals);
             output.endSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
-            output.postProcess(out, SimulationStage.END_SESSION, out.map);
+            output.postProcess(out, SimulationStage.END_SESSION);
             out.map.clear();
         }
         output.endSimulation(out, sim.markets, sim.agents);
-        output.postProcess(out, SimulationStage.END_SIMULATION, out.map);
+        output.postProcess(out, SimulationStage.END_SIMULATION);
         out.map.clear();
 
         long TIME_THE_END = System.nanoTime();

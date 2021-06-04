@@ -1,6 +1,7 @@
 package plham.core.main;
 
 import java.io.File;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -77,8 +78,14 @@ public class SimulatorFactory {
          *
          * @param f the file to parse
          */
+        public SimulationParser(File f) {
+            this(JSON.parse(f));
+        }
         public SimulationParser(String fileName) {
-            CONFIG = JSON.parse(new File(fileName));
+            this(new File(fileName));
+        }
+        public SimulationParser(JSON.Value json) {
+            CONFIG = json;
         }
 
         /**
@@ -255,6 +262,13 @@ public class SimulatorFactory {
         parser = new SimulationParser(configFilePath);
         parser.parseFile();
     }
+
+    public SimulatorFactory(JSON.Value config) throws Exception {
+        this();
+        parser = new SimulationParser(config);
+        parser.parseFile();
+    }
+
 
     public void addAgentGenerator(String name, AgentGenerator generator) {
         agentGenerators.put(name, generator);

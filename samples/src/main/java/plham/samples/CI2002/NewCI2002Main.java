@@ -62,14 +62,14 @@ public class NewCI2002Main extends SimulationOutput {
     }
 
     @Override
-    public void postProcess(OutputCollector output, SimulationStage stage, Map<String, List<Object>> logs) {
+    public void postProcess(OutputCollector output, SimulationStage stage) {
         switch (stage) {
         case WITH_PRINT_DURING_SESSION:
             // Here we combine the session name with the state of each market in a single line
             // First remove the session name from the "logs" Map
-            String sessionName = (String) logs.remove("_SESSION_NAME_").get(0);
+            String sessionName = (String) output.getLogs().remove("_SESSION_NAME_").get(0);
             // All remaining entries in the "logs" correspond to the markets taking part in the simulation
-            for (Map.Entry<String, List<Object>> lo : logs.entrySet()) {
+            for (Map.Entry<String, List<Object>> lo : output.getLogs().entrySet()) {
                 if (lo.getKey().equals("Market")) {
                     String marketSuffix = (String) lo.getValue().get(0);
                     output.print(sessionName + " " + marketSuffix);
