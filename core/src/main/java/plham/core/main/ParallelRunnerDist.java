@@ -730,5 +730,80 @@ public final class ParallelRunnerDist extends Runner {
         }
         return allOrders;
     }
+    
+    /**
+     * Launches a simulation with the specified output, JSON configuration, and seed using the
+     * distributed runner.
+     * Arguments are:
+     * <ol>
+     * <li>Output class (defines the outputs to extract from the simulation)
+     * <li>JSON configuration file
+     * <li>seed
+     * @param args program arguments
+     */
+    public static void main(String [] args) {
+        if (args.length < 3) {
+            System.err.println("Program arguments for ParallelRunnerMT:");
+            System.err.println("\tOutput class (defines the outputs to extract from the simulation)");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed");
+            System.err.println("\tparallelism level (optional)");
+        }
+
+        String outputClassName = args[0];
+        String JsonConfigurationFile = args[1];
+        String seedArg = args[2];
+
+        SimulationOutput simulationOutput = null;
+
+        try {
+            Class<?> outputClass = Class.forName(outputClassName);
+            simulationOutput = (SimulationOutput) outputClass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            System.err.println("Could not create an instance of outputClassName");
+            e.printStackTrace();
+            return;
+        } catch (ClassNotFoundException e) {
+            System.err.println("Could not find class " + outputClassName);
+            System.err.println("Check you classpath and for any typo");
+            e.printStackTrace();
+            return;
+        }
+        
+        SimulatorFactory factory;
+        
+        try {
+            factory = new SimulatorFactory(JsonConfigurationFile);
+        } catch (Exception e) {
+            System.err.println("Problem encountered when attemting to open file " + JsonConfigurationFile);
+            e.printStackTrace();
+            return;
+        }
+        
+        long seed;
+        try {
+            seed = Long.parseLong(seedArg);
+        } catch (NumberFormatException e) {
+            System.err.println("Could not parse the seed " + seedArg);
+            e.printStackTrace();
+            return;
+        }
+        
+        ParallelRunnerDist runner; 
+        
+        try {
+            if (3 < args.length) {
+                runner = new ParallelRunnerDist(simulationOutput, factory, Integer.parseInt(args[3]));
+            } else {
+                runner = new ParallelRunnerDist(simulationOutput, factory);
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Failed to parse the parallelism level to use for the ParallelRunnerMT");
+            e.printStackTrace();
+            return;
+        }
+        
+        runner.run(seed);
+    }
 
 }

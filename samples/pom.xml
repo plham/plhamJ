@@ -16,6 +16,12 @@
 			<artifactId>core</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>com.github.handist</groupId>
+			<artifactId>mpi-junit</artifactId>
+			<version>v1.2.1</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<name>Plham - samples</name>
 	<description>Sample simulations using the Plham financial market simulator. This module contains a number of initial market configurations. These are also used to check that the simulator also produces the expected result in a number of &quot;known&quot; situations.</description>

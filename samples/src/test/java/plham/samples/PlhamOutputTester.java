@@ -107,15 +107,9 @@ public abstract class PlhamOutputTester {
 
 	/**
 	 * Constructor for this class
-	 *
-	 * @param mainClass          the class which contains the main of the program to
-	 *                           run
-	 * @param config             the path to the JSON configuration file for the
-	 *                           simulation to perform
-	 * @param seed               the seed (as a String) used to initialize the
-	 *                           random generators used in the simulation
-	 * @param expectedFileOutput the path to the file which contains the expected
-	 *                           output for the specified program
+	 * @param mainClass main class of the program whose output needs to be launched
+	 * @param expectedFileOutput path to the file containing the expected output of the program to launch
+	 * @param arguments the arguments of the main class supplied as first parameter of this constructor, as a number of successive {@link String}s
 	 */
 	public PlhamOutputTester(Class<?> mainClass, String expectedFileOutput, String ... arguments) {
 		main = mainClass;
@@ -153,7 +147,7 @@ public abstract class PlhamOutputTester {
 	 *                                   the execution and comparing it with the
 	 *                                   file in which the expected output resides.
 	 */
-	@Test(timeout=30000)
+	@Test(timeout=60000)
 	public void checkProgramOutput() throws NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, IOException {
 		FileOutputStream output = new FileOutputStream(temporaryOutput);
