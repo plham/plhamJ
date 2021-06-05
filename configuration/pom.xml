@@ -30,6 +30,51 @@
 		</dependency>
 	</dependencies>
 
+	<profiles>
+		<profile>
+			<id>hostfile-file-present</id>
+			<activation>
+				<file>
+					<exists>HOSTFILE</exists>
+				</file>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<mpirunner.mpirunOptions>--hostfile HOSTFILE</mpirunner.mpirunOptions>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- Profile activated when the property "hostfile" is specified (mvn 
+				-Dhostfile=/path/to/hostfile) -->
+			<id>explicit-hostfile</id>
+			<activation>
+				<property>
+					<name>hostfile</name>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<!-- override the default and specify the hostfile -->
+								<mpirunner.mpirunOptions>--hostfile ${hostfile}</mpirunner.mpirunOptions>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<build>
 		<plugins>
 			<plugin>
@@ -73,6 +118,14 @@
 				<configuration>
 					<forkNode
 						implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
+
+					<systemPropertyVariables>
+						<mpirunner.mpiImpl>mpj-native</mpirunner.mpiImpl>
+						<mpirunner.notificationsPath>target/mpi-junit</mpirunner.notificationsPath>
+						<mpirunner.keepNotifications>true</mpirunner.keepNotifications>
+						<mpirunner.mpirunOptions>--oversubscribe</mpirunner.mpirunOptions>
+						<mpirunner.parseNotifications>0</mpirunner.parseNotifications>
+					</systemPropertyVariables>
 				</configuration>
 				<executions>
 					<execution>
