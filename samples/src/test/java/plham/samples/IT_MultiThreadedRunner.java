@@ -20,9 +20,9 @@ import plham.samples.ShockTransfer.ShockTransferMain;
 import plham.samples.TradingHalt.TradingHaltMain;
 
 @RunWith(Parameterized.class)
-public class IT_MultiThreadCI2002 extends PlhamOutputTester {
+public class IT_MultiThreadedRunner extends PlhamOutputTester {
 	
-	public IT_MultiThreadCI2002(String testName, Class<?> outputClass, String jsonConfig, String seed, String expectedOutput, String parallelism) {
+	public IT_MultiThreadedRunner(String testName, Class<?> outputClass, String jsonConfig, String seed, String expectedOutput, String parallelism) {
 		super(ParallelRunnerMT.class, expectedOutput, outputClass.getCanonicalName(), jsonConfig, seed, parallelism);
 	}
 	
