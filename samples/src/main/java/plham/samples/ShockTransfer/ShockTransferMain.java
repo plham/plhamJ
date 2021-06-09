@@ -2,6 +2,7 @@ package plham.samples.ShockTransfer;
 
 import java.util.List;
 
+import handist.collections.ChunkedList;
 import plham.core.Agent;
 import plham.core.Event;
 import plham.core.IndexMarket;
@@ -38,7 +39,7 @@ public class ShockTransferMain extends SimulationOutput {
 	}
 
 	@Override
-	public void print(OutputCollector output, Session s, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
+	public void print(OutputCollector output, Session s, List<Market> markets, ChunkedList<Agent> agents, List<Event> sessionEvents) {
 //		List<Market> markets = getMarketsByName("markets");
 		for (Market market : markets) {
 			long t = market.getTime();

@@ -2,6 +2,7 @@ package cassia.util.random;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,10 +18,12 @@ public class RandomPermutation<T> implements Iterable<T>, Serializable {
     public List<T> array;
     public Random random;
 
-    public RandomPermutation(Random random, List<T> list) {
+    public RandomPermutation(Random random, Iterable<T> list) {
         this.random = random;
         this.array = new ArrayList<>();
-        this.array.addAll(list);
+        for(T t: list) {
+            this.array.add(t);
+        }
     }
 
     @Override

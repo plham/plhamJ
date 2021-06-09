@@ -2,6 +2,7 @@ package plham.samples.FatFinger;
 
 import java.util.List;
 
+import handist.collections.ChunkedList;
 import plham.core.Agent;
 import plham.core.Event;
 import plham.core.Market;
@@ -37,7 +38,7 @@ public class FatFingerMain extends CI2002Main {
 	}
 
 	@Override
-	public void print(OutputCollector output, Session s, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
+	public void print(OutputCollector output, Session s, List<Market> markets, ChunkedList<Agent> agents, List<Event> sessionEvents) {
 		super.print(output, s, markets, agents, sessionEvents); // Calls CI2002Main#print
 
 		// Print additional information compared to CI2002Main

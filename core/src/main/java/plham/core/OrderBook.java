@@ -1,11 +1,8 @@
 package plham.core;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import plham.core.model.PlhamComparator;
@@ -130,27 +127,17 @@ public class OrderBook implements Serializable {
      * @return {@code true} if at least one Order was removed during this method, {@code false otherwise}
      */
     public synchronized boolean removeAllWhere(Predicate<Order> condition) {
-        int size = queue.size();
-        Order[] orders = queue.toArray(new Order[size]);
-        LinkedList<Order> list = new LinkedList<>(queue);
-        for (int i = 0; i < orders.length; i++) {
-            Order order = orders[i];
+        AtomicBoolean result = new AtomicBoolean(false);
+        Iterator<Order> iter = queue.iterator();
+        while (iter.hasNext()) {
+            Order order = iter.next();
             if (condition.test(order)) {
-                cancelCache.remove(getKey(order));
-                Order last = list.removeLast();
-                list.addLast((Order) null);
-                if (i < queue.size()) {
-                    list.set(i, last);
-                }
+                iter.remove();
+                result.set(true);
             }
         }
-        queue.clear();
-        for (Order order : list) {
-            if (null != order) {
-                queue.add(order);
-            }
-        }
-        return queue.size() < size;
+        cancelCache.clear();
+        return result.get();
     }
 
     /**

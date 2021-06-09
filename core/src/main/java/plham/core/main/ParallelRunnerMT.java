@@ -272,10 +272,10 @@ public final class ParallelRunnerMT extends Runner {
         long TIME_INIT = System.nanoTime();
         ParallelOutputCollector out = this.out;
 
-        sim = factory.makeNewSimulation(seed);
         AllocManager.Centric<Agent> dm = new AllocManager.Centric<Agent>();
+        sim = factory.makeNewSimulation(seed, dm);
         cAgents = new ChunkedList<>();
-        cAgents.add(sim.dm.getChunk());
+        cAgents.add(dm.getChunk());
 
         long TIME_THE_BEGINNING = System.nanoTime();
 
@@ -505,7 +505,7 @@ public final class ParallelRunnerMT extends Runner {
 
         Random random = sim.getRandom();
         Random tmpRandom = new Random(System.nanoTime());
-        List<Agent> agents = sim.hifreqAgents;
+        Iterable<Agent> agents = sim.hifreqAgents;
         RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random, agents);
         //RandomPermutation<List<Order>> randomOrders = new RandomPermutation<>(random, localOrders);
         //randomOrders.shuffle();

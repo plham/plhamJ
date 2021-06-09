@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+import handist.collections.ChunkedList;
 import plham.core.main.Simulator.Session;
 
 /**
@@ -44,11 +45,12 @@ public class SimulationOutput implements Serializable {
      * want to print some information at the beginning of a session.
      *
      * @param session the current session
+     * @param agents
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
-    public void beginSession(OutputCollector output, Session session, List<Market> markets, List<Agent> agents,
-            List<Event> sessionEvents) {
+    public void beginSession(OutputCollector output, Session session, List<Market> markets, ChunkedList<Agent> agents,
+                             List<Event> sessionEvents) {
         sessionOutput(output, SimulationStage.BEGIN_SESSION, session);
         for (Market m : markets) {
             marketOutput(output, SimulationStage.BEGIN_SESSION, m);
@@ -69,7 +71,7 @@ public class SimulationOutput implements Serializable {
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}  
      */
     @Deprecated
-    public void beginSimulation(OutputCollector output, List<Market> markets, List<Agent> agents) {
+    public void beginSimulation(OutputCollector output, List<Market> markets, ChunkedList<Agent> agents) {
         for (Market m : markets) {
             marketOutput(output, SimulationStage.BEGIN_SIMULATION, m);
         }
@@ -90,8 +92,8 @@ public class SimulationOutput implements Serializable {
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
-    public void endprint(OutputCollector output, Session session, List<Market> markets, List<Agent> agents,
-            List<Event> sessionEvents, long iterationStep) {
+    public void endprint(OutputCollector output, Session session, List<Market> markets, ChunkedList<Agent> agents,
+                         List<Event> sessionEvents, long iterationStep) {
         sessionOutput(output, SimulationStage.WITH_PRINT_END_SESSION, session);
         for (Market m : markets) {
             marketOutput(output, SimulationStage.WITH_PRINT_END_SESSION, m);
@@ -113,11 +115,12 @@ public class SimulationOutput implements Serializable {
      * print some information at the end of a session.
      *
      * @param session
+     * @param agents
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
-    public void endSession(OutputCollector output, Session session, List<Market> markets, List<Agent> agents,
-            List<Event> sessionEvents) {
+    public void endSession(OutputCollector output, Session session, List<Market> markets, ChunkedList<Agent> agents,
+                           List<Event> sessionEvents) {
         sessionOutput(output, SimulationStage.END_SESSION, session);
         for (Market m : markets) {
             marketOutput(output, SimulationStage.END_SESSION, m);
@@ -141,7 +144,7 @@ public class SimulationOutput implements Serializable {
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
-    public void endSimulation(OutputCollector output, List<Market> markets, List<Agent> agents) {
+    public void endSimulation(OutputCollector output, List<Market> markets, ChunkedList<Agent> agents) {
         for (Market m : markets) {
             marketOutput(output, SimulationStage.END_SIMULATION, m);
         }
@@ -177,11 +180,12 @@ public class SimulationOutput implements Serializable {
      * make the desired outputs.
      *
      * @param session the ongoing session
+     * @param agents
      * @deprecated instead of overriding this method, consider using {@link #agentOutput(OutputCollector, SimulationStage, Agent)}, {@link #marketOutput(OutputCollector, SimulationStage, Market)}, {@link #sessionOutput(OutputCollector, SimulationStage, Session)} and {@link #eventOutput(OutputCollector, SimulationStage, Event)}
      */
     @Deprecated
-    public void print(OutputCollector output, Session session, List<Market> markets, List<Agent> agents,
-            List<Event> sessionEvents) {
+    public void print(OutputCollector output, Session session, List<Market> markets, ChunkedList<Agent> agents,
+                      List<Event> sessionEvents) {
         sessionOutput(output, SimulationStage.WITH_PRINT_DURING_SESSION, session);
         for (Market m : markets) {
             marketOutput(output, SimulationStage.WITH_PRINT_DURING_SESSION, m);

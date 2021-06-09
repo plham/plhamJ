@@ -2,6 +2,7 @@ package plham.samples.CI2002;
 
 import java.util.List;
 
+import handist.collections.ChunkedList;
 import plham.core.Agent;
 import plham.core.Event;
 import plham.core.Market;
@@ -37,7 +38,7 @@ public class CI2002Main extends SimulationOutput {
 	}
     
 	@Override
-	public void print(OutputCollector output, Session session, List<Market> markets, List<Agent> agents, List<Event> sessionEvents) {
+	public void print(OutputCollector output, Session session, List<Market> markets, ChunkedList<Agent> agents, List<Event> sessionEvents) {
 		for (Market market : markets) {
 			long t = market.getTime();
 			System.out.println(String.format("%s %s %s %s %s %s  ", session.sessionName, t, market.id, market.name,

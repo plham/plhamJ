@@ -1,10 +1,7 @@
 package plham.core.main;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import cassia.util.random.RandomPermutation;
 import plham.core.Agent;
@@ -66,7 +63,7 @@ public class SequentialRunner extends Runner implements Serializable {
                                            Session s, OutputCollector out) {
         Simulator env = super.sim;
         List<Market> markets = env.markets;
-        List<Agent> agents = env.normalAgents;
+        Iterable<Agent> agents = env.normalAgents;
 
         long beginTime = System.nanoTime();
         List<List<Order>> allOrders = new ArrayList<>();
@@ -104,7 +101,7 @@ public class SequentialRunner extends Runner implements Serializable {
 
         Random random = sim.getRandom();
         Random tmpRandom = new Random(System.nanoTime());
-        List<Agent> agents = sim.hifreqAgents;
+        Iterable<Agent> agents = sim.hifreqAgents;
         RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random, agents);
         RandomPermutation<List<Order>> randomOrders = new RandomPermutation<>(random, localOrders);
 

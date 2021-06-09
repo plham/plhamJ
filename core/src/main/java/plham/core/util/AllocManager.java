@@ -1,5 +1,6 @@
 package plham.core.util;
 
+import java.util.Collection;
 import java.util.List;
 
 import cassia.util.JSON;
@@ -17,13 +18,9 @@ public abstract class AllocManager<T> {
         /*
          * public def getBody() { return body; }
          */
-        public List<T> getBody() {
-            return list.toList();
-        }
-
-        public Chunk<T> getChunk() {
-            return list;
-        }
+        public Iterable<T> getContainer() { return list; }
+        public List<T> getList() { return list.toList(); }
+        public Chunk<T> getChunk() { return list; }
 
         @Override
         public RangedList<T> getRangedList(JSON.Value config, LongRange range) {
@@ -51,6 +48,7 @@ public abstract class AllocManager<T> {
         }
 
     }
+    public abstract Iterable<T> getContainer();
 
     public abstract RangedList<T> getRangedList(JSON.Value config, LongRange range);
 

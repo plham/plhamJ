@@ -1,10 +1,12 @@
 package plham.core.main;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import cassia.util.JSON;
+import handist.collections.ChunkedList;
 import handist.collections.LongRange;
 import plham.core.Agent;
 import plham.core.Event;
@@ -52,15 +54,15 @@ public class Simulator {
         return DEBUG;
     }
 
-    public List<Agent> agents;
+    public ChunkedList<Agent> agents;
     // public Map<String, Object> GLOBAL;
     public List<Event> sessionEvents;
-    public List<Agent> hifreqAgents;
+    public Iterable<Agent> hifreqAgents;
     public Map<String, List<LongRange>> marketName2Ranges;
 
     public List<Market> markets;
 
-    public List<Agent> normalAgents;
+    public Iterable<Agent> normalAgents;
     public long numAgents;
     public Random RANDOM;
 
@@ -69,7 +71,7 @@ public class Simulator {
     public Fundamentals fundamentals;
 
     // Allocation manager for the Agents
-    AllocManager.Centric<Agent> dm;
+    AllocManager<Agent> dm;
     
     public Simulator() {
     }
@@ -80,9 +82,10 @@ public class Simulator {
     }
 
     public Agent getAgentByName(String name) {
-        return agents.stream().filter(a -> {
-            return a.name.equals(name);
-        }).findFirst().get();
+        for(Agent a: agents) {
+            if(a.name.equals(name)) return a;
+        }
+        return null;
     }
 
 //	public List<Agent> getAgentsByName(JSON.Value json) {
@@ -96,9 +99,10 @@ public class Simulator {
     public List<Agent> getAgentsByName(String name) {
 //		return getItemsByName(name);
         ArrayList<Agent> toReturn = new ArrayList<>();
-        agents.stream().filter(a -> {
-            return a.name.equals(name);
-        }).forEach(a -> toReturn.add(a));
+        for(Agent a: agents) {
+            if(a.name.equals(name))
+                toReturn.add(a);
+        }
         return toReturn;
     }
 

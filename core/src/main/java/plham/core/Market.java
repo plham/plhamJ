@@ -7,6 +7,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 import cassia.util.JSON;
+import handist.collections.ChunkedList;
 import handist.collections.LongRange;
 import plham.core.main.Simulator;
 import plham.core.main.SimulatorFactory;
@@ -240,7 +241,7 @@ public class Market implements Serializable {
         System.out.println("#MARKET CHECK PASSED");
     }
 
-    public void executeAgentUpdate(List<Agent> agents, AgentUpdate update) {
+    public void executeAgentUpdate(ChunkedList<Agent> agents, AgentUpdate update) {
         long id = update.agentId;
         Agent agent = agents.get((int) id);
         if (agent != null) {
