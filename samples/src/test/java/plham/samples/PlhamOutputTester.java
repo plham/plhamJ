@@ -79,6 +79,15 @@ public abstract class PlhamOutputTester {
     List<String> obtainedLines;
 
     /**
+     * Output stream to the temporary file containing the output of the program being tested. 
+     */
+    FileOutputStream output;
+    
+    /**
+     * Name of the program being tested. Used as a prefix to 
+     */
+    String programName;
+    /**
      * Temporary file used to collect the output from the tested program
      */
     private File temporaryOutput;
@@ -92,11 +101,13 @@ public abstract class PlhamOutputTester {
 
     /**
      * Constructor for this class
+     * @param name name of the program being tested. It is used as a prefix in case the test fails and the output of the program is saved on a local file
      * @param mainClass main class of the program whose output needs to be launched
      * @param expectedFileOutput path to the file containing the expected output of the program to launch
      * @param arguments the arguments of the main class supplied as first parameter of this constructor, as a number of successive {@link String}s
      */
-    public PlhamOutputTester(Class<?> mainClass, String expectedFileOutput, String ... arguments) {
+    public PlhamOutputTester(String name, Class<?> mainClass, String expectedFileOutput, String ... arguments) {
+        programName = name;
         main = mainClass;
         args = arguments;
         expectedOutput = expectedFileOutput;
@@ -104,6 +115,12 @@ public abstract class PlhamOutputTester {
     @After
     public void after() throws IOException {
         if (!testPassed) {
+            // The following three lines are necessary in case of timeout failure
+            output.flush();
+            output.close();
+            obtainedLines = FileUtils.readLines(temporaryOutput);
+            
+            // Save the program output to a file
             saveFailedProgramOutput();
         }
     }
@@ -140,7 +157,7 @@ public abstract class PlhamOutputTester {
     @Test(timeout=30000)
     public void checkProgramOutput() throws NoSuchMethodException, SecurityException, IllegalAccessException,
     IllegalArgumentException, InvocationTargetException, IOException {
-        FileOutputStream output = new FileOutputStream(temporaryOutput);
+        output = new FileOutputStream(temporaryOutput);
         Method m = main.getMethod("main", String[].class);
         PrintStream stdOut = System.out;
         System.setOut(new PrintStream(output));
@@ -207,7 +224,7 @@ public abstract class PlhamOutputTester {
         // If a Junit failure occurs, save the "bad" results of the execution to a file for later examination
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm.ss");
         String timeStamp = dateFormat.format(new Date(System.currentTimeMillis()));
-        String fileName = FilenameUtils.getBaseName(expectedOutputFile.getName()) + "_failed_" + timeStamp + ".txt";
+        String fileName = FilenameUtils.getBaseName(programName + "_failed_" + timeStamp + ".txt");
         File failedOutputFile = new File(expectedOutputFile.getParent(), fileName);
         System.err.println("KEEPING THE OUTPUT OF THE FAILED PROGRAM IN FILE " + failedOutputFile);
         FileUtils.writeLines(failedOutputFile, obtainedLines);
