@@ -1,8 +1,12 @@
 package plham.core;
 
 import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import plham.core.model.PlhamComparator;
@@ -127,17 +131,43 @@ public class OrderBook implements Serializable {
      * @return {@code true} if at least one Order was removed during this method, {@code false otherwise}
      */
     public synchronized boolean removeAllWhere(Predicate<Order> condition) {
-        AtomicBoolean result = new AtomicBoolean(false);
-        Iterator<Order> iter = queue.iterator();
-        while (iter.hasNext()) {
-            Order order = iter.next();
-            if (condition.test(order)) {
-                iter.remove();
-                result.set(true);
+        System.err.println("size:" + queue.size()); // FIXME For debug purposes, don't forget to remove 
+        
+        // Old code located below
+//        int size = queue.size();
+//        Order[] orders = queue.toArray(new Order[size]);
+//        LinkedList<Order> list = new LinkedList<>(queue);
+//        for (int i = 0; i < orders.length; i++) {
+//            Order order = orders[i];
+//            if (condition.test(order)) {
+//                cancelCache.remove(getKey(order));
+//                Order last = list.removeLast();
+//                list.addLast((Order) null);
+//                if (i < queue.size()) {
+//                    list.set(i, last);
+//                }
+//            }
+//        }
+//        
+//        queue.clear();
+//        for (Order order : list) {
+//            if (null != order) {
+//                queue.add(order);
+//            }
+//        }
+//        
+//        return queue.size() < size;
+        
+        boolean removed = false;
+        Iterator<Order> it = queue.iterator();
+        while(it.hasNext()) {
+            if (condition.test(it.next())) {
+                it.remove();
+                removed = true;
             }
         }
         cancelCache.clear();
-        return result.get();
+        return removed;
     }
 
     /**
