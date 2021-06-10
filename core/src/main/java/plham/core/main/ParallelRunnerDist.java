@@ -456,7 +456,7 @@ public final class ParallelRunnerDist extends Runner {
                 return;
             }
             // TODO serializable or not?
-            this.sim = factory.makeNewSimulation(seed, false, new DistAllocManager());
+            this.sim = factory.makeNewSimulation(seed, true, false, new DistAllocManager());
             out.print("step0a:" + pg);
             // Setup Dist Collections
 
@@ -488,7 +488,7 @@ public final class ParallelRunnerDist extends Runner {
                 if(!here().equals(caller)) {
                     that.factory = result.factory = new SimulatorFactory(conf);
                     result.runner = that;
-                    that.sim = that.factory.makeNewSimulation(seed, false, that.getAllocManager());
+                    that.sim = that.factory.makeNewSimulation(seed, true, false, that.getAllocManager());
                     that.sim.marketName2Ranges = marketName2Ranges; // TODO (hack)
                     that.sim.agents = dAgents;
                     dMarkets.forEach((Market m) -> { // TODO

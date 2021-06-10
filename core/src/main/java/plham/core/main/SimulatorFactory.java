@@ -426,7 +426,6 @@ public class SimulatorFactory {
         for (int i = 0; i < sorted.size(); i++) {
             String name = sorted.get(i).toString();
             JSON.Value config = CONFIG.get(name);
-            System.out.println("QQQQQ:"+ name + "->" + config);
             String className = config.get("class").toString();
             if (className.equals("AgentGroup") || agentGenerators.containsKey(className)) {
                 continue;
@@ -673,19 +672,29 @@ public class SimulatorFactory {
 
     /**
      * Takes all the accumulated initializers of this class, calls them, and stores the result in the provided Simulator
-     * instance.
+     * instance. This method is for sequential or multi-thread simulations.
      *
      * @param seed the seed used to initiliaze all the objects that participate in the computation
      * @return a build {@link Simulator} instance
      */
-    public Simulator makeNewSimulation(long seed) {
-        return makeNewSimulation(seed, true, new AllocManager.Centric<Agent>());
+    public Simulator makeNewSimulation(long seed) { // for sequential use
+        return makeNewSimulation(seed, false, true, new AllocManager.Centric<Agent>());
     }
     public Simulator makeNewSimulation(long seed, AllocManager.Centric<Agent> am) {
-        return makeNewSimulation(seed, true, am);
+        return makeNewSimulation(seed, true, true, am);
     }
-
-    public Simulator makeNewSimulation(long seed, boolean genAgents, AllocManager<Agent> am) {
+    /**
+     * Takes all the accumulated initializers of this class, calls them, and stores the result in the provided Simulator
+     * instance.
+     *
+     * @param seed the seed used to initiliaze all the objects that participate in the computation
+     * @param skippableRandom represents whether the runner use skippable random assignments or not.
+     *                        Please use skippableRandome(=true) for distributed environments.
+     *                        This flag changes the random seed of agents and markets and their behaviors.
+     * @return a build {@link Simulator} instance
+     */
+    public Simulator makeNewSimulation(long seed, boolean skippableRandom, boolean genAgents,
+                                       AllocManager<Agent> am) {
         inConstruction = new Simulator();
         Simulator sim = inConstruction;
         // Allows access of the various initializers to the Simulator
@@ -696,8 +705,8 @@ public class SimulatorFactory {
         sim.RANDOM = new Random(seed);
 
         // Market initialization
-        this.randomForMarketsSetup = sim.RANDOM.split();
-        this.randomForAgentsSetup = sim.RANDOM.split();
+        this.randomForMarketsSetup = skippableRandom? sim.RANDOM.split(): sim.RANDOM;
+        this.randomForAgentsSetup = skippableRandom? sim.RANDOM.split(): sim.RANDOM;
         // TODO ->
         List<Market> markets = createAllMarkets(CONFIG.get("simulation").get("markets"));
         List<LongRange> mrange = new ArrayList<>();
