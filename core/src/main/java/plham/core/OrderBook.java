@@ -131,7 +131,7 @@ public class OrderBook implements Serializable {
      * @return {@code true} if at least one Order was removed during this method, {@code false otherwise}
      */
     public synchronized boolean removeAllWhere(Predicate<Order> condition) {
-        System.err.println("size:" + queue.size()); // FIXME For debug purposes, don't forget to remove 
+//        System.err.println("size:" + queue.size()); // FIXME For debug purposes, don't forget to remove 
         
         // Old code located below
 //        int size = queue.size();
