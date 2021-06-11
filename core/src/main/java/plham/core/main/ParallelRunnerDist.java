@@ -43,6 +43,7 @@ import static plham.core.main.ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY;
  */
 
 public final class ParallelRunnerDist extends Runner {
+
     public static class DefaultOutputCollector implements OutputCollector, Serializable {
         private static final long serialVersionUID = 5777744274622700033L;
         transient public ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap<>();
@@ -138,7 +139,6 @@ public final class ParallelRunnerDist extends Runner {
         public DistLog getDistLog() {
             return dlog;
         }
-
     }
 
     /**
@@ -242,59 +242,8 @@ public final class ParallelRunnerDist extends Runner {
         }
     }
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8584132179986832924L;
-
-    /**
-     * Utility method which checks how many threads this runner should run with
-     *
-     * @return the level of parallelism desired
-     */
-    private static int initializeNThreads() {
-        //        String NTHREADS_ENV = System.getenv("NTHREADS");
-        //        if (NTHREADS_ENV != null) {
-        //            try {
-        //                return Integer.parseInt(NTHREADS_ENV);
-        //            } catch (RuntimeException e) {
-        //                System.err.println("[Env: NTHREADS] " + NTHREADS_ENV + " is not integer (parse error).");
-        //            }
-        //        } else {
-        return Integer.parseInt(System.getProperty(PARALLEL_RUNNER_THREAD_PROPERTY, DEFAULT_THREAD_COUNT));
-    }
-
-
-    /**
-     * The distributed simulation data, which consist of constant data, a list of distributed collections.
-     *
-     */
-    BranchHandle bh;
-
-    // int NPLACES;
-
-    int NTHREADS;
-
-    // TODO duplicated with MT (if RunnerDist extends RunnerMT)
-    transient private ExecutorService pool;
-    long TIME_THE_BEGINNING;
-
-    public ParallelRunnerDist(SimulationOutput sim, SimulatorFactory factory) {
-        this(sim, factory, initializeNThreads());
-    }
-
-    public ParallelRunnerDist(SimulationOutput simulation, SimulatorFactory factory, int nthreads) {
-        super(simulation, factory);
-        NTHREADS = nthreads;
-    }
-
-    private OutputCollector out = new DefaultOutputCollector();
-    public void setLogger(OutputCollector out) {
-        this.out = out;
-    }
-    public String defaultScheduleType = "\"short\"";
-
     class DistAllocManager extends AgentAllocManager {
+        public String defaultScheduleType = "\"short\"";
         TreeSet<LongRange> myRanges = new TreeSet<>();
         ArrayList<LongRange> arbRanges = new ArrayList<>();
         ArrayList<LongRange> ordRanges = new ArrayList<>();
@@ -400,6 +349,58 @@ public final class ParallelRunnerDist extends Runner {
             /* do nothing now */
         }
     }
+
+    /**
+     *
+     */
+    private static final long serialVersionUID = -8584132179986832924L;
+
+    /**
+     * Utility method which checks how many threads this runner should run with
+     *
+     * @return the level of parallelism desired
+     */
+    private static int initializeNThreads() {
+        //        String NTHREADS_ENV = System.getenv("NTHREADS");
+        //        if (NTHREADS_ENV != null) {
+        //            try {
+        //                return Integer.parseInt(NTHREADS_ENV);
+        //            } catch (RuntimeException e) {
+        //                System.err.println("[Env: NTHREADS] " + NTHREADS_ENV + " is not integer (parse error).");
+        //            }
+        //        } else {
+        return Integer.parseInt(System.getProperty(PARALLEL_RUNNER_THREAD_PROPERTY, DEFAULT_THREAD_COUNT));
+    }
+
+
+    /**
+     * The distributed simulation data, which consist of constant data, a list of distributed collections.
+     *
+     */
+    BranchHandle bh;
+
+    // int NPLACES;
+
+    int NTHREADS;
+
+    // TODO duplicated with MT (if RunnerDist extends RunnerMT)
+    transient private ExecutorService pool;
+    long TIME_THE_BEGINNING;
+
+    public ParallelRunnerDist(SimulationOutput sim, SimulatorFactory factory) {
+        this(sim, factory, initializeNThreads());
+    }
+
+    public ParallelRunnerDist(SimulationOutput simulation, SimulatorFactory factory, int nthreads) {
+        super(simulation, factory);
+        NTHREADS = nthreads;
+    }
+
+    private OutputCollector out = new DefaultOutputCollector();
+    public void setLogger(OutputCollector out) {
+        this.out = out;
+    }
+
     private DistAllocManager getAllocManager() {
         return new DistAllocManager();
     }
