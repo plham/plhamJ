@@ -1,7 +1,6 @@
 package plham.core.main;
 
 import java.io.File;
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -14,13 +13,11 @@ import java.util.NoSuchElementException;
 
 import cassia.util.JSON;
 import cassia.util.JSON.Value;
-import handist.collections.ChunkedList;
 import handist.collections.LongRange;
 import handist.collections.RangedList;
 import plham.core.Agent;
 import plham.core.Event;
 import plham.core.Fundamentals;
-import plham.core.HighFrequencyAgent;
 import plham.core.IndexMarket;
 import plham.core.Market;
 import plham.core.agent.ArbitrageAgent;
@@ -38,7 +35,7 @@ import plham.core.model.EventInitializer;
 import plham.core.model.MarketGenerator;
 import plham.core.model.MarketInitializer;
 import plham.core.model.MarketsInitializer;
-import plham.core.util.AllocManager;
+import plham.core.util.AgentAllocManager;
 import plham.core.util.JSONRandom;
 import plham.core.util.JSONUtils;
 import plham.core.util.Random;
@@ -349,7 +346,7 @@ public class SimulatorFactory {
 
     }
 
-    public void createAllAgents(JSON.Value list, AllocManager<Agent> dm) {
+    public void createAllAgents(JSON.Value list, AgentAllocManager dm) {
         long id = 0;
         List<String> sorted = JSONUtils.getDependencySortedList(CONFIG, list, "agents");
         long numAllAgents = 0;
@@ -678,9 +675,9 @@ public class SimulatorFactory {
      * @return a build {@link Simulator} instance
      */
     public Simulator makeNewSimulation(long seed) { // for sequential use
-        return makeNewSimulation(seed, false, true, new AllocManager.Centric<Agent>());
+        return makeNewSimulation(seed, false, true, new AgentAllocManager.Centric());
     }
-    public Simulator makeNewSimulation(long seed, AllocManager.Centric<Agent> am) {
+    public Simulator makeNewSimulation(long seed, AgentAllocManager.Centric am) {
         return makeNewSimulation(seed, true, true, am);
     }
     /**
@@ -694,7 +691,7 @@ public class SimulatorFactory {
      * @return a build {@link Simulator} instance
      */
     public Simulator makeNewSimulation(long seed, boolean skippableRandom, boolean genAgents,
-                                       AllocManager<Agent> am) {
+                                       AgentAllocManager am) {
         inConstruction = new Simulator();
         Simulator sim = inConstruction;
         // Allows access of the various initializers to the Simulator
@@ -780,8 +777,8 @@ public class SimulatorFactory {
     }
     public void setupAgents() {
         // TODO ugly
-
-        if(inConstruction.dm instanceof AllocManager.Centric) {
+        inConstruction.dm.finalSetup(inConstruction);
+        /*if(inConstruction.dm instanceof AllocManager.Centric) {
             AllocManager.Centric<Agent> dm = (AllocManager.Centric<Agent>) inConstruction.dm;
             ChunkedList<Agent> agents = new ChunkedList();
             agents.add(dm.getChunk());
@@ -798,6 +795,6 @@ public class SimulatorFactory {
             inConstruction.agents = agents;
             inConstruction.normalAgents = normalAgents;
             inConstruction.hifreqAgents = hifreqAgents;
-        }
+        }*/
     }
 }

@@ -1,7 +1,6 @@
 package plham.core.main;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +12,7 @@ import plham.core.Event;
 import plham.core.Fundamentals;
 import plham.core.IndexMarket;
 import plham.core.Market;
-import plham.core.util.AllocManager;
+import plham.core.util.AgentAllocManager;
 import plham.core.util.Random;
 
 public class Simulator {
@@ -71,7 +70,7 @@ public class Simulator {
     public Fundamentals fundamentals;
 
     // Allocation manager for the Agents
-    AllocManager<Agent> dm;
+    AgentAllocManager dm;
     
     public Simulator() {
     }

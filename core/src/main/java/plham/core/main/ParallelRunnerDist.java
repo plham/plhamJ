@@ -19,7 +19,7 @@ import handist.collections.dist.*;
 import handist.collections.dist.DistLog.*;
 import plham.core.*;
 import plham.core.Market.AgentUpdate;
-import plham.core.util.AllocManager;
+import plham.core.util.AgentAllocManager;
 import plham.core.util.Random;
 import plham.core.main.Simulator.Session;
 import plham.core.main.ParallelRunnerMT.Step;
@@ -263,8 +263,7 @@ public final class ParallelRunnerDist extends Runner {
         //        } else {
         return Integer.parseInt(System.getProperty(PARALLEL_RUNNER_THREAD_PROPERTY, DEFAULT_THREAD_COUNT));
     }
-    // TODO TK range for arbitragers.
-    transient ArrayList<LongRange> arbRanges = new ArrayList<>();
+
 
     /**
      * The distributed simulation data, which consist of constant data, a list of distributed collections.
@@ -272,13 +271,10 @@ public final class ParallelRunnerDist extends Runner {
      */
     BranchHandle bh;
 
-    transient TreeSet<LongRange> myRanges = new TreeSet<>();
-
     // int NPLACES;
 
     int NTHREADS;
 
-    transient ArrayList<LongRange> ordRanges = new ArrayList<>();
     // TODO duplicated with MT (if RunnerDist extends RunnerMT)
     transient private ExecutorService pool;
     long TIME_THE_BEGINNING;
@@ -298,7 +294,11 @@ public final class ParallelRunnerDist extends Runner {
     }
     public String defaultScheduleType = "\"short\"";
 
-    class DistAllocManager extends AllocManager<Agent> {
+    class DistAllocManager extends AgentAllocManager {
+        TreeSet<LongRange> myRanges = new TreeSet<>();
+        ArrayList<LongRange> arbRanges = new ArrayList<>();
+        ArrayList<LongRange> ordRanges = new ArrayList<>();
+
         @Override
         public Iterable<Agent> getContainer() {
             return bh.allAgents;
@@ -313,7 +313,6 @@ public final class ParallelRunnerDist extends Runner {
                     //TODO
                     if (classType.equals("arbitrager")) {
                         Chunk<Agent> chunk = new Chunk<>(range);
-                        out.print("AX:"+ range);
                         bh.allAgents.add(chunk);
                         return chunk;
                     } else {
@@ -330,10 +329,7 @@ public final class ParallelRunnerDist extends Runner {
                         }
                         Chunk<Agent> chunk = new Chunk<>(myrange);
                         bh.allAgents.add(chunk);
-                        /*
-                         * if(longType) longTermAgents.putChunk(chunk); else shortTermAgents.putChunk(chunk);
-                         * debug("place:"+here+" alloc "+myrange+ " @" + (longType?"long":"short"));
-                         */
+                        //TODO also add to long/short-term agents
                         return chunk;
                     }
                 }
@@ -342,14 +338,51 @@ public final class ParallelRunnerDist extends Runner {
             }
         }
 
+        // return the assigned range for the worker (place)
+        LongRange getAssignedRange(LongRange targetRange) {
+            LongRange floor = myRanges.floor(targetRange);
+            if (floor != null && floor.isOverlapped(targetRange)) {
+                return floor;
+            }
+            LongRange ceil = myRanges.ceiling(targetRange);
+            if (ceil != null && ceil.isOverlapped(targetRange)) {
+                return ceil;
+            }
+            return null;
+        }
+
         @Override
         public void registerRange(Value config, LongRange range) {
-            registerConfigAndRange(config, range);
+            // JSON.Value className = config.get("class");
+            JSON.Value classType = config.getOrElse("schedule", defaultScheduleType);
+            if (classType.equals("arbitrager")) {
+                // TODO
+                if (arbRanges == null) arbRanges = new ArrayList<>();
+                arbRanges.add(range);
+                // TODO long/short using className
+            } else {
+                // TDODO
+                if (ordRanges == null) ordRanges = new ArrayList<>();
+                ordRanges.add(range);
+            }
         }
 
         @Override
         public void scanDone() {
-                separateAgentRanges();
+            // determine how agents are distributed on worker places.
+            if (myRanges == null) myRanges = new TreeSet<>();
+            if (bh.isMaster()) {
+                for (LongRange r : arbRanges) {
+                    myRanges.add(r);
+                }
+            } else {
+                int numWorkers = bh.placeGroup.size() - 1;
+                List<List<LongRange>> split = LongRange.splitList(numWorkers, ordRanges);
+                List<LongRange> mine = split.get(bh.placeGroup.rank() - 1);
+                for (LongRange r : mine)
+                    if (r.size() > 0)
+                        myRanges.add(r);
+            }
         }
 
         @Override
@@ -360,6 +393,11 @@ public final class ParallelRunnerDist extends Runner {
         @Override
         public boolean use2scan() {
             return true;
+        }
+
+        @Override
+        public void finalSetup(Simulator sim) {
+            /* do nothing now */
         }
     }
     private DistAllocManager getAllocManager() {
@@ -376,19 +414,6 @@ public final class ParallelRunnerDist extends Runner {
 
     private void debug(Object o) {
         System.err.println(o);
-    }
-
-    LongRange getAssignedRange(LongRange targetRange) {
-
-        LongRange floor = myRanges.floor(targetRange);
-        if (floor != null && floor.isOverlapped(targetRange)) {
-            return floor;
-        }
-        LongRange ceil = myRanges.ceiling(targetRange);
-        if (ceil != null && ceil.isOverlapped(targetRange)) {
-            return ceil;
-        }
-        return null;
     }
 
     public void iterateMarketUpdates(OutputCollector output, Session s, Fundamentals fundamentals) {
@@ -484,23 +509,6 @@ public final class ParallelRunnerDist extends Runner {
         });
 
         bh.contractedOrders.clear();
-    }
-
-    void registerConfigAndRange(JSON.Value config, LongRange range) {
-        // JSON.Value className = config.get("class");
-        System.out.println("XXXX:" + config + ":" + range);
-        JSON.Value classType = config.getOrElse("schedule", defaultScheduleType);
-        if (classType.equals("arbitrager")) {
-            // TODO
-            if(arbRanges==null) arbRanges = new ArrayList<>();
-            arbRanges.add(range);
-            // TODO long/short using className
-        } else {
-            // TDODO
-            if(ordRanges== null) ordRanges = new ArrayList<>();
-            ordRanges.add(range);
-        }
-
     }
 
     // TODO
@@ -639,24 +647,7 @@ public final class ParallelRunnerDist extends Runner {
 
 
 
-    void separateAgentRanges() {
-        // TODO
-        if(myRanges==null) myRanges = new TreeSet<>();
-        if (bh.isMaster()) {
-            for (LongRange r : arbRanges) {
-                myRanges.add(r);
-            }
 
-        } else {
-            int numWorkers = bh.placeGroup.size() - 1;
-            List<List<LongRange>> split = LongRange.splitList(numWorkers, ordRanges);
-            List<LongRange> mine = split.get(bh.placeGroup.rank() - 1);
-            for (LongRange r : mine)
-                if (r.size() > 0)
-                    myRanges.add(r);
-        }
-        out.print("SeparateAgentRange:" + myRanges);
-    }
 
     public void setupEnv() {
         // TODO

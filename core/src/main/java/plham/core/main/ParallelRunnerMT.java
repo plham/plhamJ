@@ -1,6 +1,5 @@
 package plham.core.main;
 
-import java.io.ByteArrayOutputStream;
 import java.util.*;
 
 import cassia.util.random.*;
@@ -13,14 +12,13 @@ import java.util.function.Consumer;
 
 import handist.collections.Bag;
 import handist.collections.ChunkedList;
-import handist.collections.dist.util.ObjectOutput;
 import plham.core.Agent;
 import plham.core.Fundamentals;
 import plham.core.Market;
 import plham.core.Market.AgentUpdate;
 import plham.core.SimulationOutput.SimulationStage;
 import plham.core.main.Simulator.Session;
-import plham.core.util.AllocManager;
+import plham.core.util.AgentAllocManager;
 import plham.core.util.Random;
 import plham.core.Order;
 import plham.core.OutputCollector;
@@ -288,7 +286,7 @@ public final class ParallelRunnerMT extends Runner {
         long TIME_INIT = System.nanoTime();
         OutputCollector out = this.out;
 
-        AllocManager.Centric<Agent> dm = new AllocManager.Centric<Agent>();
+        AgentAllocManager.Centric dm = new AgentAllocManager.Centric();
         sim = factory.makeNewSimulation(seed, dm);
         cAgents = new ChunkedList<>();
         cAgents.add(dm.getChunk());
