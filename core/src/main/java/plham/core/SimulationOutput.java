@@ -230,12 +230,12 @@ public class SimulationOutput implements Serializable {
      * @param stage the stage of the simulation about which outputs are being made
      */
     public void postProcess(OutputCollector output, SimulationStage stage) {
-        for (Map.Entry<String, List<Object>> entry : output.getLogs().entrySet()) {
-            StringBuilder sb = new StringBuilder(entry.getKey() + " : ");
-            for (Object o : entry.getValue()) {
-                sb.append(o.toString()+ " ");
+        output.forEach((String key, List<String> values)-> {
+            StringBuilder sb = new StringBuilder(key + " : ");
+            for (String v : values) {
+                sb.append(v+ " ");
             }
             output.print(sb.toString());
-        }
+        });
     }
 }

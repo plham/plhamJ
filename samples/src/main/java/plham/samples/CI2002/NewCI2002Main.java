@@ -1,5 +1,6 @@
 package plham.samples.CI2002;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -67,14 +68,14 @@ public class NewCI2002Main extends SimulationOutput {
         case WITH_PRINT_DURING_SESSION:
             // Here we combine the session name with the state of each market in a single line
             // First remove the session name from the "logs" Map
-            String sessionName = (String) output.getLogs().remove("_SESSION_NAME_").get(0);
+            String sessionName = (String) output.removeLog("_SESSION_NAME_").get(0);
             // All remaining entries in the "logs" correspond to the markets taking part in the simulation
-            for (Map.Entry<String, List<Object>> lo : output.getLogs().entrySet()) {
-                if (lo.getKey().equals("Market")) {
-                    String marketSuffix = (String) lo.getValue().get(0);
+            output.forEach((String key, List<String> lo)->{
+                if (key.equals("Market")) {
+                    String marketSuffix = lo.get(0);
                     output.print(sessionName + " " + marketSuffix);
                 }
-            }
+            });
             break;
         default:
             // No grouped outputs in all other stages

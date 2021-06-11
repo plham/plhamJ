@@ -2,6 +2,7 @@ package plham.core;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * Interface supplied to programmers of {@link SimulationOutput}. The implementation of the methods is left to the
@@ -26,6 +27,11 @@ public interface OutputCollector {
      */
     public void print(String message);
 
-    public Map<String, List<Object>> getLogs();
     public void clear();
+
+    public List<String> getLog(String key);
+    public List<String> removeLog(String key);
+
+    void forEach(BiConsumer<String, List<String>> func);
+
 }

@@ -8,6 +8,7 @@ import cassia.util.random.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import handist.collections.Bag;
@@ -28,7 +29,7 @@ import plham.core.SimulationOutput;
 @SuppressWarnings("unused")
 public final class ParallelRunnerMT extends Runner {
 
-    private ParallelOutputCollector out;
+    private OutputCollector out;
 
     /**
      * Temporary implementation for the multithreaded output collector. Support for parallel collection of program output is coming.
@@ -36,24 +37,39 @@ public final class ParallelRunnerMT extends Runner {
      *
      */
     public static class ParallelOutputCollector implements OutputCollector {
-        protected ConcurrentHashMap<String, List<Object>> map = new ConcurrentHashMap<>();
+        protected ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap<>();
         @Override
         public void print(String message) {
             System.out.println(message);
         }
         @Override
         public void log(String topic, Object o) {
-            List<Object> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
-            listOfTopic.add(o);
+            List<String> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
+            listOfTopic.add(o.toString());
         }
         public void clear(){
             map.clear();
-        };
-        public Map<String, List<Object>> getLogs() { return map; }
+        }
+
+        @Override
+        public List<String> getLog(String key) {
+            return map.get(key);
+        }
+
+        @Override
+        public List<String> removeLog(String key) {
+            return map.remove(key);
+        }
+
+        @Override
+        public void forEach(BiConsumer<String, List<String>> func) {
+            map.forEach(func);
+        }
+
     }
 
     public static class ParallelOutputLogger extends ParallelOutputCollector {
-        LinkedList<ConcurrentHashMap<String,  List<Object>>> arch = new LinkedList<>();
+        LinkedList<ConcurrentHashMap<String,  List<String>>> arch = new LinkedList<>();
         @Override
         public void clear() {
             arch.add(map);
@@ -61,12 +77,12 @@ public final class ParallelRunnerMT extends Runner {
         }
     }
     public static class ParallelOutputChecker extends ParallelOutputCollector {
-        LinkedList<ConcurrentHashMap<String,  List<Object>>> arch = new LinkedList<>();
-        ConcurrentHashMap<String, List<Object>> omap;
+        LinkedList<ConcurrentHashMap<String,  List<String>>> arch = new LinkedList<>();
+        ConcurrentHashMap<String, List<String>> omap;
         public ParallelOutputChecker(ParallelOutputLogger base) {
             this(base.arch);
         }
-        public ParallelOutputChecker(LinkedList<ConcurrentHashMap<String, List<Object>>> arch) {
+        public ParallelOutputChecker(LinkedList<ConcurrentHashMap<String, List<String>>> arch) {
             try {
                 this.arch = arch;
                 this.omap = arch.removeFirst();
@@ -75,14 +91,14 @@ public final class ParallelRunnerMT extends Runner {
                 System.exit(0);
             }
         };
-        public void diffFound(String key, Object o1, List<Object> o2) {
+        public void diffFound(String key, Object o1, List<String> o2) {
             System.err.println("OutputChecker found different entry for key" + key + ". new entry:" + o1 + ", prev entries:" + o2);
         }
         @Override
         public void log(String topic, Object o) {
             try {
                 super.log(topic, o);
-                List<Object> listOfTopic = omap.get(topic);
+                List<String> listOfTopic = omap.get(topic);
                 if (listOfTopic == null) diffFound(topic, o, null);
                 boolean flag = listOfTopic.remove(o);
                 if (!flag) diffFound(topic, o, listOfTopic);
@@ -96,7 +112,7 @@ public final class ParallelRunnerMT extends Runner {
             try {
                 super.clear();
                 for (String key : omap.keySet()) {
-                    List<Object> objs = omap.get(key);
+                    List<String> objs = omap.get(key);
                     if (!objs.isEmpty()) diffFound(key, null, objs);
                 }
                 if (!arch.isEmpty()) {
@@ -177,7 +193,7 @@ public final class ParallelRunnerMT extends Runner {
         out = new ParallelOutputCollector();
         System.err.println(ParallelRunnerMT.class.getName() + " running with " + NTHREADS + " threads");
     }
-    public void setLogger(ParallelOutputCollector out) {
+    public void setLogger(OutputCollector out) {
         this.out = out;
     }
 
@@ -189,7 +205,7 @@ public final class ParallelRunnerMT extends Runner {
 
 
     @SuppressWarnings("deprecation")
-    public void iterateMarketUpdates(ParallelOutputCollector out, Session s, Fundamentals fundamentals) {
+    public void iterateMarketUpdates(OutputCollector out, Session s, Fundamentals fundamentals) {
         // TODO
         boolean isMaster = true;
         if (isMaster) {
@@ -270,7 +286,7 @@ public final class ParallelRunnerMT extends Runner {
     @Override
     public void run(long seed) {
         long TIME_INIT = System.nanoTime();
-        ParallelOutputCollector out = this.out;
+        OutputCollector out = this.out;
 
         AllocManager.Centric<Agent> dm = new AllocManager.Centric<Agent>();
         sim = factory.makeNewSimulation(seed, dm);

@@ -1,10 +1,12 @@
 package plham.core.main;
 
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import apgas.Place;
@@ -13,11 +15,8 @@ import cassia.util.JSON;
 import cassia.util.JSON.Value;
 import cassia.util.random.RandomPermutation;
 import handist.collections.*;
-import handist.collections.dist.CachableArray;
-import handist.collections.dist.DistBag;
-import handist.collections.dist.DistCol;
-import handist.collections.dist.DistMultiMap;
-import handist.collections.dist.TeamedPlaceGroup;
+import handist.collections.dist.*;
+import handist.collections.dist.DistLog.*;
 import plham.core.*;
 import plham.core.Market.AgentUpdate;
 import plham.core.util.AllocManager;
@@ -25,7 +24,6 @@ import plham.core.util.Random;
 import plham.core.main.Simulator.Session;
 import plham.core.main.ParallelRunnerMT.Step;
 import plham.core.SimulationOutput.SimulationStage;
-import plham.core.util.RandomSequenceBySplit;
 
 import static apgas.Constructs.finish;
 import static apgas.Constructs.here;
@@ -46,7 +44,8 @@ import static plham.core.main.ParallelRunnerMT.PARALLEL_RUNNER_THREAD_PROPERTY;
 
 public final class ParallelRunnerDist extends Runner {
     public static class DefaultOutputCollector implements OutputCollector, Serializable {
-        transient public ConcurrentHashMap<String, List<Object>> map = new ConcurrentHashMap<>();
+        private static final long serialVersionUID = 5777744274622700033L;
+        transient public ConcurrentHashMap<String, List<String>> map = new ConcurrentHashMap<>();
 
         @Override
         public void print(String message) {
@@ -56,14 +55,90 @@ public final class ParallelRunnerDist extends Runner {
         @Override
         public void log(String topic, Object o) {
             if(map==null) map = new ConcurrentHashMap<>();
-            List<Object> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
-            listOfTopic.add(o);
+            List<String> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
+            listOfTopic.add(o.toString());
         }
         public void clear(){
             if(map==null) map = new ConcurrentHashMap<>();
             map.clear();
-        };
-        public Map<String, List<Object>> getLogs() { return map; }
+        }
+
+        @Override
+        public List<String> getLog(String key) {
+            return map.get(key);
+        }
+
+        @Override
+        public List<String> removeLog(String key) {
+            return map.remove(key);
+        }
+
+        @Override
+        public void forEach(BiConsumer<String, List<String>> func) {
+            map.forEach(func);
+        }
+
+    }
+
+    public static class DistOutputCollector implements OutputCollector, Serializable {
+        private static final long serialVersionUID = -5608362301183888334L;
+        DistLog dlog;
+
+        public DistOutputCollector(TeamedPlaceGroup pg) {
+            this(pg, 0);
+        }
+        public DistOutputCollector(TeamedPlaceGroup pg, long phase) {
+            dlog = new DistLog(pg, phase);
+        }
+        @Override
+        public void log(String topic, Object o) {
+            dlog.put(topic, o, null);
+        }
+        public static List<String> getMsgs(Collection<LogItem> vals) {
+            if(vals==null) return null;
+            List<String> results = new ArrayList<>(vals.size());
+            for(LogItem item: vals) results.add(item.msg);
+            return results;
+        }
+
+        @Override
+        public void print(String message) {
+            System.out.println(message);
+            //dlog.put("_MSG_", message, null);
+        }
+        @Override
+        public void clear() {
+            dlog.setPhase(dlog.getPhase()+1);
+        }
+
+        @Override
+        public List<String> getLog(String key) {
+            return getMsgs(dlog.getLog(key));
+        }
+
+        @Override
+        public List<String> removeLog(String key) {
+            return getMsgs(dlog.removeLog(key));
+        }
+
+        @Override
+        public void forEach(BiConsumer<String, List<String>> func) {
+            dlog.getDistMultiMap()
+                    .forEach((LogKey key, Collection<LogItem> vals)->{
+                if(key.place == here() && key.phase == dlog.getPhase()) {
+                    List<String> msgs = new ArrayList<>(vals.size());
+                    for(LogItem v: vals)  msgs.add(v.msg);
+                    func.accept(key.tag, msgs);
+                }
+            });
+        }
+        public void printAll(PrintStream out) {
+            dlog.printAll(out);
+        }
+        public DistLog getDistLog() {
+            return dlog;
+        }
+
     }
 
     /**
@@ -90,10 +165,6 @@ public final class ParallelRunnerDist extends Runner {
         }
     }
 
-    /*
-     * TODO var agentDistribution: Rail[Place];
-     */
-
     /**
      * This class is used to summarizes the handles to distributed collections that
      * manages the simulation status.
@@ -114,7 +185,6 @@ public final class ParallelRunnerDist extends Runner {
         ParallelRunnerDist runner;
         SimulatorFactory factory;
 
-        // TODO orders
         public BranchHandle(TeamedPlaceGroup placeGroup,
                 CachableArray<Market> markets, DistCol<Agent> allAgents, DistBag<List<Order>> orders,
                 DistMultiMap<Long, AgentUpdate> contractedOrders) {
@@ -201,8 +271,6 @@ public final class ParallelRunnerDist extends Runner {
      *
      */
     BranchHandle bh;
-    // TODO TK String->place?
-    private final String here;
 
     transient TreeSet<LongRange> myRanges = new TreeSet<>();
 
@@ -222,7 +290,6 @@ public final class ParallelRunnerDist extends Runner {
     public ParallelRunnerDist(SimulationOutput simulation, SimulatorFactory factory, int nthreads) {
         super(simulation, factory);
         NTHREADS = nthreads;
-        here = here().toString();
     }
 
     private OutputCollector out = new DefaultOutputCollector();
@@ -239,28 +306,27 @@ public final class ParallelRunnerDist extends Runner {
         @Override
         public RangedList<Agent> getRangedList(JSON.Value config, LongRange range) {
             // TODO JSON.value
-            JSON.Value className = config.get("class");
-            JSON.Value classType = config.getOrElse("schedule", defaultScheduleType);
+            String className = config.get("class").toString();
+            String classType = config.getOrElse("schedule", defaultScheduleType).toString();
             try {
                 if (bh.isMaster()) {
+                    //TODO
                     if (classType.equals("arbitrager")) {
-                        debug(here + " rangeForArbitrage = " + range);
-                        debug(here + " type " + bh.allAgents);
                         Chunk<Agent> chunk = new Chunk<>(range);
                         out.print("AX:"+ range);
                         bh.allAgents.add(chunk);
                         return chunk;
                     } else {
-                        return RangedListView.<Agent>emptyView();
+                        return RangedListView.emptyView();
                     }
                 } else {
                     if (classType.equals("arbitrager")) {
-                        return RangedListView.<Agent>emptyView();
+                        return RangedListView.emptyView();
                     } else {
                         // boolean longType = classType.equals("longTerm");
                         LongRange myrange = getAssignedRange(range);
                         if (myrange == null) {
-                            return RangedListView.<Agent>emptyView();
+                            return RangedListView.emptyView();
                         }
                         Chunk<Agent> chunk = new Chunk<>(myrange);
                         bh.allAgents.add(chunk);
@@ -283,13 +349,7 @@ public final class ParallelRunnerDist extends Runner {
 
         @Override
         public void scanDone() {
-            try {
                 separateAgentRanges();
-                throw new RuntimeException();
-            }  catch (RuntimeException e) {
-                System.out.println("PStack:"+here());
-                e.printStackTrace(System.out);
-            }
         }
 
         @Override
@@ -340,7 +400,6 @@ public final class ParallelRunnerDist extends Runner {
         // TODO master check
         boolean isMaster = bh.isMaster();
         if (isMaster) {
-            out.print("bh.sim:" + bh.runner.sim);
             marketSetup(bh.markets, s.withOrderExecution);
         }
 
@@ -415,7 +474,7 @@ public final class ParallelRunnerDist extends Runner {
     public void processAgentUpdate() {
         // TODO
         // maybe contracted.forEach() become faster
-        bh.allAgents.forEach(/* pool, NTHREADS, */ (long index, Agent agent) -> {
+        bh.allAgents.forEach(pool, NTHREADS, (long index, Agent agent) -> {
             Collection<AgentUpdate> cs = bh.contractedOrders.get(index);
             if (cs == null)
                 return;
@@ -457,30 +516,23 @@ public final class ParallelRunnerDist extends Runner {
             }
             // TODO serializable or not?
             this.sim = factory.makeNewSimulation(seed, true, false, new DistAllocManager());
-            out.print("step0a:" + pg);
             // Setup Dist Collections
 
             final DistCol<Agent> dAgents = new DistCol<>();
-            out.print("step0b:" + pg);
             final DistBag<List<Order>> dOrders = new DistBag<>();
-            out.print("step0c:" + pg);
             finish(()-> {
                 pg.broadcastFlat(() -> {
                     out.print("step0c1:" + pg);
                 });
             ;});
-            out.print("step0c2:" + pg);
             final CachableArray<Market> dMarkets = CachableArray.make(pg, sim.markets);
             sim.markets = dMarkets;
             sim.agents = dAgents;
             final Map<String, List<LongRange>> marketName2Ranges = sim.marketName2Ranges;
-            out.print("step0c3:" + marketName2Ranges);
             DistMultiMap<Long, Market.AgentUpdate> dContractedOrders = new DistMultiMap<>(pg);
-            out.print("step0d:" + pg);
             final Place caller = here();
             final JSON.Value conf = factory.CONFIG;
             final ParallelRunnerDist that = this;
-            out.print("step0e:" + pg);
             this.bh = PlaceLocalObject.make(pg.places(), () -> {
                 out.print("BH setup:" + here()+ ":"+conf);
                 //BranchHandle result = new BranchHandle(pg, runner, runner.factory, dMarkets, dAgents, dOrders, dContractedOrders);
@@ -520,34 +572,15 @@ public final class ParallelRunnerDist extends Runner {
         try {
             Simulator sim = this.bh.runner.sim;
             this.pool = Executors.newFixedThreadPool(this.NTHREADS);
-// TODO
-//		JSON.Value CONFIG = sim.CONFIG;
-//		Map<String, Object> GLOBAL = sim.GLOBAL;
-// TODO
-//		// ////// AGENTS INSTANTIATION ////////
 
+            // TODO
 //		bh.allAgents.setProxyGenerator((Long index)->{
 //			return new AgentUpdateProxy(index, bh.contractedOrders);
 //		});
-// TODO
-//		// ////// MULTIVARIATE GEOMETRIC BROWNIAN ////////
-//		Fundamentals fundamentals = sim.createFundamentals(bh.markets,
-//				sim.CONFIG.get("simulation").getOrElse("fundamentalCorrelations", "{}"));
-//		sim.updateFundamentals(fundamentals);
-//		GLOBAL.put("fundamentals", fundamentals);
-//		// ////// MAIN SIMULATION PROCEDURE ////////
-
-// TODO
             OutputCollector out = this.out;
-// TODO
-//      from new MT
-//      AllocManager.Centric<Agent> dm = new AllocManager.Centric<Agent>();
-//      b    h.allAgents = new ChunkedList<>();
-//      bh.allAgents.add(sim.dm.getChunk());
             boolean isMaster = bh.isMaster();
             long TIME_THE_BEGINNING = System.nanoTime();
 
-            // TODO dist runner should prepare routines instead of default beginSimulation
             outputSimulation(isMaster, output, out, SimulationStage.BEGIN_SIMULATION, bh.markets, bh.allAgents);
 
             for (Session session : sim.sessions) {
@@ -572,6 +605,7 @@ public final class ParallelRunnerDist extends Runner {
     private void outputSimulation(boolean isMaster, SimulationOutput output, OutputCollector collector, SimulationStage stage, CachableArray<Market> markets, DistCol<Agent> agents) {
         if(isMaster) marketOutput(output, collector, stage, markets);
         agentOutput(output, collector, stage, agents);
+        out.clear();
     }
     private void outputPrint(boolean isMaster, SimulationOutput output, OutputCollector collector, Session s, SimulationStage stage, CachableArray<Market> markets, DistCol<Agent> agents, List<Event> sessionEvents) {
         if(isMaster) output.sessionOutput(collector, stage, s);
@@ -637,7 +671,7 @@ public final class ParallelRunnerDist extends Runner {
         // TODO
         List<Market> markets = bh.markets;
         try {
-            bh.allAgents.forEach(/* TODO pool, NTHREADS,*/
+            bh.allAgents.forEach(pool, NTHREADS,
                     (Agent a, Consumer<? super List<Order>> receiver) -> {
                 List<Order> orders = a.submitOrders(markets);
                 if (s.withPrint)
@@ -678,7 +712,8 @@ public final class ParallelRunnerDist extends Runner {
             long t1 = System.nanoTime();
             //System.out.println("CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
             bh.orders.TEAM.gather(bh.placeGroup.get(0));
-            handleOrders(bh.orders, maxHifreqOrders); // FIXME
+            if(bh.isMaster())
+                handleOrders(bh.orders, maxHifreqOrders); // FIXME
             long t2 = System.nanoTime();
             // System.out.println("CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
             updateAgents(step);

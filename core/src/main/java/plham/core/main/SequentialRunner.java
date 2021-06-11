@@ -2,6 +2,7 @@ package plham.core.main;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import cassia.util.random.RandomPermutation;
 import plham.core.Agent;
@@ -27,16 +28,11 @@ public class SequentialRunner extends Runner implements Serializable {
      */
     public static class SequentialOutput implements OutputCollector {
 
-        HashMap<String, List<Object>> map = new HashMap<>();
+        HashMap<String, List<String>> map = new HashMap<>();
         
         @Override
         public void print(String message) {
             System.out.println(message);
-        }
-
-        @Override
-        public Map<String, List<Object>> getLogs() {
-            return map;
         }
 
         @Override
@@ -45,9 +41,24 @@ public class SequentialRunner extends Runner implements Serializable {
         }
 
         @Override
+        public List<String> getLog(String key) {
+            return map.get(key);
+        }
+
+        @Override
+        public List<String> removeLog(String key) {
+            return map.remove(key);
+        }
+
+        @Override
+        public void forEach(BiConsumer<String, List<String>> func) {
+            map.forEach(func);
+        }
+
+        @Override
         public void log(String topic, Object o) {
-            List<Object> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
-            listOfTopic.add(o);
+            List<String> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
+            listOfTopic.add(o.toString());
         }
         
     }

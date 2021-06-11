@@ -92,7 +92,7 @@ public class NewCI2002MainForLogging extends SimulationOutput {
 
     @Override
     public void agentOutput(OutputCollector out, SimulationStage stage, Agent agent) {
-        out.log("Agent:"+agent.id, String.format("Agent %s %s ", agent.id, agent.toString()));
+        // out.log("Agent:"+agent.id, String.format("Agent %s %s ", agent.id, agent.toString()));
     }
 
     @Override
@@ -102,24 +102,22 @@ public class NewCI2002MainForLogging extends SimulationOutput {
 
     @Override
     public void orderSubmissionOutput(OutputCollector out, SimulationStage stage, Agent a, List<Order> orders, List<Market> markets) {
-        out.log("orderSubmission:"+a.id, new SubmissionLog(a, markets, orders));
+        // out.log("orderSubmission:"+a.id, new SubmissionLog(a, markets, orders));
     }
     
     @Override
     public void postProcess(OutputCollector output, SimulationStage stage) {
         switch (stage) {
         case WITH_PRINT_DURING_SESSION:
-            Map<String,List<Object>> logs = output.getLogs();
             // Here we combine the session name with the state of each market in a single line
             // First remove the session name from the "logs" Map
-            String sessionName = (String) logs.get("_SESSION_NAME_").get(0);
+            String sessionName = (String) output.getLog("_SESSION_NAME_").get(0);
             // All remaining entries in the "logs" correspond to the markets taking part in the simulation
-            for (String key : logs.keySet()) {
-                if(!(key.startsWith("Market")||key.startsWith("Agent"))) continue;
-                List<Object> lo = logs.get(key);
+            output.forEach((String key, List<String> lo)-> {
+                if(!(key.startsWith("Market")||key.startsWith("Agent"))) return;
                 String marketSuffix = (String) lo.get(0);
                 output.print(sessionName + " " + marketSuffix);
-            }
+            });
             break;
             default:
                 // No grouped outputs in all other stages
