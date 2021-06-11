@@ -288,8 +288,7 @@ public final class ParallelRunnerMT extends Runner {
 
         AgentAllocManager.Centric dm = new AgentAllocManager.Centric();
         sim = factory.makeNewSimulation(seed, dm);
-        cAgents = new ChunkedList<>();
-        cAgents.add(dm.getChunk());
+        cAgents = sim.normalAgents;
 
         long TIME_THE_BEGINNING = System.nanoTime();
 

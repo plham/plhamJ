@@ -16,8 +16,8 @@ import plham.core.main.Simulator;
 public abstract class AgentAllocManager {
 
     public static class Centric extends AgentAllocManager {
-
         private Chunk<Agent> list;
+        public ChunkedList<Agent> all=new ChunkedList<>();
 
         /*
          * public def getBody() { return body; }
@@ -28,49 +28,40 @@ public abstract class AgentAllocManager {
 
         @Override
         public RangedList<Agent> getRangedList(JSON.Value config, LongRange range) {
-            assert list != null : "CentricAllocManager: body is null, setTotalCount has not called yet!";
-            return list.subList(range);
+            RangedList<Agent> result = list.subList(range);
+            all.add(result);
+            return result;
         }
-
         @Override
-        public void registerRange(Value config, LongRange range) {
-        }
-
+        public void registerRange(JSON.Value config, LongRange range) { }
         @Override
-        public void scanDone() {
-        }
-
+        public void scanDone() { }
         @Override
         public void setTotalCount(long size) {
             this.list = new Chunk<>(new LongRange(0, size));
         }
-        // TODO expand ...
-
         @Override
-        public boolean use2scan() {
-            return false;
-        }
-
+        public boolean use2scan() { return false; }
         @Override
-        public void finalSetup(Simulator inConstruction) {
-            ChunkedList<Agent> agents = new ChunkedList();
-            agents.add(this.getChunk());
-            // TODO
-            List<Agent> normalAgents = new ArrayList<>();
-            List<Agent> hifreqAgents = new ArrayList<>();
-            for (Agent agent : agents) {
-                if (agent instanceof HighFrequencyAgent) {
-                    hifreqAgents.add(agent);
+        public void finalSetup(Simulator sim) {
+            sim.agents = all;
+            ChunkedList<Agent> arbs = new ChunkedList<>();
+            ChunkedList<Agent> ords = new ChunkedList<>();
+            sim.hifreqAgents = new ChunkedList<>();
+            all.forEachChunk((RangedList<Agent> c)-> {
+                if(c.get(c.getRange().from) instanceof HighFrequencyAgent) {
+                    arbs.add(c);
                 } else {
-                    normalAgents.add(agent);
+                    ords.add(c);
                 }
-            }
-            inConstruction.agents = agents;
-            inConstruction.normalAgents = normalAgents;
-            inConstruction.hifreqAgents = hifreqAgents;
+            });
+            sim.hifreqAgents = arbs;
+            sim.normalAgents = ords;
         }
 
     }
+
+
     public abstract Iterable<Agent> getContainer();
 
     /**

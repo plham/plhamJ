@@ -56,12 +56,12 @@ public class Simulator {
     public ChunkedList<Agent> agents;
     // public Map<String, Object> GLOBAL;
     public List<Event> sessionEvents;
-    public Iterable<Agent> hifreqAgents;
+    public ChunkedList<Agent> hifreqAgents;
     public Map<String, List<LongRange>> marketName2Ranges;
 
     public List<Market> markets;
 
-    public Iterable<Agent> normalAgents;
+    public ChunkedList<Agent> normalAgents;
     public long numAgents;
     public Random RANDOM;
 
