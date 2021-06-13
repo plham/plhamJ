@@ -176,22 +176,30 @@ public final class ParallelRunnerDist extends Runner {
      */
     static class BranchHandle extends PlaceLocalObject { // TODO TK no need for PLO?
         // TODO short/long-term agents for Fujishima's scheduling.
-        DistCol<Agent> allAgents;
-        DistMultiMap<Long, Market.AgentUpdate> contractedOrders;
+        DistCol<Agent> allNormalAgents;
+        DistChunkedList<Agent> sAgents;
+        DistChunkedList<Agent> lAgents;
+        DistMultiMap<Long, AgentUpdate> contractedOrders;
         CachableArray<Market> markets;
 
-        DistBag<List<Order>> orders;
+        DistBag<List<Order>> sOrders;
+        DistBag<List<Order>> lOrders;
         TeamedPlaceGroup placeGroup;
         ParallelRunnerDist runner;
         SimulatorFactory factory;
 
         public BranchHandle(TeamedPlaceGroup placeGroup,
-                CachableArray<Market> markets, DistCol<Agent> allAgents, DistBag<List<Order>> orders,
+                CachableArray<Market> markets, DistCol<Agent> allAgents,
+                            DistChunkedList<Agent> sAgents, DistChunkedList<Agent> lAgents,
+                            DistBag<List<Order>> sOrders, DistBag<List<Order>> lOrders,
                 DistMultiMap<Long, AgentUpdate> contractedOrders) {
             this.placeGroup = placeGroup;
             this.markets = markets;
-            this.allAgents = allAgents;
-            this.orders = orders;
+            this.allNormalAgents = allAgents;
+            this.sAgents = sAgents;
+            this.lAgents = lAgents;
+            this.sOrders = sOrders;
+            this.lOrders = lOrders;
             this.contractedOrders = contractedOrders;
         }
 
@@ -242,6 +250,122 @@ public final class ParallelRunnerDist extends Runner {
         }
     }
 
+//    class DistAllocManager extends AgentAllocManager {
+//        public String defaultScheduleType = "\"short\"";
+//        //public String defaultScheduleType = "\"long\"";
+//        TreeSet<LongRange> myRanges = new TreeSet<>();
+//        ArrayList<LongRange> arbRanges = new ArrayList<>();
+//        ArrayList<LongRange> ordRanges = new ArrayList<>();
+//
+//        @Override
+//        public Iterable<Agent> getContainer() {
+//            return bh.allNormalAgents;
+//        }
+//        @Override
+//        public RangedList<Agent> getRangedList(Value config, LongRange range, String name, SimulatorFactory simulatorFactory) {
+//            // TODO JSON.value
+//            // String className = config.get("class").toString();
+//            try {
+//                if (bh.isMaster()) {
+//                    //TODO
+//                    if (factory.judgeHFTorNot(name)) {
+//                        Chunk<Agent> chunk = new Chunk<>(range);
+//                        bh.allNormalAgents.add(chunk);
+//                        return chunk;
+//                    } else {
+//                        return RangedListView.emptyView();
+//                    }
+//                } else {
+//                    if (factory.judgeHFTorNot(name)) {
+//                        return RangedListView.emptyView();
+//                    } else {
+//                        String classType = config.getOrElse("schedule", defaultScheduleType).toString();
+//
+//                        // boolean longType = classType.equals("longTerm");
+//                        LongRange myrange = getAssignedRange(range);
+//                        if (myrange == null) {
+//                            return RangedListView.emptyView();
+//                        }
+//                        Chunk<Agent> chunk = new Chunk<>(myrange);
+//                        bh.allNormalAgents.add(chunk);
+//                        if(classType.equals("short")) {
+//                            bh.sAgents.add(chunk);
+//                            out.print("xSHORT:" + chunk.getRange());
+//                        } else {
+//                            bh.lAgents.add(chunk);
+//                            out.print("xLONG:" + chunk.getRange());
+//                        }
+//                        //TODO also add to long/short-term agents
+//                        return chunk;
+//                    }
+//                }
+//            } catch (Exception e) {
+//                throw new RuntimeException("put chunk duplicated!" + here());
+//            }
+//        }
+//
+//        // return the assigned range for the worker (place)
+//        LongRange getAssignedRange(LongRange targetRange) {
+//            LongRange floor = myRanges.floor(targetRange);
+//            if (floor != null && floor.isOverlapped(targetRange)) {
+//                return floor;
+//            }
+//            LongRange ceil = myRanges.ceiling(targetRange);
+//            if (ceil != null && ceil.isOverlapped(targetRange)) {
+//                return ceil;
+//            }
+//            return null;
+//        }
+//
+//        @Override
+//        public void registerRange(Value config, LongRange range, String name, SimulatorFactory simulatorFactory) {
+//            // JSON.Value className = config.get("class");
+//            JSON.Value classType = config.getOrElse("schedule", defaultScheduleType);
+//            if (classType.equals("arbitrager")) {
+//                // TODO
+//                if (arbRanges == null) arbRanges = new ArrayList<>();
+//                arbRanges.add(range);
+//                // TODO long/short using className
+//            } else {
+//                // TDODO
+//                if (ordRanges == null) ordRanges = new ArrayList<>();
+//                ordRanges.add(range);
+//            }
+//        }
+//
+//        @Override
+//        public void scanDone() {
+//            // determine how agents are distributed on worker places.
+//            if (myRanges == null) myRanges = new TreeSet<>();
+//            if (bh.isMaster()) {
+//                for (LongRange r : arbRanges) {
+//                    myRanges.add(r);
+//                }
+//            } else {
+//                int numWorkers = bh.placeGroup.size() - 1;
+//                List<List<LongRange>> split = LongRange.splitList(numWorkers, ordRanges);
+//                List<LongRange> mine = split.get(bh.placeGroup.rank() - 1);
+//                for (LongRange r : mine)
+//                    if (r.size() > 0)
+//                        myRanges.add(r);
+//            }
+//        }
+//
+//        @Override
+//        public void setTotalCount(long size) {
+//            sim.numAgents = size;
+//        }
+//
+//        @Override
+//        public boolean use2scan() {
+//            return true;
+//        }
+//
+//        @Override
+//        public void finalSetup(Simulator sim) {
+//            /* do nothing now */
+//        }
+//    }
     class DistAllocManager extends AgentAllocManager {
         public String defaultScheduleType = "\"short\"";
         TreeSet<LongRange> myRanges = new TreeSet<>();
@@ -250,10 +374,11 @@ public final class ParallelRunnerDist extends Runner {
 
         @Override
         public Iterable<Agent> getContainer() {
-            return bh.allAgents;
+            return bh.allNormalAgents;
         }
         @Override
-        public RangedList<Agent> getRangedList(JSON.Value config, LongRange range) {
+        public RangedList<Agent> getRangedList(Value config, LongRange range,
+                                               String name, SimulatorFactory factory) {
             // TODO JSON.value
             String className = config.get("class").toString();
             String classType = config.getOrElse("schedule", defaultScheduleType).toString();
@@ -262,7 +387,7 @@ public final class ParallelRunnerDist extends Runner {
                     //TODO
                     if (classType.equals("arbitrager")) {
                         Chunk<Agent> chunk = new Chunk<>(range);
-                        bh.allAgents.add(chunk);
+                        bh.allNormalAgents.add(chunk);
                         return chunk;
                     } else {
                         return RangedListView.emptyView();
@@ -277,7 +402,7 @@ public final class ParallelRunnerDist extends Runner {
                             return RangedListView.emptyView();
                         }
                         Chunk<Agent> chunk = new Chunk<>(myrange);
-                        bh.allAgents.add(chunk);
+                        bh.allNormalAgents.add(chunk);
                         //TODO also add to long/short-term agents
                         return chunk;
                     }
@@ -301,9 +426,9 @@ public final class ParallelRunnerDist extends Runner {
         }
 
         @Override
-        public void registerRange(Value config, LongRange range) {
+        public void registerRange(Value config, LongRange range, String name, SimulatorFactory factory) {
             // JSON.Value className = config.get("class");
-            JSON.Value classType = config.getOrElse("schedule", defaultScheduleType);
+            Value classType = config.getOrElse("schedule", defaultScheduleType);
             if (classType.equals("arbitrager")) {
                 // TODO
                 if (arbRanges == null) arbRanges = new ArrayList<>();
@@ -409,7 +534,7 @@ public final class ParallelRunnerDist extends Runner {
      * requests factory for agent/markets creation.
      */
     void createAllAgents() {
-        JSON.Value list = factory.CONFIG.get("simulation").get("agents");
+        Value list = factory.CONFIG.get("simulation").get("agents");
         factory.createAllAgents(list, sim.dm);
     }
 
@@ -449,7 +574,7 @@ public final class ParallelRunnerDist extends Runner {
                 }
                 long t1 = System.nanoTime();
                 if (s.withPrint) {
-                    outputPrint(isMaster, output, out, s, SimulationStage.WITH_PRINT_DURING_SESSION, bh.markets, bh.allAgents, sim.sessionEvents);
+                    outputPrint(isMaster, output, out, s, SimulationStage.WITH_PRINT_DURING_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
                 }
                 long t2 = System.nanoTime();
                 for (Market market : bh.markets) {
@@ -471,7 +596,7 @@ public final class ParallelRunnerDist extends Runner {
             }
         }
         if (isMaster && s.withPrint) {
-            outputPrint(isMaster, output, out, s, SimulationStage.WITH_PRINT_END_SESSION, bh.markets, bh.allAgents, sim.sessionEvents);
+            outputPrint(isMaster, output, out, s, SimulationStage.WITH_PRINT_END_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
         }
     }
 
@@ -500,7 +625,7 @@ public final class ParallelRunnerDist extends Runner {
     public void processAgentUpdate() {
         // TODO
         // maybe contracted.forEach() become faster
-        bh.allAgents.forEach(pool, NTHREADS, (long index, Agent agent) -> {
+        bh.allNormalAgents.forEach(pool, NTHREADS, (long index, Agent agent) -> {
             Collection<AgentUpdate> cs = bh.contractedOrders.get(index);
             if (cs == null)
                 return;
@@ -528,7 +653,10 @@ public final class ParallelRunnerDist extends Runner {
             // Setup Dist Collections
 
             final DistCol<Agent> dAgents = new DistCol<>();
-            final DistBag<List<Order>> dOrders = new DistBag<>();
+            final DistChunkedList<Agent> sAgents = new DistCol<>();
+            final DistChunkedList<Agent> lAgents = new DistCol<>();
+            final DistBag<List<Order>> sOrders = new DistBag<>();
+            final DistBag<List<Order>> lOrders = new DistBag<>();
             finish(()-> {
                 pg.broadcastFlat(() -> {
                     out.print("step0c1:" + pg);
@@ -540,12 +668,12 @@ public final class ParallelRunnerDist extends Runner {
             final Map<String, List<LongRange>> marketName2Ranges = sim.marketName2Ranges;
             DistMultiMap<Long, Market.AgentUpdate> dContractedOrders = new DistMultiMap<>(pg);
             final Place caller = here();
-            final JSON.Value conf = factory.CONFIG;
+            final Value conf = factory.CONFIG;
             final ParallelRunnerDist that = this;
             this.bh = PlaceLocalObject.make(pg.places(), () -> {
                 out.print("BH setup:" + here()+ ":"+conf);
                 //BranchHandle result = new BranchHandle(pg, runner, runner.factory, dMarkets, dAgents, dOrders, dContractedOrders);
-                BranchHandle result = new BranchHandle(pg, dMarkets, dAgents, dOrders, dContractedOrders);
+                BranchHandle result = new BranchHandle(pg, dMarkets, dAgents, sAgents, lAgents, sOrders, lOrders, dContractedOrders);
                 if(!here().equals(caller)) {
                     that.factory = result.factory = new SimulatorFactory(conf);
                     result.runner = that;
@@ -590,18 +718,18 @@ public final class ParallelRunnerDist extends Runner {
             boolean isMaster = bh.isMaster();
             long TIME_THE_BEGINNING = System.nanoTime();
 
-            outputSimulation(isMaster, output, out, SimulationStage.BEGIN_SIMULATION, bh.markets, bh.allAgents);
+            outputSimulation(isMaster, output, out, SimulationStage.BEGIN_SIMULATION, bh.markets, bh.allNormalAgents);
 
             for (Session session : sim.sessions) {
                 session.print();
                 // TODO master only??
                 sim.sessionEvents = factory.createEventsForASession(session, sim);
-                outputSession(isMaster, output, out, session, SimulationStage.BEGIN_SESSION, bh.markets, bh.allAgents, sim.sessionEvents);
+                outputSession(isMaster, output, out, session, SimulationStage.BEGIN_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
                 iterateMarketUpdates(out, session, sim.fundamentals);
-                outputSession(isMaster, output, out, session, SimulationStage.END_SESSION, bh.markets, bh.allAgents, sim.sessionEvents);
+                outputSession(isMaster, output, out, session, SimulationStage.END_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
             }
 
-            outputSimulation(isMaster, output, out, SimulationStage.END_SIMULATION, bh.markets, bh.allAgents);
+            outputSimulation(isMaster, output, out, SimulationStage.END_SIMULATION, bh.markets, bh.allNormalAgents);
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -636,7 +764,7 @@ public final class ParallelRunnerDist extends Runner {
         for(Event e: events) output.eventOutput(collector, stage, e);
     }
     private void outputSession(boolean isMaster, SimulationOutput output, OutputCollector collector,
-                               Session session, SimulationOutput.SimulationStage stage,
+                               Session session, SimulationStage stage,
                                List<Market> markets, DistCol<Agent> agents, List<Event> sessionEvents) {
         if(isMaster) output.sessionOutput(collector, stage, session);
         if(isMaster) marketOutput(output, collector, stage, markets);
@@ -663,7 +791,7 @@ public final class ParallelRunnerDist extends Runner {
         // TODO
         List<Market> markets = bh.markets;
         try {
-            bh.allAgents.forEach(pool, NTHREADS,
+            bh.allNormalAgents.forEach(pool, NTHREADS,
                     (Agent a, Consumer<? super List<Order>> receiver) -> {
                 List<Order> orders = a.submitOrders(markets);
                 if (s.withPrint)
@@ -680,7 +808,7 @@ public final class ParallelRunnerDist extends Runner {
 
     }
 
-    void updateAgents(ParallelRunnerMT.Step step) {
+    void updateAgents(Step step) {
         // no need for remote propagation of contractedorders
         for (Market m : bh.markets) {
             List<List<AgentUpdate>> updatesHistory = m.agentUpdates;
@@ -695,22 +823,22 @@ public final class ParallelRunnerDist extends Runner {
                                      Session s, SimulationOutput output) {
         try {
             // TODO comm time
-            Bag<List<Order>> bag = bh.orders;
+            Bag<List<Order>> bag = bh.sOrders;
 
             bh.markets.<MarketInfo>broadcast(MarketInfo::pack, MarketInfo::unpack);
-            bh.orders.clear();
+            bh.sOrders.clear();
             long t0 = System.nanoTime();
             submitOrders(id, bag, s, output);
             long t1 = System.nanoTime();
             //System.out.println("CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
-            bh.orders.TEAM.gather(bh.placeGroup.get(0));
+            bh.sOrders.TEAM.gather(bh.placeGroup.get(0));
             if(bh.isMaster())
-                handleOrders(bh.orders, maxHifreqOrders); // FIXME
+                handleOrders(bh.sOrders, maxHifreqOrders); // FIXME
             long t2 = System.nanoTime();
             // System.out.println("CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
             updateAgents(step);
             // TODO `relocate` should be TEAM operation.
-            bh.contractedOrders.relocate(bh.allAgents.getDistributionLong());
+            bh.contractedOrders.relocate(bh.allNormalAgents.getDistributionLong());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("[ParallelRunnerDist] updateMarketBatch MPI exception");
