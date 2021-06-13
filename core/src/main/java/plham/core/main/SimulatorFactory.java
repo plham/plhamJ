@@ -15,11 +15,7 @@ import cassia.util.JSON;
 import cassia.util.JSON.Value;
 import handist.collections.LongRange;
 import handist.collections.RangedList;
-import plham.core.Agent;
-import plham.core.Event;
-import plham.core.Fundamentals;
-import plham.core.IndexMarket;
-import plham.core.Market;
+import plham.core.*;
 import plham.core.agent.ArbitrageAgent;
 import plham.core.agent.FCNAgent;
 import plham.core.event.FundamentalPriceShock;
@@ -189,6 +185,7 @@ public class SimulatorFactory {
                 // We call the "register(SimulatorFactory)" method through reflection
                 Method registerMethod = objectClass.getMethod("register", SimulatorFactory.class);
                 registerMethod.invoke(null, SimulatorFactory.this);
+                name2class.put(name, objectClass);
             } catch (ClassNotFoundException e) {
                 System.err.println("Unable to find class " + implementingClassName
                         + ". Are you using a custom class? Use the fully qualified name, i.e.  \"class\" : \"package.subpackage.MyClass\" in your configuration file");
@@ -237,6 +234,7 @@ public class SimulatorFactory {
         legacyClassResolver = resolver;
     }
 
+    public Map<String, Class> name2class;
     public Map<String, AgentGenerator> agentGenerators;
 
     public Map<String, AgentsInitializer> agentInitializers;
@@ -250,6 +248,7 @@ public class SimulatorFactory {
     private SimulationParser parser;
 
     private SimulatorFactory() {
+        name2class = new LinkedHashMap<>();
         agentInitializers = new LinkedHashMap<>();
         agentGenerators = new LinkedHashMap<>();
         marketInitializers = new LinkedHashMap<>();
@@ -403,7 +402,7 @@ public class SimulatorFactory {
                 long numAgents = config.get("numAgents").toLong();
                 LongRange range = new LongRange(lastAgentId, lastAgentId + numAgents);
                 lastAgentId += numAgents;
-                dm.registerRange(config, range);
+                dm.registerRange(config, range, name, this);
             }
             for (Map.Entry<String, List<JSON.Value>> entry : configsGenerated.entrySet()) {
                 String name = entry.getKey();
@@ -413,7 +412,7 @@ public class SimulatorFactory {
                     long numAgents = config.get("numAgents").toLong();
                     LongRange range = new LongRange(lastAgentId, lastAgentId + numAgents);
                     lastAgentId += numAgents;
-                    dm.registerRange(config, range);
+                    dm.registerRange(config, range, name, this);
                 }
             }
             dm.scanDone();
@@ -430,7 +429,7 @@ public class SimulatorFactory {
             long numAgents = config.get("numAgents").toLong();
             LongRange range = new LongRange(lastAgentId, lastAgentId + numAgents);
             lastAgentId += numAgents;
-            RangedList<Agent> subList = dm.getRangedList(config, range);
+            RangedList<Agent> subList = dm.getRangedList(config, range, name, this);
             if (!subList.isEmpty()) {
                 createAgents(name, randoms, subList.getRange(), config, subList);
             }
@@ -443,7 +442,7 @@ public class SimulatorFactory {
                 long numAgents = config.get("numAgents").toLong();
                 LongRange range = new LongRange(lastAgentId, lastAgentId + numAgents);
                 lastAgentId += numAgents;
-                RangedList<Agent> subList = dm.getRangedList(config, range);
+                RangedList<Agent> subList = dm.getRangedList(config, range, name, this);
                 if (!subList.isEmpty())
                     createAgents(name, randoms, subList.getRange(), config, subList);
             }
@@ -665,6 +664,12 @@ public class SimulatorFactory {
 
     public Simulator getSimulatorInConstruction() {
         return inConstruction;
+    }
+
+    public Class<?> getClass(String name) { return name2class.get(name); }
+    public boolean judgeHFTorNot(String name) {
+        Class<?> clazz = name2class.get(name);
+        return HighFrequencyAgent.class.isAssignableFrom(clazz);
     }
 
     /**

@@ -1,9 +1,7 @@
 package plham.core.util;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import cassia.util.JSON;
 import cassia.util.JSON.Value;
 import handist.collections.Chunk;
 import handist.collections.ChunkedList;
@@ -12,6 +10,7 @@ import handist.collections.RangedList;
 import plham.core.Agent;
 import plham.core.HighFrequencyAgent;
 import plham.core.main.Simulator;
+import plham.core.main.SimulatorFactory;
 
 public abstract class AgentAllocManager {
 
@@ -27,13 +26,13 @@ public abstract class AgentAllocManager {
         public Chunk<Agent> getChunk() { return list; }
 
         @Override
-        public RangedList<Agent> getRangedList(JSON.Value config, LongRange range) {
+        public RangedList<Agent> getRangedList(Value config, LongRange range, String name, SimulatorFactory simulatorFactory) {
             RangedList<Agent> result = list.subList(range);
             all.add(result);
             return result;
         }
         @Override
-        public void registerRange(JSON.Value config, LongRange range) { }
+        public void registerRange(Value config, LongRange range, String name, SimulatorFactory simulatorFactory) { }
         @Override
         public void scanDone() { }
         @Override
@@ -70,18 +69,21 @@ public abstract class AgentAllocManager {
      *
      * @param config
      * @param range
+     * @param name
+     * @param simulatorFactory
      * @return
      */
-    public abstract RangedList<Agent> getRangedList(JSON.Value config, LongRange range);
+    public abstract RangedList<Agent> getRangedList(Value config, LongRange range, String name, SimulatorFactory simulatorFactory);
 
     /**
      * Simulation factory tells the range for the agents created by the config.
      * This method is only called when two scan (use2scan()==true).
-     *
      * @param config
      * @param range
+     * @param name
+     * @param simulatorFactory
      */
-    public abstract void registerRange(JSON.Value config, LongRange range);
+    public abstract void registerRange(Value config, LongRange range, String name, SimulatorFactory simulatorFactory);
 
     /**
      * This method tells that all the range of agents are already notified.
