@@ -1,7 +1,10 @@
 package plham.core.main;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.*;
 
+import apgas.util.GlobalID;
 import cassia.util.JSON;
 import cassia.util.random.*;
 
@@ -10,6 +13,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import handist.collections.*;
+import handist.collections.dist.util.ObjectInput;
+import handist.collections.dist.util.ObjectOutput;
 import plham.core.*;
 import plham.core.Market.AgentUpdate;
 import plham.core.SimulationOutput.SimulationStage;
@@ -17,8 +22,7 @@ import plham.core.main.Simulator.Session;
 import plham.core.util.AgentAllocManager;
 import plham.core.util.Random;
 
-import static apgas.Constructs.async;
-import static apgas.Constructs.finish;
+import static apgas.Constructs.*;
 
 @SuppressWarnings("unused")
 public final class ParallelRunnerMT extends Runner {
@@ -36,7 +40,7 @@ public final class ParallelRunnerMT extends Runner {
         }
         @Override
         public void log(String topic, Object o) {
-            List<String> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
+            List<String> listOfTopic = map.computeIfAbsent(topic, k -> {return Collections.synchronizedList(new ArrayList<>()); });
             listOfTopic.add(o.toString());
         }
         public void clear(){
@@ -61,37 +65,37 @@ public final class ParallelRunnerMT extends Runner {
     }
 
     public static class ParallelOutputLogger extends ParallelOutputCollector {
-        LinkedList<ConcurrentHashMap<String,  List<String>>> arch = new LinkedList<>();
         @Override
         public void clear() {
-            arch.add(map);
-            map = new ConcurrentHashMap<>();
+            /* do nothing */
         }
     }
     public static class ParallelOutputChecker extends ParallelOutputCollector {
-        LinkedList<ConcurrentHashMap<String,  List<String>>> arch = new LinkedList<>();
-        ConcurrentHashMap<String, List<String>> omap;
+        ConcurrentHashMap<String,  List<String>> arch = new ConcurrentHashMap<>();
         public ParallelOutputChecker(ParallelOutputLogger base) {
-            this(base.arch);
+            this(base.map);
         }
-        public ParallelOutputChecker(LinkedList<ConcurrentHashMap<String, List<String>>> arch) {
+        public ParallelOutputChecker(ConcurrentHashMap<String, List<String>> arch) {
             try {
                 this.arch = arch;
-                this.omap = arch.removeFirst();
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(0);
             }
         };
         public void diffFound(String key, Object o1, List<String> o2) {
-            System.err.println("OutputChecker found different entry for key" + key + ". new entry:" + o1 + ", prev entries:" + o2);
+            System.err.println("OutputChecker found different entry for key: " + key + ". new entry:" + o1 + ", prev entries:" + o2);
         }
         @Override
-        public void log(String topic, Object o) {
+        public void log(String topic, Object o0) {
+            String o = o0.toString();
             try {
                 super.log(topic, o);
-                List<String> listOfTopic = omap.get(topic);
-                if (listOfTopic == null) diffFound(topic, o, null);
+                List<String> listOfTopic = arch.get(topic);
+                if (listOfTopic == null) {
+                    diffFound(topic, o, null);
+                    return;
+                }
                 boolean flag = listOfTopic.remove(o);
                 if (!flag) diffFound(topic, o, listOfTopic);
             } catch (Exception e) {
@@ -101,21 +105,15 @@ public final class ParallelRunnerMT extends Runner {
         }
         @Override
         public void clear() {
-            try {
-                super.clear();
-                for (String key : omap.keySet()) {
-                    List<String> objs = omap.get(key);
-                    if (!objs.isEmpty()) diffFound(key, null, objs);
-                }
-                if (!arch.isEmpty()) {
-                    this.omap = arch.removeFirst();
-                } else {
-                    this.omap = new ConcurrentHashMap<>();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.exit(0);
+        }
+
+        public boolean checkRemains() {
+            boolean flag = true;
+            for (String key : arch.keySet()) {
+                List<String> objs = arch.get(key);
+                if (!objs.isEmpty()) { flag= false; diffFound(key, null, objs);}
             }
+            return flag;
         }
     }
     public class LongShortCentric extends AgentAllocManager {
@@ -222,6 +220,17 @@ public final class ParallelRunnerMT extends Runner {
     ChunkedList<Agent> shortTs = new ChunkedList<>();
     ChunkedList<Agent> longTs = new ChunkedList<>();
     ChunkedList<Agent> arbitragers = new ChunkedList<>();
+    boolean pipeline = false;
+    List<Market> marketsForArbs = null;
+
+    static <T> T serializeClone(T obj) {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        ObjectOutput output = new ObjectOutput(buf);
+        output.writeObject(obj);
+        output.close();
+        ObjectInput input = new ObjectInput(new ByteArrayInputStream(buf.toByteArray()));
+        return (T)input.readObject();
+    }
 
     int NTHREADS;
     private ExecutorService pool;
@@ -245,52 +254,10 @@ public final class ParallelRunnerMT extends Runner {
         System.err.println(o);
     }
 
-    @SuppressWarnings("deprecation")
-    public void iterateMarketUpdatesWoOrderPlace(OutputCollector out, Session s, Fundamentals fundamentals) {
-        marketSetup(sim.markets, s.withOrderExecution);
-        long epoch = System.currentTimeMillis();
-        for (long id = 0; id < s.iterationSteps; id++) {
-            Step step = new Step(id, epoch);
-            long begin = System.nanoTime();
-            iterSetup(fundamentals);
-            long t0 = System.nanoTime();
-            if (s.forDummyTimeseries) {
-                sim.updateMarketsUsingFundamentalPrice(sim.markets, fundamentals);
-            } else {
-                sim.updateMarketsUsingMarketPrice(sim.markets, fundamentals);
-            }
-            long t1 = System.nanoTime();
-            if (s.withPrint) {
-                output.print(out, s, sim.markets, sim.agents, sim.sessionEvents);
-                output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION);
-                out.clear();
-            }
-            long t2 = System.nanoTime();
-            for (Market market : sim.markets) {
-                market.triggerAfterSimulationStepEvents();
-            }
-            long t3 = System.nanoTime();
-            for (Market market : sim.markets) {
-                market.updateTime();
-                market.updateOrderBooks();
-            }
-            long t4 = System.nanoTime();
-            long end = System.nanoTime();
-        }
-        if (s.withPrint) {
-            output.endprint(out, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
-            output.postProcess(out, SimulationStage.WITH_PRINT_END_SESSION);
-            out.clear();
-        }
-    }
-
-
-    @SuppressWarnings("deprecation")
     public void iterateMarketUpdates(OutputCollector out, Session s, Fundamentals fundamentals) {
         // TODO
         if(!s.withOrderPlacement) System.out.println("------------should not occur!-");
-        boolean doPipeline = (longTs.size() != 0);
-        marketSetup(sim.markets, s.withOrderExecution);
+        marketSetup(pipeline? marketsForArbs:sim.markets, s.withOrderExecution);
         long epoch = System.currentTimeMillis();
         Bag<List<Order>> pbag = null;
         for (long id = 0; id < s.iterationSteps; id++) {
@@ -300,35 +267,47 @@ public final class ParallelRunnerMT extends Runner {
             Step step = new Step(id, epoch);
             long begin = System.nanoTime();
             iterSetup(fundamentals);
-            if(doPipeline) {
+            marketSync();
+            if(pipeline) {
                 final long id0 = id;
-                Bag<List<Order>> bag = (pbag==null)? new Bag<>(): pbag;
+                Bag<List<Order>> bag = (pbag == null) ? new Bag<>() : pbag;
                 // updateMarketsInBatch(id, step, s.maxHighFreqOrders, s, output);
                 final Bag<List<Order>> lbag = new Bag<>();
                 long t0 = System.nanoTime();
                 submitOrders(id, NTHREADS, shortTs, bag, s, output);
                 long t1 = System.nanoTime();
-                final int lsplit = Math.max((NTHREADS-1) * 3, 1);
-                finish(()->{
-                    async(()-> {
+                final int lsplit = Math.max((NTHREADS - 1) * 3, 1);
+                finish(() -> {
+                    async(() -> {
                         submitOrders(id0, lsplit, longTs, lbag, s, output);
                     });
-                    handleOrders(bag.convertToList(), s.maxHighFreqOrders);
-                    updateMarketMisc(s, fundamentals);
+                    handleOrders(bag.convertToList(), marketsForArbs, s.maxHighFreqOrders);
+                    if (id0 + 1 < s.iterationSteps) {
+                        updateMarketMisc(s, fundamentals);
+                    }
                 });
-                long t2 = System.nanoTime();
-                updateAgents(step);
+                if (id + 1 < s.iterationSteps) {
+                    for (Market market : marketsForArbs) {
+                        market.updateTime();
+                    }
+                    marketSync();
+                    updateAgents(step);
+                }
                 pbag = lbag;
+                long t2 = System.nanoTime();
             } else {
                 // updateMarketsInBatch(id, step, s.maxHighFreqOrders, s, output);
                 Bag<List<Order>> bag = new Bag<>();
                 long t0 = System.nanoTime();
                 submitOrders(id, NTHREADS, shortTs, bag, s, output);
                 long t1 = System.nanoTime();
-                handleOrders(bag.convertToList(), s.maxHighFreqOrders);
+                handleOrders(bag.convertToList(), sim.markets, s.maxHighFreqOrders);
                 long t2 = System.nanoTime();
                 updateAgents(step);
                 updateMarketMisc(s, fundamentals);
+                for (Market market : sim.markets) {
+                    market.updateTime();
+                }
             }
             //                System.out.println("CYCLE upMarket: " + ((t1 - t0) * 1e-9));
             //                System.out.println("CYCLE print: " + ((t2 - t1) * 1e-9));
@@ -336,11 +315,14 @@ public final class ParallelRunnerMT extends Runner {
             //                System.out.println("CYCLE upTime: " + ((t4 - t3) * 1e-9));
             //                System.out.println("CYCLE all" + ((end - begin) * 1e-9));
         }
-        if(doPipeline && pbag != null) {
-            handleOrders(pbag.convertToList(), s.maxHighFreqOrders);
-            // TODO again?
-            updateAgents(new Step(s.iterationSteps-1, epoch));
+        if(pipeline) {
+            handleOrders(pbag.convertToList(), marketsForArbs, s.maxHighFreqOrders);
             updateMarketMisc(s, fundamentals);
+            for (Market market : sim.markets) {
+                market.updateTime();
+            }
+            marketSync();
+            updateAgents(new Step(s.iterationSteps - 1, epoch));
         }
         if (s.withPrint) {
             output.endprint(out, s, sim.markets, sim.agents, sim.sessionEvents, s.iterationSteps);
@@ -349,31 +331,39 @@ public final class ParallelRunnerMT extends Runner {
         }
     }
     public void updateMarketMisc(Session s, Fundamentals fundamentals) {
+        List<Market> activeM = pipeline? marketsForArbs: sim.markets;
         long t0 = System.nanoTime();
         if (s.forDummyTimeseries) {
-            sim.updateMarketsUsingFundamentalPrice(sim.markets, fundamentals);
+            sim.updateMarketsUsingFundamentalPrice(activeM, fundamentals);
         } else {
-            sim.updateMarketsUsingMarketPrice(sim.markets, fundamentals);
+            sim.updateMarketsUsingMarketPrice(activeM, fundamentals);
         }
         long t1 = System.nanoTime();
         if (s.withPrint) {
-            output.print(out, s, sim.markets, sim.agents, sim.sessionEvents);
+            output.print(out, s, activeM, sim.agents, sim.sessionEvents);
             output.postProcess(out, SimulationStage.WITH_PRINT_DURING_SESSION);
             out.clear();
         }
         long t2 = System.nanoTime();
-        for (Market market : sim.markets) {
+        for (Market market : activeM) {
             market.triggerAfterSimulationStepEvents();
         }
         long t3 = System.nanoTime();
-        for (Market market : sim.markets) {
-            market.updateTime();
+        for (Market market : activeM) {
             market.updateOrderBooks();
         }
         long t4 = System.nanoTime();
         long end = System.nanoTime();
     }
-
+    private void marketSync() {
+        if (pipeline) {
+            for (int i = 0; i < marketsForArbs.size(); i++) {
+                ParallelRunnerDist.MarketInfo minfo =
+                        ParallelRunnerDist.MarketInfo.pack(marketsForArbs.get(i));
+                ParallelRunnerDist.MarketInfo.unpack(sim.markets.get(i), minfo);
+            }
+        }
+    }
     void iterSetup(Fundamentals fundamentals) {
         sim.updateFundamentals(fundamentals);
         for (Market market : sim.markets) {
@@ -392,10 +382,13 @@ public final class ParallelRunnerMT extends Runner {
             market.check();
         });
     }
-
-    @SuppressWarnings("deprecation")
     @Override
     public void run(long seed) {
+        run(seed, false);
+    }
+
+    @SuppressWarnings("deprecation")
+    public void run(long seed, boolean pipeline) {
         long TIME_INIT = System.nanoTime();
         OutputCollector out = this.out;
 
@@ -403,6 +396,13 @@ public final class ParallelRunnerMT extends Runner {
         sim = factory.makeNewSimulation(seed, true, true, dm);
 
         long TIME_THE_BEGINNING = System.nanoTime();
+        if(pipeline) {
+            this.pipeline = pipeline;
+            marketsForArbs = sim.markets;
+            sim.markets = serializeClone(sim.markets);
+        } else {
+            if(longTs.size()!=0) throw new IllegalArgumentException("Please set pipeline=true if there are long-term agents");
+        }
 
         output.beginSimulation(out, sim.markets, sim.agents);
         output.postProcess(out, SimulationStage.BEGIN_SIMULATION);
@@ -458,142 +458,6 @@ public final class ParallelRunnerMT extends Runner {
         }
     }
 
-    //	public void run(String[] args) {
-    //
-    //		if (args.length < 1) {
-    //			throw new RuntimeException("Usage: ./a.out config.json [SEED]");
-    //		}
-    //
-    //		long seed;
-    //		if (args.length > 1) {
-    //			seed = Long.valueOf(args[1]);
-    //		} else {
-    //			Random random = new Random();
-    //			seed = random.nextLong(Long.MAX_VALUE / 2); // MEMO: main()
-    //		}
-    //		System.out.println("#NTHREADS=" + NTHREADS);
-    //		System.out.println("#HIFREQ_SUBMIT_RATE=" + Runner.HIFREQ_SUBMIT_RATE);
-    //
-    //		long TIME_THE_BEGINNING = System.nanoTime();
-
-    //		Map<String, Object> GLOBAL = new LinkedHashMap<String, Object>();
-    //		sim.GLOBAL = GLOBAL;
-    //		JSON.Value CONFIG = JSON.parse(new File(args[0]));
-    //		sim.CONFIG = CONFIG;
-    //		JSON.extendDeeply(CONFIG, CONFIG);
-    //
-    //		Random RANDOM = new Random(seed);
-    //		sim.RANDOM = RANDOM;
-    //		System.out.println("# Random.seed " + seed);
-
-    //		// ////// MARKETS INSTANTIATION ////////
-    //		List<Market> markets = sim.createAllMarkets(CONFIG.get("simulation").get("markets"));
-    //		List<LongRange> mrange = new ArrayList<LongRange>();
-    //		mrange.add(new LongRange(0, markets.size()));
-    //		sim.marketName2Ranges.put("markets", mrange);
-    //
-    //		System.out.println("# #(markets) " + markets.size());
-
-    //		// ////// AGENTS INSTANTIATION ////////
-    //		AllocManager.Centric<Agent> dm = new AllocManager.Centric<Agent>();
-    //		sim.createAllAgents(CONFIG.get("simulation").get("agents"), dm);
-    //		GLOBAL.put("agents", dm.getBody());
-    //		// TODO tmp hack
-    //		this.cAgents = new ChunkedList<>();
-    //		cAgents.add(dm.getChunk());
-
-
-    //		// ////// MULTIVARIATE GEOMETRIC BROWNIAN ////////
-    //		Fundamentals fundamentals = sim.createFundamentals(markets,
-    //				CONFIG.get("simulation").getOrElse("fundamentalCorrelations", "{}"));
-    //		sim.updateFundamentals(fundamentals);
-    //		GLOBAL.put("fundamentals", fundamentals);
-
-    // ////// SERIAL/PARALLEL ENV SETUP ////////
-
-    //		setupEnv(markets, dm.getBody());
-
-    // ////// MAIN SIMULATION PROCEDURE ////////
-
-    //		sim.beginSimulation();
-    //
-    //		JSON.Value sessions = null; // CONFIG.get("simulation").get("sessions");
-    //		for (long i = 0; i < sessions.size(); i++) {
-    //			JSON.Value json = sessions.get(i);
-    //			String sessionName = json.get("sessionName").toString();
-    //			long iterationSteps = parseIterationSteps(json);
-    //			boolean withOrderPlacement = json.get("withOrderPlacement").toBoolean();
-    //			boolean withOrderExecution = json.get("withOrderExecution").toBoolean();
-    //			boolean withPrint = json.getOrElse("withPrint", "true").toBoolean();
-    //			boolean forDummyTimeseries = (!withOrderPlacement && !withOrderExecution);
-    //			if (json.has("forDummyTimeseries")) {
-    //				forDummyTimeseries = json.get("forDummyTimeseries").toBoolean();
-    //			}
-    //			long maxNormalOrders = json.getOrElse("maxNormalOrders", String.valueOf(markets.size())).toLong();
-    //			long maxHifreqOrders = json.getOrElse("maxHifreqOrders", "0").toLong();
-    //			if (true) {
-    //				System.out.println("# SESSION: " + sessionName);
-    //				System.out.println("# iterationSteps: " + iterationSteps);
-    //				System.out.println("# withOrderPlacement: " + withOrderPlacement);
-    //				System.out.println("# withOrderExecution: " + withOrderExecution);
-    //				System.out.println("# withPrint: " + withPrint);
-    //				System.out.println("# forDummyTimeseries: " + forDummyTimeseries);
-    //				System.out.println("# maxNormalOrders: " + maxNormalOrders);
-    //				System.out.println("# maxHifreqOrders: " + maxHifreqOrders);
-    //			}
-    //
-    //			GLOBAL.put("events", null);
-    //			if (json.has("events")) {
-    //				List<Event> events = sim.createAllEvents(json.get("events"));
-    //				GLOBAL.put("events", events);
-    //			}
-    //			sim.beginSession(sessionName);
-    //			iterateMarketUpdates(sessionName, iterationSteps, withOrderPlacement, withOrderExecution, withPrint,
-    //					forDummyTimeseries, maxNormalOrders, maxHifreqOrders, fundamentals);
-    //			sim.endSession(sessionName);
-    //		}
-    //		sim.endSimulation();
-    //
-    //		long TIME_THE_END = System.nanoTime();
-    //		System.out.println("# TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
-    //		pool.shutdown();
-    //	}
-
-//    public void updateMarketsInBatch(long id, Step step, long maxHifreqOrders,
-//                                     Session s, SimulationOutput output) {
-//        Bag<List<Order>> bag = new Bag<>();
-////        Bag<List<Order>> bag = new Bag<>();
-//        // TODO tuning
-//        long t0 = System.nanoTime();
-//        submitOrders(id, NTHREADS, shortTs, bag, s, output);
-//        long t1 = System.nanoTime();
-//        //        System.out.println("# CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
-//        //finish(()->{
-//        if(longTs.size()==0) {
-//            handleOrders(bag.convertToList(), maxHifreqOrders);
-//        } else {
-//            // TODO pool impl (not async impl)
-//            try {
-//                final Bag<List<Order>> prevBag = bag;
-//                Future<?> future0 = pool.submit(() -> {
-//                    handleOrders(prevBag.convertToList(), maxHifreqOrders);
-//                });
-//                bag = new Bag<>();
-//                int nSplit =  Math.max(3, (NTHREADS -1) * 2);
-//                submitOrders(id, nSplit, longTs, bag, s, output);
-//                future0.get();
-//            } catch (InterruptedException | ExecutionException e) {
-//                throw new ParallelExecutionException("[ParallelRunnerMT] exception raised by a thread executing handleOrders().", e);
-//            }
-//        }
-//          //  submitOrders(id, longTs, bag, s, output);
-//        //});
-//
-//        long t2 = System.nanoTime();
-//        //        System.out.println("# CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
-//        updateAgents(step);
-//    }
-
     // tmporal impl, maybe we should apply this randomize during Bag gathering
     static class Ox implements Comparable<Ox> {
         long priority;
@@ -627,7 +491,7 @@ public final class ParallelRunnerMT extends Runner {
             long priority = random.getNthLong(agentId);
             sorted.put(new Ox(priority, agentId, orderSet), orderSet);
         }
-        out.log("# simRandom@myShuffle", sorted.keySet().toString());
+        out.log("# simRandom@myShuffle", "" + orders.size() + ":"+random + ":"+ sorted.keySet().toString());
         return sorted.values();
     }
 
@@ -639,10 +503,10 @@ public final class ParallelRunnerMT extends Runner {
      * @param MAX_HIFREQ_ORDERS
      * @return
      */
-    public List<List<Order>> handleOrders(List<List<Order>> localOrders, long MAX_HIFREQ_ORDERS) {
+    public List<List<Order>> handleOrders(List<List<Order>> localOrders, List<Market> markets,
+                                          long MAX_HIFREQ_ORDERS) {
         long beginTime = System.nanoTime();
         List<List<Order>> allOrders = new ArrayList<>();
-        List<Market> markets = sim.markets;
 //        StringBuffer buf0 = new StringBuffer();
 //        for (List<Order> someOrders : localOrders) {
 //            buf0.append(" "+someOrders.get(0).agentId);
@@ -652,11 +516,11 @@ public final class ParallelRunnerMT extends Runner {
         Random random = sim.getRandom();
         Random tmpRandom = new Random(System.nanoTime());
         Iterable<Agent> agents = arbitragers;
-        RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random, agents);
+        RandomPermutation<Agent> randomAgents = new RandomPermutation<>(random.split(), agents);
         //RandomPermutation<List<Order>> randomOrders = new RandomPermutation<>(random, localOrders);
         //randomOrders.shuffle();
 
-        Collection<List<Order>> randomOrders = myShuffle(random, localOrders);
+        Collection<List<Order>> randomOrders = myShuffle(random.split(), localOrders);
 
         //out.log("simRandom@handleOrders", random.toString());
 
@@ -669,7 +533,7 @@ public final class ParallelRunnerMT extends Runner {
             // This handles one order-list submitted by an agent per loop.
             // TODO: If needed, one-market one-order handling.
             for (Order order : someOrders) {
-                Market m = sim.markets.get(((int) order.marketId));
+                Market m = markets.get(((int) order.marketId));
                 m.triggerBeforeOrderHandlingEvents(order);
                 m.handleOrder(order); // NOTE: DO it now.
                 m.triggerAfterOrderHandlingEvents(order);
@@ -692,7 +556,7 @@ public final class ParallelRunnerMT extends Runner {
 
                 if (orders.size() > 0) {
                     for (Order order : orders) {
-                        Market m = sim.markets.get((int) order.marketId);
+                        Market m = markets.get((int) order.marketId);
                         m.triggerBeforeOrderHandlingEvents(order);
                         m.handleOrder(order);
                         m.triggerAfterOrderHandlingEvents(order);

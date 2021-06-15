@@ -102,12 +102,12 @@ public final class ParallelRunnerDist extends Runner {
 
         @Override
         public void print(String message) {
-            System.out.println(message);
+            System.out.println(message + "::" + here());
             //dlog.put("_MSG_", message, null);
         }
         @Override
         public void clear() {
-            dlog.setPhase(dlog.getPhase()+1);
+            /* dlog.setPhase(dlog.getPhase()+1);*/
         }
 
         @Override
@@ -250,10 +250,12 @@ public final class ParallelRunnerDist extends Runner {
 
     class DistAllocManager extends AgentAllocManager {
         public String defaultScheduleType = "\"short\"";
-        //public String defaultScheduleType = "\"long\"";
+        // public String defaultScheduleType = "\"long\"";
         TreeSet<LongRange> myRanges = new TreeSet<>();
         ArrayList<LongRange> arbRanges = new ArrayList<>();
         ArrayList<LongRange> ordRanges = new ArrayList<>();
+        ChunkedList<Agent> arbitrageurs = new ChunkedList<>();
+        boolean hasLong = false;
 
         @Override
         public Iterable<Agent> getContainer() {
@@ -269,7 +271,7 @@ public final class ParallelRunnerDist extends Runner {
                     //TODO
                     if (factory.judgeHFTorNot(name)) {
                         Chunk<Agent> chunk = new Chunk<>(range);
-                        bh.allNormalAgents.add(chunk);
+                        arbitrageurs.add(chunk);
                         return chunk;
                     } else {
                         return RangedListView.emptyView();
@@ -289,10 +291,8 @@ public final class ParallelRunnerDist extends Runner {
                         bh.allNormalAgents.add(chunk);
                         if(classType.equals("short")) {
                             bh.sAgents.add(chunk);
-                            out.print("xSHORT:" + chunk.getRange());
                         } else {
                             bh.lAgents.add(chunk);
-                            out.print("xLONG:" + chunk.getRange());
                         }
                         //TODO also add to long/short-term agents
                         return chunk;
@@ -329,6 +329,7 @@ public final class ParallelRunnerDist extends Runner {
                 // TDODO
                 if (ordRanges == null) ordRanges = new ArrayList<>();
                 ordRanges.add(range);
+                if(classType.equals("long")) hasLong = true;
             }
         }
 
@@ -362,8 +363,9 @@ public final class ParallelRunnerDist extends Runner {
 
         @Override
         public void finalSetup(Simulator sim) {
-            /* do nothing now */
+            sim.hifreqAgents = arbitrageurs;
         }
+        public boolean hasLong() { return hasLong; }
     }
     /**
      *
@@ -434,43 +436,13 @@ public final class ParallelRunnerDist extends Runner {
 
     public void iterateMarketUpdates(OutputCollector output, Session s, Fundamentals fundamentals) {
         bh.placeGroup.barrier();
-        iterateMarketUpdatesPara(output, s, fundamentals);
-    }
-    public void iterateMarketUpdatesWoOrderPlace(OutputCollector out, Session s, Fundamentals fundamentals) {
-        // TODO master check
-        marketSetup(bh.markets, s.withOrderExecution);
-        long epoch = System.currentTimeMillis();
-        for (long id = 0; id < s.iterationSteps; id++) {
-            Step step = new Step(id, epoch);
-            long begin = System.nanoTime();
-            iterSetup(fundamentals);
-            long t0 = System.nanoTime();
-            if (s.forDummyTimeseries) {
-                sim.updateMarketsUsingFundamentalPrice(bh.markets, fundamentals);
-            } else {
-                sim.updateMarketsUsingMarketPrice(bh.markets, fundamentals);
-            }
-            long t1 = System.nanoTime();
-            if (s.withPrint) {
-                outputPrint(true, output, out, s, SimulationStage.WITH_PRINT_DURING_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
-            }
-            long t2 = System.nanoTime();
-            for (Market market : bh.markets) {
-                market.triggerAfterSimulationStepEvents();
-            }
-            long t3 = System.nanoTime();
-            for (Market market : bh.markets) {
-                market.updateTime();
-                market.updateOrderBooks();
-            }
-            long t4 = System.nanoTime();
-            long end = System.nanoTime();
-        }
-        if (s.withPrint) {
-            outputPrint(true, output, out, s, SimulationStage.WITH_PRINT_END_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
+        if(pipeline) {
+            iterateMarketUpdatesParaPipeline(output, s, fundamentals);
+        } else {
+            iterateMarketUpdatesPara0(output, s, fundamentals);
         }
     }
-    public void iterateMarketUpdatesPara(OutputCollector out, Session s, Fundamentals fundamentals) {
+    public void iterateMarketUpdatesParaPipeline(OutputCollector out, Session s, Fundamentals fundamentals) {
         // TODO master check
         if(!s.withOrderPlacement) throw new RuntimeException("should not occur");
         boolean isMaster = bh.isMaster();
@@ -498,8 +470,12 @@ public final class ParallelRunnerDist extends Runner {
                         submitOrders(idc, NTHREADS, bh.sAgents, bh.sOrders, s, output);
                     });
                     long t1 = System.nanoTime();
-                    bh.lOrders.TEAM.gather(bh.placeGroup.get(0));
-                    if (isMaster) addOrders(bh.lOrders);
+                    if(idc >0) {
+                        bh.contractedOrders.relocate(bh.allNormalAgents.getDistributionLong());
+                        // TODO ...
+                        bh.lOrders.TEAM.gather(bh.placeGroup.get(0));
+                        if (isMaster) addOrders(bh.lOrders);
+                    }
                     //System.out.println("CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
                 });
                 finish(()-> {
@@ -513,28 +489,80 @@ public final class ParallelRunnerDist extends Runner {
                         addOrders(bh.sOrders);
                         handleOrders(s.maxHighFreqOrders); // FIXME
                         // TODO
-                        updateAgents(step);
+                        if(idc + 1 < s.iterationSteps)
+                            updateMarketMisc(s, fundamentals);
                     }
                     long t2 = System.nanoTime();
                     // System.out.println("CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
-                    bh.contractedOrders.relocate(bh.allNormalAgents.getDistributionLong());
-                    // TODO `relocate` should be TEAM operation.
-                    if(idc+1 < s.iterationSteps) {
-                        if (isMaster) {
-                            updateMarketMisc(s, fundamentals);
-                            iterSetup(fundamentals);
-                        }
-                        bh.markets.<MarketInfo>broadcast(MarketInfo::pack, MarketInfo::unpack);
-                    } else {
-                        if (isMaster) {
-                            updateMarketMisc(s, fundamentals);
-                            addOrders(bh.lOrders);
-                            handleOrders(s.maxHighFreqOrders);
-                            updateAgents(step);
-                            updateMarketMisc0(s, fundamentals);
-                        }
-                    }
                 });
+                if(isMaster&& idc+1 < s.iterationSteps) {
+                    for(Market market: bh.markets) market.updateTime();
+                    if (isMaster) {
+                        updateAgents(step); // TODO...
+                        iterSetup(fundamentals);
+                    }
+                }
+                bh.markets.<MarketInfo>broadcast(MarketInfo::pack, MarketInfo::unpack);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("[ParallelRunnerDist] updateMarketBatch MPI exception");
+            }
+        }
+
+        { //
+            bh.lOrders.TEAM.gather(bh.placeGroup.get(0));
+            if (isMaster) {
+                addOrders(bh.lOrders);
+                handleOrders(s.maxHighFreqOrders);
+                updateMarketMisc(s, fundamentals);
+                updateAgents(new Step(s.iterationSteps-1, epoch));
+            }
+        }
+        if (isMaster && s.withPrint) {
+            outputPrint(isMaster, output, out, s, SimulationStage.WITH_PRINT_END_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
+        }
+    }
+
+    public void iterateMarketUpdatesPara0(OutputCollector out, Session s, Fundamentals fundamentals) {
+        if(!s.withOrderPlacement) throw new RuntimeException("should not occur");
+        boolean isMaster = bh.isMaster();
+        if (isMaster) {
+            marketSetup(bh.markets, s.withOrderExecution);
+        }
+        for (long id = 0; id < s.iterationSteps; id++) {
+            long epoch = System.currentTimeMillis();
+            if (isMaster)
+                iterSetup(fundamentals);
+            bh.markets.<MarketInfo>broadcast(MarketInfo::pack, MarketInfo::unpack);
+            final long idc = id;
+            assert s.withOrderPlacement;
+
+            Step step = new Step(id, epoch);
+            long begin = System.nanoTime();
+            try {
+                // TODO comm time
+                bh.sOrders.clear();
+                long t0 = System.nanoTime();
+                submitOrders(idc, NTHREADS, bh.sAgents, bh.sOrders, s, output);
+                long t1 = System.nanoTime();
+                if(idc >0) {
+                    bh.contractedOrders.relocate(bh.allNormalAgents.getDistributionLong());
+                    // TODO ...
+                }
+                    //System.out.println("CYCLE submitOrders: " + ((t1 - t0) * 1e-9));
+                bh.sOrders.TEAM.gather(bh.placeGroup.get(0));
+                if (bh.isMaster()) {
+                    addOrders(bh.sOrders);
+                    handleOrders(s.maxHighFreqOrders); // FIXME
+                    // TODO
+                    updateMarketMisc(s, fundamentals);
+                }
+                long t2 = System.nanoTime();
+                // System.out.println("CYCLE handleOrders: " + ((t2 - t1) * 1e-9));
+                for(Market market: bh.markets) market.updateTime();
+                if (isMaster) {
+                    updateAgents(step); // TODO...
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException("[ParallelRunnerDist] updateMarketBatch MPI exception");
@@ -562,41 +590,10 @@ public final class ParallelRunnerDist extends Runner {
         }
         long t3 = System.nanoTime();
         for (Market market : bh.markets) {
-            market.updateTime();
             market.updateOrderBooks();
         }
         long t4 = System.nanoTime();
         long end = System.nanoTime();
-        //                System.out.println("CYCLE upMarket: " + ((t1 - t0) * 1e-9));
-        //                System.out.println("CYCLE print: " + ((t2 - t1) * 1e-9));
-        //                System.out.println("CYCLE triEvent: " + ((t3 - t2) * 1e-9));
-        //                System.out.println("CYCLE upTime: " + ((t4 - t3) * 1e-9));
-        //                System.out.println("CYCLE all" + ((end - begin) * 1e-9));
-    }
-    void updateMarketMisc0(Session s, Fundamentals fundamentals) {
-        long t0 = System.nanoTime();
-        if (s.forDummyTimeseries) {
-            sim.updateMarketsUsingFundamentalPrice(bh.markets, fundamentals);
-        } else {
-            sim.updateMarketsUsingMarketPrice(bh.markets, fundamentals);
-        }
-        long t1 = System.nanoTime();
-        if (s.withPrint) {
-            outputPrint(true, output, out, s, SimulationStage.WITH_PRINT_DURING_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
-        }
-
-        long t2 = System.nanoTime();
-        for (Market market : bh.markets) {
-            market.triggerAfterSimulationStepEvents();
-        }
-        /*
-        long t3 = System.nanoTime();
-        for (Market market : bh.markets) {
-            //market.updateTime();
-            // market.updateOrderBooks();
-        }
-        long t4 = System.nanoTime();
-        long end = System.nanoTime();*/
         //                System.out.println("CYCLE upMarket: " + ((t1 - t0) * 1e-9));
         //                System.out.println("CYCLE print: " + ((t2 - t1) * 1e-9));
         //                System.out.println("CYCLE triEvent: " + ((t3 - t2) * 1e-9));
@@ -642,28 +639,30 @@ public final class ParallelRunnerDist extends Runner {
     // TODO
     @Override
     public void run(final long seed) {
+        run(seed, false);
+    }
+
+    boolean pipeline;
+    public void run(final long seed, boolean pipeline) {
+        this.pipeline = pipeline;
         try {
             long TIME_INIT = System.nanoTime();
             final TeamedPlaceGroup pg = TeamedPlaceGroup.getWorld();
-            out.print("PG:" + pg);
+            out.print("# " + pg);
             if (pg.rank() != 0) {
                 System.err.println("NOT master" + bh.placeGroup);
                 return;
             }
             // TODO serializable or not?
-            this.sim = factory.makeNewSimulation(seed, true, false, new DistAllocManager());
+            DistAllocManager da = new DistAllocManager();
+            this.sim = factory.makeNewSimulation(seed, true, false, da);
             // Setup Dist Collections
-
             final DistCol<Agent> dAgents = new DistCol<>();
             final DistChunkedList<Agent> sAgents = new DistCol<>();
             final DistChunkedList<Agent> lAgents = new DistCol<>();
+            final DistChunkedList<Agent> arbitrageurs = new DistCol<>();
             final DistBag<List<Order>> sOrders = new DistBag<>();
             final DistBag<List<Order>> lOrders = new DistBag<>();
-            finish(()-> {
-                pg.broadcastFlat(() -> {
-                    out.print("step0c1:" + pg);
-                });
-            ;});
             final CachableArray<Market> dMarkets = CachableArray.make(pg, sim.markets);
             sim.markets = dMarkets;
             sim.agents = dAgents;
@@ -672,10 +671,11 @@ public final class ParallelRunnerDist extends Runner {
             final Place caller = here();
             final Value conf = factory.CONFIG;
             final ParallelRunnerDist that = this;
-            this.bh = PlaceLocalObject.make(pg.places(), () -> {
+            final BranchHandle bh = PlaceLocalObject.make(pg.places(), () -> {
                 out.print("BH setup:" + here()+ ":"+conf);
                 //BranchHandle result = new BranchHandle(pg, runner, runner.factory, dMarkets, dAgents, dOrders, dContractedOrders);
-                BranchHandle result = new BranchHandle(pg, dMarkets, dAgents, sAgents, lAgents, sOrders, lOrders, dContractedOrders);
+                BranchHandle result = new BranchHandle(pg, dMarkets, dAgents, sAgents, lAgents,
+                        sOrders, lOrders, dContractedOrders);
                 if(!here().equals(caller)) {
                     that.factory = result.factory = new SimulatorFactory(conf);
                     result.runner = that;
@@ -691,14 +691,24 @@ public final class ParallelRunnerDist extends Runner {
             this.bh = bh;
             bh.runner = this;
             bh.factory= factory;
+            this.createAllAgents();
+            this.sim.markets = bh.markets;
+
+            if(da.hasLong() && !pipeline){
+                throw new IllegalArgumentException("Please set pipeline=true if there are long-term agents");
+            }
 
             pg.broadcastFlat(() -> {
-                out.print("start running:" + here());
-                bh.runner.bh = bh;
-                bh.runner.createAllAgents();
-                bh.runner.sim.markets = bh.markets;
-                bh.runner.parallelRun();
+                if(!here().equals(caller)) {
+                    out.print("# start running");
+                    bh.runner.bh = bh;
+                    bh.runner.createAllAgents();
+                    bh.runner.sim.markets = bh.markets;
+                    bh.runner.parallelRun();
+                }
             });
+            out.print("# start running");
+            this.parallelRun();
             long TIME_THE_END = System.nanoTime();
             out.print("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
             out.print("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
@@ -851,6 +861,7 @@ public final class ParallelRunnerDist extends Runner {
         orders.clear();
     }
     private Collection<List<Order>> myShuffle(Random random) {
+        int bsize = keptOrders.size();
         TreeMap<ParallelRunnerMT.Ox, List<Order>> sorted = new TreeMap<>();
         for(List<Order> orderSet: keptOrders) {
             if (orderSet.isEmpty()) continue;
@@ -858,8 +869,8 @@ public final class ParallelRunnerDist extends Runner {
             long priority = random.getNthLong(agentId);
             sorted.put(new ParallelRunnerMT.Ox(priority, agentId, orderSet), orderSet);
         }
+        out.log("# simRandom@myShuffle", "" + keptOrders.size() +":"+ random + ":"+ sorted.keySet().toString());
         keptOrders.clear();
-        out.log("# simRandom@myShuffle", sorted.keySet().toString());
         return sorted.values();
     }
     /**
@@ -879,16 +890,14 @@ public final class ParallelRunnerDist extends Runner {
 
         Random random = sim.getRandom();
         Random tmpRandom = new Random(System.nanoTime());
-        Iterable<Agent> randomAgents;
         if(sim.hifreqAgents==null) {
-            randomAgents = Collections.emptyList();
-        } else {
-            RandomPermutation<Agent> agents = new RandomPermutation<>(random, sim.hifreqAgents);
-            agents.shuffle();
-            randomAgents = agents;
+            sim.hifreqAgents = new ChunkedList<>();
         }
+        RandomPermutation<Agent> agents = new RandomPermutation<>(random.split(), sim.hifreqAgents);
+        agents.shuffle();
+        Iterable<Agent> randomAgents = agents;
 // TODO
-        Collection<List<Order>> randomOrders = myShuffle(random);
+        Collection<List<Order>> randomOrders = myShuffle(random.split());
 
         for (List<Order> someOrders : randomOrders) {
             // This handles one order-list submitted by an agent per loop.

@@ -34,9 +34,9 @@ public class DistParallelMainDebug {
 			System.err.println("# Running with seed: " + seed);
 			final ParallelRunnerMT runner = new ParallelRunnerMT(sim, factory, 1);
 			runner.setLogger(out0);
-			runner.run(seed);
+			runner.run(seed, true);
 			out0.clear();
-			//out0.printAll(new PrintStream("logA.txt"));
+			out0.printAll(new PrintStream("logA.txt"));
 		}
 		System.out.println("==================");
 
@@ -46,13 +46,15 @@ public class DistParallelMainDebug {
 			System.err.println("# Running with seed: " + seed);
 			final ParallelRunnerDist runner = new ParallelRunnerDist(sim, factory, 3);
 			runner.setLogger(out1);
-			runner.run(seed);
+			runner.run(seed, true);
 			out1.clear();
 			out1.getDistLog().globalGather();
-			//out1.printAll(new PrintStream("logB.txt"));
+			out1.printAll(new PrintStream("logB.txt"));
 		}
 		// diff check
-		out1.getDistLog().distributionFreeEquals(out0.getDistLog(), System.out);
-
+		boolean flag = out1.getDistLog().distributionFreeEquals(out0.getDistLog(), System.out);
+		if(flag) System.out.println("Exact match. Congratulation!");
+		boolean flag2 = out0.getDistLog().distributionFreeEquals(out1.getDistLog(), System.out);
+		if(flag2) System.out.println("Exact match. Congratulation again!");
 	}
 }

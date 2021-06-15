@@ -86,7 +86,7 @@ public class NewCI2002MainForLogging extends SimulationOutput {
     @Override
     public void marketOutput(OutputCollector out, SimulationStage stage, Market market) {
         long t = market.getTime();
-        out.log("Market:" + market.id, String.format("%s %s %s %s %s %s ", t, market.id, market.name,
+        out.log("Market:" + market.id +":"+market.getTime(), String.format("%s %s %s %s %s %s ", t, market.id, market.name,
                 market.getPrice(t), market.getFundamentalPrice(t), market.getRandom()));
     }
 
@@ -102,25 +102,24 @@ public class NewCI2002MainForLogging extends SimulationOutput {
 
     @Override
     public void orderSubmissionOutput(OutputCollector out, SimulationStage stage, Agent a, List<Order> orders, List<Market> markets) {
-        // out.log("orderSubmission:"+a.id, new SubmissionLog(a, markets, orders));
+        for(Order order: orders) {
+            out.log("OrderSubmission:" + order.agentId + ":" + order.marketId +"@"+order.timePlaced, order.toString());
+        }
     }
     
     @Override
     public void postProcess(OutputCollector output, SimulationStage stage) {
+        /*
         switch (stage) {
         case WITH_PRINT_DURING_SESSION:
             // Here we combine the session name with the state of each market in a single line
             // First remove the session name from the "logs" Map
             String sessionName = (String) output.getLog("_SESSION_NAME_").get(0);
             // All remaining entries in the "logs" correspond to the markets taking part in the simulation
-            output.forEach((String key, List<String> lo)-> {
-                if(!(key.startsWith("Market")||key.startsWith("Agent"))) return;
-                String marketSuffix = (String) lo.get(0);
-                output.print(sessionName + " " + marketSuffix);
-            });
             break;
             default:
                 // No grouped outputs in all other stages
         }
+         */
     }
 }

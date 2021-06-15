@@ -675,6 +675,11 @@ public class Market implements Serializable {
         return setup(json);
     }
 
+    @Override
+    public String toString() {
+        return "[Market"+ id + ", seed" + random + ", time: " + time.t + ", marketPrice" + getPrice();
+    }
+
     public void tickUpdateMarketPrice() {
         long t = getTime();
         double price = getNextMarketPrice();

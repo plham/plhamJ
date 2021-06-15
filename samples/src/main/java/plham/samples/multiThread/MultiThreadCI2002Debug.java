@@ -22,7 +22,7 @@ public class MultiThreadCI2002Debug {
 			System.err.println("# Running with seed: " + seed);
 			final ParallelRunnerMT runner = new ParallelRunnerMT(sim, factory, 1);
 			runner.setLogger(out0);
-			runner.run(seed);
+			runner.run(seed, true);
 			out0.clear();
 		}
 		//ParallelRunnerMT.ParallelOutputLogger outC = new ParallelRunnerMT.ParallelOutputLogger();
@@ -30,9 +30,11 @@ public class MultiThreadCI2002Debug {
 		{
 			final NewCI2002MainForLogging sim = new NewCI2002MainForLogging();
 			System.err.println("# Running with seed: " + seed);
-			final ParallelRunnerMT runner = new ParallelRunnerMT(sim, factory, 1);
+			final ParallelRunnerMT runner = new ParallelRunnerMT(sim, factory, 3);
 			runner.setLogger(outC);
-			runner.run(seed);
+			runner.run(seed, true);
+			boolean exactSame = outC.checkRemains();
+			if(exactSame) System.out.println("Congratulation!");
 		}
 	}
 }
