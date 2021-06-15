@@ -21,6 +21,7 @@ public class DistParallelMainDebug {
     public static void main(final String[] args) throws Exception {
 		SimulatorFactory factory = new SimulatorFactory(args[0]);
 		TeamedPlaceGroup world = TeamedPlaceGroup.getWorld();
+		boolean pipeline = false;
 		long seed;
 		if (args.length > 1) {
 			seed = Long.valueOf(args[1]);
@@ -34,7 +35,7 @@ public class DistParallelMainDebug {
 			System.err.println("# Running with seed: " + seed);
 			final ParallelRunnerMT runner = new ParallelRunnerMT(sim, factory, 1);
 			runner.setLogger(out0);
-			runner.run(seed, true);
+			runner.run(seed, pipeline);
 			out0.clear();
 			out0.printAll(new PrintStream("logA.txt"));
 		}
@@ -46,7 +47,7 @@ public class DistParallelMainDebug {
 			System.err.println("# Running with seed: " + seed);
 			final ParallelRunnerDist runner = new ParallelRunnerDist(sim, factory, 3);
 			runner.setLogger(out1);
-			runner.run(seed, true);
+			runner.run(seed, pipeline);
 			out1.clear();
 			out1.getDistLog().globalGather();
 			out1.printAll(new PrintStream("logB.txt"));

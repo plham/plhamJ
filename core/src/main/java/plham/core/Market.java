@@ -45,7 +45,8 @@ public class Market implements Serializable {
     /**
      * Class used to carry update information to the Agents that were involved in a trade
      */
-    public static class AgentUpdate {
+    public static class AgentUpdate implements Serializable {
+        private static final long serialVersionUID = -3636190568594599556L;
         public long agentId;
         public long assetVolumeDelta;
         public double cashAmountDelta;
