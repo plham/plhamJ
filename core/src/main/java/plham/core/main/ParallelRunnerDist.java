@@ -250,7 +250,7 @@ public final class ParallelRunnerDist extends Runner {
 
     class DistAllocManager extends AgentAllocManager {
         public String defaultScheduleType = "\"short\"";
-        // public String defaultScheduleType = "\"long\"";
+        //public String defaultScheduleType = "\"long\"";
         TreeSet<LongRange> myRanges = new TreeSet<>();
         ArrayList<LongRange> arbRanges = new ArrayList<>();
         ArrayList<LongRange> ordRanges = new ArrayList<>();
@@ -318,9 +318,8 @@ public final class ParallelRunnerDist extends Runner {
 
         @Override
         public void registerRange(Value config, LongRange range, String name, SimulatorFactory factory) {
-            // JSON.Value className = config.get("class");
-            Value classType = config.getOrElse("schedule", defaultScheduleType);
-            if (classType.equals("arbitrager")) {
+            String classType = config.getOrElse("schedule", defaultScheduleType).toString();
+            if (factory.judgeHFTorNot(name)) {
                 // TODO
                 if (arbRanges == null) arbRanges = new ArrayList<>();
                 arbRanges.add(range);
@@ -329,7 +328,7 @@ public final class ParallelRunnerDist extends Runner {
                 // TDODO
                 if (ordRanges == null) ordRanges = new ArrayList<>();
                 ordRanges.add(range);
-                if(classType.equals("long")) hasLong = true;
+                if(classType.startsWith("long")) hasLong = true;
             }
         }
 
@@ -417,9 +416,10 @@ public final class ParallelRunnerDist extends Runner {
     public void setLogger(OutputCollector out) {
         this.out = out;
     }
-
+    transient DistAllocManager _am;
     private DistAllocManager getAllocManager() {
-        return new DistAllocManager();
+        if(_am==null) _am = new DistAllocManager();
+        return _am;
     }
     /**
      * DistRunner calcuarates the distribution of agents and then
@@ -654,9 +654,9 @@ public final class ParallelRunnerDist extends Runner {
                 return;
             }
             // TODO serializable or not?
-            DistAllocManager da = new DistAllocManager();
-            this.sim = factory.makeNewSimulation(seed, true, false, da);
+            this.sim = factory.makeNewSimulation(seed, true, false, this.getAllocManager());
             // Setup Dist Collections
+
             final DistCol<Agent> dAgents = new DistCol<>();
             final DistChunkedList<Agent> sAgents = new DistCol<>();
             final DistChunkedList<Agent> lAgents = new DistCol<>();
@@ -691,24 +691,20 @@ public final class ParallelRunnerDist extends Runner {
             this.bh = bh;
             bh.runner = this;
             bh.factory= factory;
-            this.createAllAgents();
-            this.sim.markets = bh.markets;
-
-            if(da.hasLong() && !pipeline){
-                throw new IllegalArgumentException("Please set pipeline=true if there are long-term agents");
-            }
 
             pg.broadcastFlat(() -> {
-                if(!here().equals(caller)) {
-                    out.print("# start running");
-                    bh.runner.bh = bh;
-                    bh.runner.createAllAgents();
-                    bh.runner.sim.markets = bh.markets;
-                    bh.runner.parallelRun();
+                out.print("# start running");
+                bh.runner.bh = bh;
+                bh.runner.createAllAgents();
+                bh.runner.sim.markets = bh.markets;
+                if(!bh.runner.pipeline && bh.runner.getAllocManager().hasLong()) {
+                    return;
                 }
+                bh.runner.parallelRun();
             });
-            out.print("# start running");
-            this.parallelRun();
+            if(!bh.runner.pipeline && bh.runner.getAllocManager().hasLong()) {
+                throw new IllegalArgumentException("Please set pipeline=true if there are long-term agents");
+            }
             long TIME_THE_END = System.nanoTime();
             out.print("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
             out.print("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
