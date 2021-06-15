@@ -233,7 +233,7 @@ public final class ParallelRunnerMT extends Runner {
     }
 
     int NTHREADS;
-    private ExecutorService pool;
+    //private ExecutorService pool;
 
     public ParallelRunnerMT(SimulationOutput sim, SimulatorFactory factory) {
         this(sim, factory, initializeNThreads());
@@ -242,7 +242,7 @@ public final class ParallelRunnerMT extends Runner {
     public ParallelRunnerMT(SimulationOutput sim, SimulatorFactory factory, int nthreads) {
         super(sim, factory);
         NTHREADS = nthreads;
-        pool = Executors.newFixedThreadPool(nthreads);
+        // pool = Executors.newFixedThreadPool(nthreads);
         out = new ParallelOutputCollector();
         System.err.println(ParallelRunnerMT.class.getName() + " running with " + NTHREADS + " threads");
     }
@@ -278,9 +278,7 @@ public final class ParallelRunnerMT extends Runner {
                 long t1 = System.nanoTime();
                 final int lsplit = Math.max((NTHREADS - 1) * 3, 1);
                 finish(() -> {
-                    async(() -> {
-                        submitOrders(id0, lsplit, longTs, lbag, s, output);
-                    });
+                    async(()->{ submitOrders(id0, lsplit, longTs, lbag, s, output); });
                     handleOrders(bag.convertToList(), marketsForArbs, s.maxHighFreqOrders);
                     if (id0 + 1 < s.iterationSteps) {
                         updateMarketMisc(s, fundamentals);
@@ -427,7 +425,7 @@ public final class ParallelRunnerMT extends Runner {
         long TIME_THE_END = System.nanoTime();
         System.out.println("# INITIALIZATION TIME " + ((TIME_THE_BEGINNING - TIME_INIT) / 1e+9));
         System.out.println("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
-        pool.shutdown();
+        // pool.shutdown();
     }
 
     @SuppressWarnings("deprecation")
@@ -435,7 +433,7 @@ public final class ParallelRunnerMT extends Runner {
                       Session s, SimulationOutput output) {
         final List<Market> markets = sim.markets;
         try {
-            agents.forEach(pool, parallelism,
+            agents.parallelForEach(parallelism,
                     (Agent a, Consumer<? super List<Order>> receiver) -> {
                         List<Order> orders = a.submitOrders(markets);
                         if (s.withPrint)

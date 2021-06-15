@@ -10,6 +10,8 @@ import plham.samples.CI2002.NewCI2002MainForLogging;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DistParallelMainDebug {
 
@@ -23,6 +25,10 @@ public class DistParallelMainDebug {
 		TeamedPlaceGroup world = TeamedPlaceGroup.getWorld();
 		boolean pipeline = false;
 		long seed;
+		for(String arg: args) {
+			if(arg.equals("-pipeline")) pipeline = true;
+		}
+
 		if (args.length > 1) {
 			seed = Long.valueOf(args[1]);
 		} else {

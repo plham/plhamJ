@@ -411,7 +411,7 @@ public final class ParallelRunnerDist extends Runner {
     int NTHREADS;
 
     // TODO duplicated with MT (if RunnerDist extends RunnerMT)
-    transient private ExecutorService pool;
+   //  transient private ExecutorService pool;
     long TIME_THE_BEGINNING;
 
     public ParallelRunnerDist(SimulationOutput sim, SimulatorFactory factory) {
@@ -665,7 +665,7 @@ public final class ParallelRunnerDist extends Runner {
 //            out.print(" dist "+ buf3.toString());
 //        }
         // maybe contracted.forEach() become faster
-        bh.allNormalAgents.forEach(pool, NTHREADS, (long index, Agent agent) -> {
+        bh.allNormalAgents.parallelForEach(/*pool,*/ NTHREADS, (long index, Agent agent) -> {
             Collection<AgentUpdate> cs = bh.contractedOrders.get(index);
             if (cs == null)
                 return;
@@ -758,7 +758,7 @@ public final class ParallelRunnerDist extends Runner {
     void parallelRun() { // TODO ??
         try {
             Simulator sim = this.bh.runner.sim;
-            this.pool = Executors.newFixedThreadPool(this.NTHREADS);
+            // this.pool = Executors.newFixedThreadPool(this.NTHREADS);
 
             // TODO
             bh.allNormalAgents.setProxyGenerator((Long index)->{
@@ -785,7 +785,7 @@ public final class ParallelRunnerDist extends Runner {
             throw e;
         }
 
-        pool.shutdown();
+        // pool.shutdown();
 
     }
 
@@ -842,7 +842,7 @@ public final class ParallelRunnerDist extends Runner {
         // TODO
         List<Market> markets = bh.markets;
         try {
-            agents.forEach(pool, NTHREADS,
+            agents.parallelForEach(/*pool, */ NTHREADS,
                     (Agent a, Consumer<? super List<Order>> receiver) -> {
                 List<Order> orders = a.submitOrders(markets);
                 if (s.withPrint)
