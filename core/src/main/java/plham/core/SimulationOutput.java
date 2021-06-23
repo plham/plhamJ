@@ -2,8 +2,6 @@ package plham.core;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
-
 import handist.collections.ChunkedList;
 import plham.core.main.Simulator.Session;
 

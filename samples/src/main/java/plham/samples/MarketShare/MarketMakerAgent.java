@@ -25,7 +25,12 @@ public class MarketMakerAgent extends HighFrequencyAgent {
 	public static void register(SimulatorFactory sim) {
 		String className = "MarketMakerAgent";
 		sim.addAgentInitializer(className, new AgentInitializer() {
-			@Override
+			/**
+             * 
+             */
+            private static final long serialVersionUID = -8912027028646476053L;
+
+            @Override
 			public Agent initialize(long id, String name, Random random, Value json) {
 				return new MarketMakerAgent(id, name, random).setup(json, sim);
 			}

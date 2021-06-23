@@ -22,7 +22,12 @@ public class DarkPoolFCNAgent extends FCNAgent {
 	public static void register(SimulatorFactory sim) {
 		String className = "DarkPoolFCNAgent";
 		sim.addAgentInitializer(className, new AgentInitializer() {
-			@Override
+			/**
+             * 
+             */
+            private static final long serialVersionUID = 2733235254373383829L;
+
+            @Override
 			public Agent initialize(long id, String name, Random random, Value json) {
 				return new DarkPoolFCNAgent(id, name, random).setup(json, sim);
 			}

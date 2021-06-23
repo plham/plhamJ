@@ -19,7 +19,12 @@ public class PriceLimitFCNAgent extends FCNAgent {
 	public static void register(SimulatorFactory sim) {
 		String className = "PriceLimitFCNAgent";
 		sim.addAgentInitializer(className, new AgentInitializer() {
-			@Override
+			/**
+             * 
+             */
+            private static final long serialVersionUID = -1244542071744927510L;
+
+            @Override
 			public Agent initialize(long id, String name, Random random, Value json) {
 				return new PriceLimitFCNAgent(id, name, random).setup(json, sim);
 			}

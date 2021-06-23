@@ -8,7 +8,6 @@ import plham.core.util.Random;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class NewCI2002MainForLogging extends SimulationOutput {
     public static class SubmissionLog {

@@ -1,7 +1,6 @@
 package plham.samples.DistParallel;
 
 import handist.collections.dist.TeamedPlaceGroup;
-import plham.core.OutputCollector;
 import plham.core.main.ParallelRunnerDist;
 import plham.core.main.ParallelRunnerMT;
 import plham.core.main.SimulatorFactory;
@@ -9,16 +8,8 @@ import plham.core.util.Random;
 import plham.samples.CI2002.NewCI2002MainForLogging;
 
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class DistParallelMainDebug {
-
-	/**
-     * 
-     */
-    private static final long serialVersionUID = 4103707038034011459L;
 
     public static void main(final String[] args) throws Exception {
 		SimulatorFactory factory = new SimulatorFactory(args[0]);

@@ -20,7 +20,12 @@ public class MarketShareFCNAgent extends FCNAgent {
 	public static void register(SimulatorFactory sim) {
 		String className = "MarketShareFCNAgent";
 		sim.addAgentInitializer(className, new AgentInitializer() {
-			@Override
+			/**
+             * 
+             */
+            private static final long serialVersionUID = 5023462296348181251L;
+
+            @Override
 			public Agent initialize(long id, String name, Random random, Value json) {
 				return new MarketShareFCNAgent(id, name, random).setup(json, sim);
 			}

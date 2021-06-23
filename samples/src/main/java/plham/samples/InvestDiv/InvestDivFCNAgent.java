@@ -20,7 +20,12 @@ public class InvestDivFCNAgent extends FCNAgent {
 	public static void register(SimulatorFactory sim) {
 		String className = "InvestDivFCNAgent";
 		sim.addAgentInitializer(className, new AgentInitializer() {
-			@Override
+			/**
+             * 
+             */
+            private static final long serialVersionUID = 3222079872422198744L;
+
+            @Override
 			public Agent initialize(long id, String name, Random random, Value json) {
 				return new InvestDivFCNAgent(id, name, random).setup(json, sim);
 			}

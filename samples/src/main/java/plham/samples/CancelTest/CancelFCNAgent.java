@@ -20,7 +20,12 @@ public class CancelFCNAgent extends FCNAgent {
 	public static void register(SimulatorFactory sim) {
 		String className = "CancelFCNAgent";
 		sim.addAgentInitializer(className, new AgentInitializer() {
-			@Override
+			/**
+             * 
+             */
+            private static final long serialVersionUID = 5416244314586391388L;
+
+            @Override
 			public Agent initialize(long id, String name, Random random, Value json) {
 				return new CancelFCNAgent(id, name, random).setup(json, sim);
 			}

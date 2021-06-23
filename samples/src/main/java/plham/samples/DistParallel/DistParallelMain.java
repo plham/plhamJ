@@ -1,24 +1,11 @@
 package plham.samples.DistParallel;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import cassia.util.JSON;
-import plham.core.Event;
 import plham.core.main.ParallelRunnerDist;
-import plham.core.main.ParallelRunnerMT;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
-import plham.samples.CI2002.NewCI2002Main;
 import plham.samples.CI2002.NewCI2002MainForLogging;
-import plham.samples.ShockTransfer.ShockTransferMain;
 
 public class DistParallelMain {
-
-	/**
-     * 
-     */
-    private static final long serialVersionUID = 4103707038034011459L;
 
     public static void main(final String[] args) throws Exception {
 		final NewCI2002MainForLogging sim = new NewCI2002MainForLogging();

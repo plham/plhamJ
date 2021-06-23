@@ -1,9 +1,6 @@
 package plham.samples.CI2002;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-
 import plham.core.Market;
 import plham.core.OutputCollector;
 import plham.core.SimulationOutput;
