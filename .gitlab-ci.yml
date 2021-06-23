@@ -26,9 +26,11 @@ unit_tests:
     when: always
     reports:
       junit:
-        - target/surefire-reports/TEST-*.xml
+        - core/target/surefire-reports/TEST-*.xml
+        - samples/target/surefire-reports/TEST-*.xml
     paths:
-        - target/surefire-reports/TEST-*.xml
+        - core/target/surefire-reports/TEST-*.xml
+        - samples/target/surefire-reports/TEST-*.xml
     expire_in: 1 week
 
 integration_tests:
@@ -40,9 +42,11 @@ integration_tests:
     when: always
     reports:
       junit:
-        - target/failsafe-reports/TEST-*.xml
+        - samples/target/failsafe-reports/TEST-*.xml
+        - core/target/failsafe-reports/TEST-*.xml
     paths:
-      - target/failsafe-reports/TEST-*.xml
+      - samples/target/failsafe-reports/TEST-*.xml
+      - core/target/failsafe-reports/TEST-*.xml
       - target/site/*
     expire_in: 1 week
 
