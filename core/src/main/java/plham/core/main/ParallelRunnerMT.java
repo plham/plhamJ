@@ -366,6 +366,7 @@ public final class ParallelRunnerMT extends Runner {
         sim.updateFundamentals(fundamentals);
         for (Market market : sim.markets) {
             market.triggerBeforeSimulationStepEvents(); // Assuming the markets in dependency order.
+            if(!pipeline) market.getFundamentalPrice(); // to prevent on-demand calculation of fundamental prices of IndexMarket. This may cause multi-thread bugs.
         }
     }
 
