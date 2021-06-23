@@ -3,6 +3,7 @@ package plham.samples;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -39,5 +40,10 @@ public class IT_SequentialRunner extends PlhamOutputTester {
             {FatFingerMain.class, "src/test/resources/FatFinger/config.json", "100", "src/test/resources/FatFinger/correct_output.txt"},
             {DarkPoolMain.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/DarkPool/correct_output.txt"}
         });
+    }
+    
+    @BeforeClass
+    public static void beforeClass() {
+        System.setProperty(PLHAMOUTPUTTEST_CREATE_OUTPUT, "true");
     }
 }

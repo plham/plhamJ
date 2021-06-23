@@ -994,7 +994,7 @@ public final class ParallelRunnerDist extends Runner {
      */
     public static void main(String [] args) {
         if (args.length < 3) {
-            System.err.println("Program arguments for ParallelRunnerMT:");
+            System.err.println("Program arguments for ParallelRunnerDist:");
             System.err.println("\tOutput class (defines the outputs to extract from the simulation)");
             System.err.println("\tJSON configuration file");
             System.err.println("\tseed");
@@ -1049,7 +1049,7 @@ public final class ParallelRunnerDist extends Runner {
                 runner = new ParallelRunnerDist(simulationOutput, factory);
             }
         } catch (NumberFormatException e) {
-            System.err.println("Failed to parse the parallelism level to use for the ParallelRunnerMT");
+            System.err.println("Failed to parse the parallelism level to use for the ParallelRunnerDist");
             e.printStackTrace();
             return;
         }
