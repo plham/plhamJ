@@ -156,13 +156,20 @@ public abstract class PlhamOutputTester {
      */
     @Test(timeout=30000)
     public void checkProgramOutput() throws NoSuchMethodException, SecurityException, IllegalAccessException,
-    IllegalArgumentException, InvocationTargetException, IOException {
+    IllegalArgumentException, IOException, Throwable {
         output = new FileOutputStream(temporaryOutput);
         Method m = main.getMethod("main", String[].class);
         PrintStream stdOut = System.out;
         System.setOut(new PrintStream(output));
         Object[] arguments = { args };
-        m.invoke(null, arguments); // Call the main method
+        try {
+            m.invoke(null, arguments); // Call the main method   
+        } catch (InvocationTargetException e) {
+            // Print the exception here to leave a trace
+            e.printStackTrace();
+            // Transmit the "cause" to the JUnit framework: the cause is what caused the fault in the target program
+            throw e.getCause(); 
+        }
         System.setOut(stdOut);
 
         output.flush();
