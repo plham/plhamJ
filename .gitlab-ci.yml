@@ -47,6 +47,7 @@ integration_tests:
     paths:
       - samples/target/failsafe-reports/TEST-*.xml
       - core/target/failsafe-reports/TEST-*.xml
+      - samples/target/plhamoutputtester/*.txt
       - target/site/*
     expire_in: 1 week
 

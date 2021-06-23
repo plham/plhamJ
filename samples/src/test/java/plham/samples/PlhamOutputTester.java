@@ -33,9 +33,24 @@ import org.junit.Test;
  *
  */
 public abstract class PlhamOutputTester {
-
+    
+    /**
+     * Default value for property {@value #DEFAULT_DIRECTORY_FOR_FAILED_EXECUTIONS}
+     */
+    public static final String DEFAULT_DIRECTORY_FOR_FAILED_EXECUTIONS = "target/plhamoutputtester";
+    
+    /**
+     * Property used to override the default directory in which the executions run will be kept in case
+     * they do not match the expected outputs.
+     */
+    public static final String DIRECTORY_PROPERTY = "plhamoutput.directory";
+    
+    /**
+     * Property used to activate the creation of the "expected output" files in case they are not present 
+     * on the system. By default is set to {@value false} which does not create the files.
+     */
     public static final String PLHAMOUTPUTTEST_CREATE_OUTPUT = "plhamoutputtest.createOutput";
-
+    
     /**
      * Removes all the strings in the list that start with character '#'
      *
@@ -231,8 +246,9 @@ public abstract class PlhamOutputTester {
         // If a Junit failure occurs, save the "bad" results of the execution to a file for later examination
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm.ss");
         String timeStamp = dateFormat.format(new Date(System.currentTimeMillis()));
-        String fileName = FilenameUtils.getBaseName(programName + "_failed_" + timeStamp + ".txt");
-        File failedOutputFile = new File(expectedOutputFile.getParent(), fileName);
+        String fileName = FilenameUtils.getName(programName + "_failed_" + timeStamp + ".txt");
+        String directory = System.getProperty(DIRECTORY_PROPERTY, DEFAULT_DIRECTORY_FOR_FAILED_EXECUTIONS);
+        File failedOutputFile = new File(directory, fileName);
         System.err.println("KEEPING THE OUTPUT OF THE FAILED PROGRAM IN FILE " + failedOutputFile);
         FileUtils.writeLines(failedOutputFile, obtainedLines);
 
