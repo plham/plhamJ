@@ -33,10 +33,10 @@ public class IT_DistributedRunner extends PlhamOutputTester {
         // in the 2D array below are the configurations for each sample program
         Collection<Object[]> parameters = Arrays.asList(new Object [][]{
             /* Simulation name,  OutpuClass,     JSON configuration file,                SEED,        expected output */
-//            {"New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100", "src/test/resources/MultithreadedOutputs/CI2002.txt"},
-//            {"CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100", "src/test/resources/MultithreadedOutputs/CancelTest.txt"},
-            {"MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
-//            {"FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100", "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt"}, // using the "shortened" version of FatTail
+            {"New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100", "src/test/resources/MultithreadedOutputs/CI2002.txt"},
+            {"CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100", "src/test/resources/MultithreadedOutputs/CancelTest.txt"},
+// Debugging in progress {"MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
+            {"FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100", "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt"}, // using the "shortened" version of FatTail
 //            {"TradingHalt", TradingHaltMain.class, "src/test/resources/TradingHalt/config.json", "100", "src/test/resources/MultithreadedOutputs/TradingHalt.txt"},
 //            {"ShockTransfer", ShockTransferMain.class, "src/test/resources/ShockTransfer/config.json", "100", "src/test/resources/MultithreadedOutputs/ShockTransfer.txt"},
 //            {"PriceLimit", PriceLimitMain.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
