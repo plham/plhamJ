@@ -1,17 +1,24 @@
 package plham.samples;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
+import apgas.impl.Config;
+import apgas.impl.DebugFinish;
 import handist.mpijunit.ParameterizedMpi;
 import handist.mpijunit.ParameterizedMpi.ParameterizedMpiConfig;
 import handist.mpijunit.DistributedParameterizedTestLauncher;
 import plham.core.main.ParallelRunnerDist;
 import plham.samples.CI2002.NewCI2002Main;
+import plham.samples.MarketShare.NewMarketShare;
 
 @ParameterizedMpiConfig(ranks=4,launcher = DistributedParameterizedTestLauncher.class, timeout = 60l)
 @RunWith(ParameterizedMpi.class)
@@ -26,10 +33,10 @@ public class IT_DistributedRunner extends PlhamOutputTester {
         // in the 2D array below are the configurations for each sample program
         Collection<Object[]> parameters = Arrays.asList(new Object [][]{
             /* Simulation name,  OutpuClass,     JSON configuration file,                SEED,        expected output */
-            {"New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100", "src/test/resources/MultithreadedOutputs/CI2002.txt"},
-            {"CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100", "src/test/resources/MultithreadedOutputs/CancelTest.txt"},
-//            {"MarketShare", MarketShareMain.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
-            {"FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100", "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt"}, // using the "shortened" version of FatTail
+//            {"New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100", "src/test/resources/MultithreadedOutputs/CI2002.txt"},
+//            {"CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100", "src/test/resources/MultithreadedOutputs/CancelTest.txt"},
+            {"MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
+//            {"FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100", "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt"}, // using the "shortened" version of FatTail
 //            {"TradingHalt", TradingHaltMain.class, "src/test/resources/TradingHalt/config.json", "100", "src/test/resources/MultithreadedOutputs/TradingHalt.txt"},
 //            {"ShockTransfer", ShockTransferMain.class, "src/test/resources/ShockTransfer/config.json", "100", "src/test/resources/MultithreadedOutputs/ShockTransfer.txt"},
 //            {"PriceLimit", PriceLimitMain.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
@@ -40,6 +47,19 @@ public class IT_DistributedRunner extends PlhamOutputTester {
         return parameters;
     }
     
+
+    @Rule
+    public transient TestName nameOfCurrentTest = new TestName();
+    
+    @After
+    public void afterEachTest() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            NoSuchMethodException, SecurityException {
+        if (DebugFinish.class.getCanonicalName().equals(System.getProperty(Config.APGAS_FINISH))) {
+            System.out.println("Dumping the errors that occurred during " + nameOfCurrentTest.getMethodName());
+            // If we are using the DebugFinish, dump all throwables collected on each host
+            DebugFinish.dumpAllSuppressedExceptions();
+        }
+    }
     
     @BeforeClass
     public static void beforeClass() {

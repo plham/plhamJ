@@ -11,6 +11,7 @@ package handist.mpijunit;
  ******************************************************************************/
 
 
+import apgas.impl.DebugFinish;
 import apgas.mpi.MPILauncher;
 import handist.collections.dist.TeamedPlaceGroup;
 
@@ -46,6 +47,8 @@ public class DistributedParameterizedTestLauncher {
             newArgs[newIndex++] = args[oldIndex++];
         }
 
+        System.setProperty(apgas.impl.Config.APGAS_FINISH, DebugFinish.class.getCanonicalName());
+        
         // Call TeamedPlaceGroup setup method to add its plugin to MPILauncher
         TeamedPlaceGroup.setup();
 
