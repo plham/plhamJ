@@ -47,7 +47,7 @@ public class JSONUtils implements Serializable {
                 Set<String> values = e.getValue();
                 for (String v : values) {
                     int src = NodeID.get(v);
-                    System.out.println("# src: " + src + " dst: " + dst + " V: " + V);
+//                    System.out.println("# src: " + src + " dst: " + dst + " V: " + V);
                     addEdge(src, dst);
                 }
             }
@@ -132,7 +132,7 @@ public class JSONUtils implements Serializable {
         }
         while (stack.size() > 0) {
             String name = stack.pop();
-            System.out.println("#GRAPH " + name + " checking");
+//            System.out.println("#GRAPH " + name + " checking");
             if (!graph.containsKey(name)) {
                 graph.put(name, new HashSet<String>());
             }
@@ -143,7 +143,7 @@ public class JSONUtils implements Serializable {
                         String child = children.get(i).toString();
                         stack.push(child);
                         graph.get(name).add(child);
-                        System.out.println("#GRAPH " + name + " --> " + child + " created");
+//                        System.out.println("#GRAPH " + name + " --> " + child + " created");
                     }
                 }
             }
@@ -160,7 +160,7 @@ public class JSONUtils implements Serializable {
         }
         while (stack.size() > 0) {
             String name = stack.pop();
-            System.out.println("#GRAPH " + name + " checking");
+//            System.out.println("#GRAPH " + name + " checking");
             if (!graph.containsKey(name)) {
                 graph.put(name, new HashSet<String>());
             }
@@ -170,7 +170,7 @@ public class JSONUtils implements Serializable {
                     String child = children.get(i).toString();
                     stack.push(child);
                     graph.get(name).add(child);
-                    System.out.println("#GRAPH " + name + " --> " + child + " created");
+//                    System.out.println("#GRAPH " + name + " --> " + child + " created");
                 }
             }
         }
@@ -182,7 +182,7 @@ public class JSONUtils implements Serializable {
         List<String> rail = graph.sort();
         List<String> retval = new ArrayList<>();
         retval.addAll(rail);
-        System.out.println("#GRAPH-SORTED " + retval);
+//        System.out.println("#GRAPH-SORTED " + retval);
         return retval;
     }
 
@@ -203,19 +203,19 @@ public class JSONUtils implements Serializable {
                     for (Map.Entry<String, Set<String>> e : graph.entrySet()) {
                         String parent = e.getKey();
                         if (graph.get(parent).remove(name)) {
-                            System.out.println("#GRAPH " + parent + " --> " + name + " removed");
+//                            System.out.println("#GRAPH " + parent + " --> " + name + " removed");
                         }
                     }
                     graph.remove(name);
                     nodes.remove(name);
-                    System.out.println("#GRAPH " + name + " removed");
+//                    System.out.println("#GRAPH " + name + " removed");
                 }
             }
             if (numNodes == graph.size()) {
                 throw new RuntimeException("Circular dependency of '" + keyword + "' detected");
             }
         }
-        System.out.println("#GRAPH-SORTED " + sorted);
+//        System.out.println("#GRAPH-SORTED " + sorted);
         return sorted;
     }
 }

@@ -1,38 +1,17 @@
-package plham.samples.CI2002;
+package plham.samples.FatFinger;
 
 import java.util.List;
+
 import plham.core.Market;
 import plham.core.OutputCollector;
 import plham.core.SimulationOutput;
-import plham.core.main.SequentialRunner;
 import plham.core.main.Simulator.Session;
-import plham.core.main.SimulatorFactory;
-import plham.core.util.Random;
 
-public class NewCI2002Main extends SimulationOutput {
-
-    /** Serial Version UID */
-    private static final long serialVersionUID = 2493462616283426664L;
-
-    public static void main(String[] args) {
-        try {
-            final NewCI2002Main sim = new NewCI2002Main();
-            SimulatorFactory factory = new SimulatorFactory(args[0]);
-            long seed;
-            if (args.length > 1) {
-                seed = Long.valueOf(args[1]);
-            } else {
-                seed = new Random().nextLong(Long.MAX_VALUE / 2); // MEMO: main()
-            }
-
-            final SequentialRunner runner = new SequentialRunner(factory, sim);
-            runner.run(seed);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-    }
+public class NewFatFinger extends SimulationOutput {
     
+    /** Serial Version UID */
+    private static final long serialVersionUID = -2436994143108564079L;
+
     @Override
     public void marketOutput(OutputCollector out, SimulationStage stage, Market market) {
         switch (stage) {

@@ -56,7 +56,7 @@ public class GraphUtils implements Serializable {
                 continue;
             }
 
-            System.out.println("#GRAPH " + root + " checking");
+//            System.out.println("#GRAPH " + root + " checking");
             Set<T> visited = new HashSet<>();
             Stack<T> stack = new Stack<>();
             stack.push(root);
@@ -66,17 +66,17 @@ public class GraphUtils implements Serializable {
                     continue;
                 }
                 visited.add(key);
-                System.out.println("#GRAPH " + key + " checking(sub)");
+//                System.out.println("#GRAPH " + key + " checking(sub)");
                 for (T child : graph.get(key)) {
                     assert graph.get(child).contains(key) : "Undirected graph only supported";
                     stack.push(child);
-                    System.out.println("#GRAPH " + key + " --> " + child + " connected");
+//                    System.out.println("#GRAPH " + key + " --> " + child + " connected");
                 }
             }
             out.add(visited);
             checked.addAll(visited);
         }
-        System.out.println("#GRAPH finished");
+//        System.out.println("#GRAPH finished");
         return out;
     }
 

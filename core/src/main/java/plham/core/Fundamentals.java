@@ -190,8 +190,8 @@ public class Fundamentals implements Serializable {
             }
         }
 
-        System.out.println("#Fundamentals.setup() finished");
-        System.out.println("# #groups " + GBM.length);
+//        System.out.println("#Fundamentals.setup() finished");
+//        System.out.println("# #groups " + GBM.length);
 
         this.GBM = GBM;
         this.g = g;

@@ -18,9 +18,12 @@ import handist.mpijunit.ParameterizedMpi.ParameterizedMpiConfig;
 import handist.mpijunit.DistributedParameterizedTestLauncher;
 import plham.core.main.ParallelRunnerDist;
 import plham.samples.CI2002.NewCI2002Main;
+import plham.samples.DarkPool.NewDarkPool;
 import plham.samples.MarketShare.NewMarketShare;
+import plham.samples.ShockTransfer.NewShockTransfer;
+import plham.samples.TradingHalt.NewTradingHalt;
 
-@ParameterizedMpiConfig(ranks=4,launcher = DistributedParameterizedTestLauncher.class, timeout = 60l)
+@ParameterizedMpiConfig(ranks=4,launcher = DistributedParameterizedTestLauncher.class, timeout = 90l)
 @RunWith(ParameterizedMpi.class)
 public class IT_DistributedRunner extends PlhamOutputTester {
 
@@ -34,14 +37,14 @@ public class IT_DistributedRunner extends PlhamOutputTester {
         Collection<Object[]> parameters = Arrays.asList(new Object [][]{
             /* Simulation name,  OutpuClass,     JSON configuration file,                SEED,        expected output */
             {"New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100", "src/test/resources/MultithreadedOutputs/CI2002.txt"},
-            {"CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100", "src/test/resources/MultithreadedOutputs/CancelTest.txt"},
-// Debugging in progress {"MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
-            {"FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100", "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt"}, // using the "shortened" version of FatTail
-//            {"TradingHalt", TradingHaltMain.class, "src/test/resources/TradingHalt/config.json", "100", "src/test/resources/MultithreadedOutputs/TradingHalt.txt"},
-//            {"ShockTransfer", ShockTransferMain.class, "src/test/resources/ShockTransfer/config.json", "100", "src/test/resources/MultithreadedOutputs/ShockTransfer.txt"},
-//            {"PriceLimit", PriceLimitMain.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
-//            {"FatFinger", FatFingerMain.class, "src/test/resources/FatFinger/config.json", "100", "src/test/resources/MultithreadedOutputs/FatFinger.txt"},
-//            {"DarkPool", DarkPoolMain.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
+            {"New CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100", "src/test/resources/MultithreadedOutputs/CancelTest.txt"},
+// Bugfix required {"MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
+            {"New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100", "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt"}, // using the "shortened" version of FatTail
+// Bugfix required {"New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json", "100", "src/test/resources/MultithreadedOutputs/TradingHalt.txt"},
+// Bugfix required {"New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json", "100", "src/test/resources/MultithreadedOutputs/ShockTransfer.txt"},
+// Bugfix required {"New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
+            {"FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100", "src/test/resources/MultithreadedOutputs/FatFinger.txt"},
+            {"DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
         });
         
         return parameters;
@@ -55,7 +58,7 @@ public class IT_DistributedRunner extends PlhamOutputTester {
     public void afterEachTest() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             NoSuchMethodException, SecurityException {
         if (DebugFinish.class.getCanonicalName().equals(System.getProperty(Config.APGAS_FINISH))) {
-            System.out.println("Dumping the errors that occurred during " + nameOfCurrentTest.getMethodName());
+            System.err.println("Dumping the errors that occurred during " + nameOfCurrentTest.getMethodName());
             // If we are using the DebugFinish, dump all throwables collected on each host
             DebugFinish.dumpAllSuppressedExceptions();
         }

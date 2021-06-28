@@ -733,7 +733,7 @@ public final class ParallelRunnerDist extends Runner {
             bh.factory= factory;
 
             pg.broadcastFlat(() -> {
-                bh.runner.out.print("# start running");
+//                bh.runner.out.print("# start running");
                 bh.runner.bh = bh;
                 bh.runner.createAllAgents();
                 bh.runner.sim.markets = bh.markets;
@@ -770,7 +770,7 @@ public final class ParallelRunnerDist extends Runner {
             outputSimulation(isMaster, output, out, SimulationStage.BEGIN_SIMULATION, bh.markets, bh.allNormalAgents);
 
             for (Session session : sim.sessions) {
-                session.print();
+//                session.print();
                 // TODO master only??
                 sim.sessionEvents = factory.createEventsForASession(session, sim);
                 outputSession(isMaster, output, out, session, SimulationStage.BEGIN_SESSION, bh.markets, bh.allNormalAgents, sim.sessionEvents);
