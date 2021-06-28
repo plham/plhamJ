@@ -169,7 +169,7 @@ public abstract class PlhamOutputTester {
      *                                   the execution and comparing it with the
      *                                   file in which the expected output resides.
      */
-    @Test(timeout=30000)
+    @Test(timeout=60000)
     public void checkProgramOutput() throws NoSuchMethodException, SecurityException, IllegalAccessException,
     IllegalArgumentException, IOException, Throwable {
         output = new FileOutputStream(temporaryOutput);

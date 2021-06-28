@@ -13,10 +13,13 @@ import plham.core.main.ParallelRunnerMT;
 import plham.samples.CI2002.CI2002Main;
 import plham.samples.CI2002.NewCI2002Main;
 import plham.samples.DarkPool.DarkPoolMain;
+import plham.samples.DarkPool.NewDarkPool;
 import plham.samples.FatFinger.FatFingerMain;
 import plham.samples.MarketShare.MarketShareMain;
-import plham.samples.PriceLimit.PriceLimitMain;
+import plham.samples.MarketShare.NewMarketShare;
+import plham.samples.ShockTransfer.NewShockTransfer;
 import plham.samples.ShockTransfer.ShockTransferMain;
+import plham.samples.TradingHalt.NewTradingHalt;
 import plham.samples.TradingHalt.TradingHaltMain;
 
 @RunWith(Parameterized.class)
@@ -35,12 +38,19 @@ public class IT_MultiThreadedRunner extends PlhamOutputTester {
             {"New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100", "src/test/resources/MultithreadedOutputs/CI2002.txt"},
             {"CancelTest", CI2002Main.class, "src/test/resources/CancelTest/config.json", "100", "src/test/resources/MultithreadedOutputs/CancelTest.txt"},
             {"MarketShare", MarketShareMain.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
+            {"New MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100", "src/test/resources/MultithreadedOutputs/MarketShare.txt"},
             {"FatTail", CI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100", "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt"}, // using the "shortened" version of FatTail
+            {"New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100", "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt"},
             {"TradingHalt", TradingHaltMain.class, "src/test/resources/TradingHalt/config.json", "100", "src/test/resources/MultithreadedOutputs/TradingHalt.txt"},
+            {"New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json", "100", "src/test/resources/MultithreadedOutputs/TradingHalt.txt"},
             {"ShockTransfer", ShockTransferMain.class, "src/test/resources/ShockTransfer/config.json", "100", "src/test/resources/MultithreadedOutputs/ShockTransfer.txt"},
-            {"PriceLimit", PriceLimitMain.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
+            {"New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json", "100", "src/test/resources/MultithreadedOutputs/ShockTransfer.txt"},
+            {"PriceLimit", CI2002Main.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
+            {"New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
             {"FatFinger", FatFingerMain.class, "src/test/resources/FatFinger/config.json", "100", "src/test/resources/MultithreadedOutputs/FatFinger.txt"},
-            {"DarkPool", DarkPoolMain.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
+            {"New FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100", "src/test/resources/MultithreadedOutputs/FatFinger.txt"},
+            {"DarkPool", DarkPoolMain.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"},
+            {"New DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
         });
 	    
 	    // We create 3 configurations per sample, 

@@ -20,31 +20,12 @@ public class NewMarketShare extends SimulationOutput {
 	/** Serial Version UID */
     private static final long serialVersionUID = 182717018142244006L;
 
-    public static void main(String[] args) {
-		try {
-			final NewMarketShare sim = new NewMarketShare();
-			SimulatorFactory factory = new SimulatorFactory(args[0]);
-			long seed;
-			if (args.length > 1) {
-				seed = Long.valueOf(args[1]);
-			} else {
-				seed = new Random().nextLong(Long.MAX_VALUE / 2); // MEMO: main()
-			}
-
-			final SequentialRunner runner = new SequentialRunner(factory, sim);
-			runner.run(seed);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-	}
-
     @Override
     public void marketOutput(OutputCollector out, SimulationStage stage, Market market) {
         switch (stage) {
         case WITH_PRINT_DURING_SESSION:
             long t = market.getTime();
-            out.log(market.name, String.format("%s %s %s %s %s %s ", t, market.id, market.name,
+            out.log(market.name, String.format("%s %s %s %s %s %s  ", t, market.id, market.name,
                     market.getPrice(t), market.getFundamentalPrice(t), market.getTradeVolume(t)));
             break;
 
@@ -74,7 +55,7 @@ public class NewMarketShare extends SimulationOutput {
             String sessionName = (String) output.removeLog("_SESSION_NAME_").get(0);
             // All remaining entries in the "logs" correspond to the markets taking part in the simulation
             output.forEach((String key, List<String> lo)->{
-                if (key.equals("Market")) {
+                if (key.startsWith("Market")) {
                     String marketSuffix = lo.get(0);
                     output.print(sessionName + " " + marketSuffix);
                 }
@@ -84,7 +65,7 @@ public class NewMarketShare extends SimulationOutput {
             // No grouped outputs in all other stages
         }
     }
-//    
+
 //	@Override
 //	public void print(OutputCollector output, Session s, List<Market> markets, ChunkedList<Agent> agents, List<Event> sessionEvents) {
 ////		List<Market> markets = getMarketsByName("markets");

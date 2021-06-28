@@ -447,7 +447,7 @@ public class SimulatorFactory {
                     createAgents(name, randoms, subList.getRange(), config, subList);
             }
         }
-        System.err.println("# " + numAllAgents + " agents created.");
+//        System.err.println("# " + numAllAgents + " agents created.");
         return;
     }
 
