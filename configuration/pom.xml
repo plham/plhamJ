@@ -28,29 +28,15 @@
 			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.github.handist</groupId>
+			<artifactId>MPJ</artifactId>
+			<version>0.44</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 	<profiles>
-		<profile>
-			<id>hostfile-file-present</id>
-			<activation>
-				<file>
-					<exists>HOSTFILE</exists>
-				</file>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<configuration>
-							<systemPropertyVariables>
-								<mpirunner.mpirunOptions>--hostfile HOSTFILE</mpirunner.mpirunOptions>
-							</systemPropertyVariables>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
 		<profile>
 			<!-- Profile activated when the property "hostfile" is specified (mvn 
 				-Dhostfile=/path/to/hostfile) -->
@@ -61,84 +47,84 @@
 				</property>
 			</activation>
 			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<configuration>
-							<systemPropertyVariables>
-								<!-- override the default and specify the hostfile -->
-								<mpirunner.mpirunOptions>--hostfile ${hostfile}</mpirunner.mpirunOptions>
-							</systemPropertyVariables>
-						</configuration>
-					</plugin>
-				</plugins>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<artifactId>maven-failsafe-plugin</artifactId>
+							<configuration>
+								<systemPropertyVariables>
+									<!-- override the default and specify the hostfile -->
+									<mpirunner.mpirunOptions>--hostfile ${hostfile}</mpirunner.mpirunOptions>
+								</systemPropertyVariables>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
 			</build>
 		</profile>
 	</profiles>
 	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.6</version>
-				<executions>
-					<execution>
-						<id>default-prepare-agent</id>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>default-report</id>
-						<phase>test</phase>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>pre-integration-test</id>
-						<phase>pre-integration-test</phase>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>post-integration-test</id>
-						<phase>post-integration-test</phase>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.0.0-M5</version>
-				<configuration>
-					<forkNode
-						implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
-
-					<systemPropertyVariables>
-						<mpirunner.mpiImpl>mpj-native</mpirunner.mpiImpl>
-						<mpirunner.notificationsPath>target/mpi-junit</mpirunner.notificationsPath>
-						<mpirunner.keepNotifications>true</mpirunner.keepNotifications>
-						<mpirunner.mpirunOptions>--oversubscribe</mpirunner.mpirunOptions>
-						<mpirunner.parseNotifications>0</mpirunner.parseNotifications>
-					</systemPropertyVariables>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>integration-test</goal>
-							<goal>verify</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>0.8.6</version>
+					<executions>
+						<execution>
+							<id>default-prepare-agent</id>
+							<goals>
+								<goal>prepare-agent</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>default-report</id>
+							<phase>test</phase>
+							<goals>
+								<goal>report</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>pre-integration-test</id>
+							<phase>pre-integration-test</phase>
+							<goals>
+								<goal>prepare-agent</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>post-integration-test</id>
+							<phase>post-integration-test</phase>
+							<goals>
+								<goal>report</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-failsafe-plugin</artifactId>
+					<version>3.0.0-M5</version>
+					<configuration>
+						<forkNode
+							implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
+
+						<systemPropertyVariables>
+							<mpirunner.mpiImpl>mpj-native</mpirunner.mpiImpl>
+							<mpirunner.notificationsPath>target/mpi-junit</mpirunner.notificationsPath>
+							<mpirunner.keepNotifications>true</mpirunner.keepNotifications>
+							<mpirunner.mpirunOptions>--oversubscribe</mpirunner.mpirunOptions>
+							<mpirunner.parseNotifications>0</mpirunner.parseNotifications>
+						</systemPropertyVariables>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>integration-test</goal>
+								<goal>verify</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
 				<plugin>
 					<artifactId>maven-clean-plugin</artifactId>
 					<version>3.1.0</version>
