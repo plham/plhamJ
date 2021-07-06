@@ -22,7 +22,22 @@
 			<version>v1.2.2</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>1.3.2</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<name>Plham - samples</name>
 	<description>Sample simulations using the Plham financial market simulator. This module contains a number of initial market configurations. These are also used to check that the simulator also produces the expected result in a number of &quot;known&quot; situations.</description>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
 </project>
