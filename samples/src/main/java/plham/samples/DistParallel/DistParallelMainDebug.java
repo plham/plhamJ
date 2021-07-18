@@ -50,9 +50,14 @@ public class DistParallelMainDebug {
 			out1.printAll(new PrintStream("logB.txt"));
 		}
 		// diff check
-		boolean flag = out1.getDistLog().distributionFreeEquals(out0.getDistLog(), System.out);
-		if(flag) System.out.println("Exact match. Congratulation!");
-		boolean flag2 = out0.getDistLog().distributionFreeEquals(out1.getDistLog(), System.out);
-		if(flag2) System.out.println("Exact match. Congratulation again!");
+		PrintStream diffOut = new PrintStream("diff.txt");
+		boolean flag = out1.getDistLog().distributionFreeEquals(out0.getDistLog(), diffOut);
+		if(flag) {
+			System.out.println("Exact match. Congratulation!");
+		} else {
+			System.out.println("Check diff file: diff.txt");
+		}
+		//boolean flag2 = out0.getDistLog().distributionFreeEquals(out1.getDistLog(), System.out);
+		//if(flag2) System.out.println("Exact match. Congratulation again!");
 	}
 }

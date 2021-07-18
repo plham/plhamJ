@@ -18,7 +18,7 @@ public class NewTradingHalt extends SimulationOutput {
         case WITH_PRINT_DURING_SESSION:
             long t = market.getTime();
             out.log(market.name, String.format("%s %s %s %s %s %s  ", t, market.id, market.name,
-                    market.getPrice(t), market.getFundamentalPrice(t), market.isRunning()));
+                    market.getPrice(), market.getFundamentalPrice(), market.isRunning()));
             break;
 
         default:

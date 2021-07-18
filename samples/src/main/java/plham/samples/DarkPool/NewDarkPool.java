@@ -27,7 +27,7 @@ public class NewDarkPool extends SimulationOutput {
             Double price = market.getPrice();
             long t = market.getTime();
             String marketOutput = String.format("%s %s %s %s %s", t, market.id, market.name,
-                    market.getPrice(t), market.getFundamentalPrice(t));
+                    market.getPrice(), market.getFundamentalPrice());
 
             long tradeVolume = market.getTradeVolume();
 

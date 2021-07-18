@@ -48,7 +48,7 @@ public class ShockTransferMain extends SimulationOutput {
 				marketIndex = ((IndexMarket) market).getIndex(t);
 			}
 			System.out.println(String.format("%s %s %s %s %s %s %s  ", s.sessionName, t, market.id, market.name,
-					market.getPrice(t), market.getFundamentalPrice(t), marketIndex));
+					market.getPrice(t), market.getFundamentalPrice(), marketIndex));
 		}
 	}
 }

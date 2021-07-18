@@ -254,13 +254,7 @@ public class Simulator {
 
     public void updateMarketsUsingFundamentalPrice(List<Market> markets, Fundamentals fundamentals) {
         for (Market market : markets) {
-            if (market instanceof IndexMarket) {
-                market.updateMarketPrice(market.getFundamentalPrice());
-            } else {
-                double nextFundamental = fundamentals.get(market);
-                market.updateMarketPrice(nextFundamental);
-                market.updateFundamentalPrice(nextFundamental);
-            }
+            market.updateUsingFundamentalPrice(fundamentals);
             market.updateOrderBooks();
         }
     }
@@ -268,12 +262,7 @@ public class Simulator {
     public void updateMarketsUsingMarketPrice(List<Market> markets, Fundamentals fundamentals) {
         for (Market market : markets) {
             market.updateMarketPrice();
-            if (!(market instanceof IndexMarket)) {
-                // index markets need not updated fundamentals. they calculates
-                // fundamental price from the underlyings on the fly.
-                double nextFundamental = fundamentals.get(market);
-                market.updateFundamentalPrice(nextFundamental);
-            }
+            market.updateFundamentalPrice(fundamentals);
             market.updateOrderBooks();
         }
     }

@@ -39,7 +39,7 @@ public class NewCI2002Main extends SimulationOutput {
         case WITH_PRINT_DURING_SESSION:
             long t = market.getTime();
             out.log(market.name, String.format("%s %s %s %s %s  ", t, market.id, market.name,
-                    market.getPrice(t), market.getFundamentalPrice(t)));
+                    market.getPrice(t), market.getFundamentalPrice()));
             break;
 
         default:

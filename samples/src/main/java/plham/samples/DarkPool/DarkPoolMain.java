@@ -84,7 +84,7 @@ public class DarkPoolMain extends SimulationOutput {
         for (Market market : markets) {
             long t = market.getTime();
             System.out.println(String.format("%s %s %s %s %s %s %s %s  ", s.sessionName, t, market.id, market.name,
-                    market.getPrice(t), market.getFundamentalPrice(t), tradePrice, market.getTradeVolume()));
+                    market.getPrice(t), market.getFundamentalPrice(), tradePrice, market.getTradeVolume()));
         }
     }
 }

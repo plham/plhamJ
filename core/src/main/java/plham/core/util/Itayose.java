@@ -18,8 +18,8 @@ public class Itayose implements Serializable {
         double lastSellPrice = 0.0;
         long sumExchangeVolume = 0;
         while (remainExecutableOrders(market)) {
-            Order buyOrder = market.buyOrderBook.getBestOrder();
-            Order sellOrder = market.sellOrderBook.getBestOrder();
+            Order buyOrder = market.getBestBuyOrder();
+            Order sellOrder = market.getBestSellOrder();
 
             lastBuyPrice = buyOrder.getPrice();
             lastSellPrice = sellOrder.getPrice();
@@ -51,10 +51,10 @@ public class Itayose implements Serializable {
             sellUpdates.add(sellUpdate);
 
             if (buyOrder.getVolume() <= 0) {
-                market.buyOrderBook.remove(buyOrder);
+                market.getBuyOrderBook().remove(buyOrder);
             }
             if (sellOrder.getVolume() <= 0) {
-                market.sellOrderBook.remove(sellOrder);
+                market.getSellOrderBook().remove(sellOrder);
             }
         }
 
@@ -85,14 +85,7 @@ public class Itayose implements Serializable {
             update.cashAmountDelta = +cashAmountDelta; // A seller gets cash
         }
 
-        long t = market.getTime();
-
-        long t1 = market.executedOrdersCounts.get((int) t);
-        market.executedOrdersCounts.set((int) t, t1 + buyUpdates.size());
-        market.lastExecutedPrices.set((int) t, exchangePrice);
-
-        long t2 = market.sumExecutedVolumes.get((int) t);
-        market.sumExecutedVolumes.set((int) t, t2 + sumExchangeVolume);
+        market.handleItayoseUpdate(buyUpdates.size(), exchangePrice, sumExchangeVolume);
 
         for (AgentUpdate update : buyUpdates) {
             market.handleAgentUpdate(update);
@@ -107,8 +100,8 @@ public class Itayose implements Serializable {
             return false;
         if (market.getSellOrderBook().size() == 0)
             return false;
-        Order buy = market.getBuyOrderBook().getBestOrder();
-        Order sell = market.getSellOrderBook().getBestOrder();
+        Order buy = market.getBestBuyOrder();
+        Order sell = market.getBestSellOrder();
         return buy.isMarketOrder() || sell.isMarketOrder() || buy.price >= sell.price;
     }
 }
