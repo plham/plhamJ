@@ -202,4 +202,16 @@ public class IndexMarket extends Market {
         setInitialFundamentalPrice(computeIndex(FUNDAMENTAL, spots));
         return this;
     }
+
+    @Override
+    public void updateUsingFundamentalPrice(Fundamentals fundamentals) {
+        updateMarketPrice(getFundamentalPrice());
+    }
+    @Override
+    public void updateFundamentalPrice(Fundamentals fundamentals) {
+        /* do nothing */
+    }
+
+
+
 }

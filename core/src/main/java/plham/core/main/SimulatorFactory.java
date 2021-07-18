@@ -583,9 +583,8 @@ public class SimulatorFactory {
         int N = markets.size();
         Fundamentals f = new Fundamentals(RANDOM);
 
-        for (long i = 0; i < N; i++) {
+        for (Market m: markets) {
             // TODO long->int
-            Market m = markets.get((int) i);
             double initialPrice = 0;
             try {
                 initialPrice = m.getInitialFundamentalPrice();
@@ -598,16 +597,14 @@ public class SimulatorFactory {
             }
             f.setInitial(m, initialPrice);
         }
-        for (long i = 0; i < N; i++) {
-            Market m = markets.get((int) i);
+        for (Market m: markets) {
             f.setDrift(m, 0.0);
             // (5/31, matsuura) commented out the line below. "fundamentalDrift"
             // never appeared in config files, nor in x10 sources currently.
             // f.setDrift(m,
             // random.nextRandom(CONFIG(m.name)("fundamentalDrift", "0.0")));
         }
-        for (long i = 0; i < N; i++) {
-            Market m = markets.get((int) i);
+        for (Market m: markets) {
             f.setVolatility(m, m.getFundamentalVolatility());
         }
         if (json.has("pairwise")) {
@@ -619,8 +616,7 @@ public class SimulatorFactory {
                 f.setCorrelation(mi, mj, random.nextRandom(triple.get(2)));
             }
         }
-        for (long i = 0; i < N; i++) {
-            Market m = markets.get((int) i);
+        for (Market m: markets) {
             f.setCorrelation(m, m, 1.0);
         }
 

@@ -22,7 +22,7 @@ public class NewShockTransfer extends SimulationOutput {
                 marketIndex = ((IndexMarket) market).getIndex(t);
             }
             out.log(market.name, String.format("%s %s %s %s %s %s  ", t, market.id, market.name,
-                    market.getPrice(t), market.getFundamentalPrice(t), marketIndex));
+                    market.getPrice(), market.getFundamentalPrice(), marketIndex));
             break;
 
         default:

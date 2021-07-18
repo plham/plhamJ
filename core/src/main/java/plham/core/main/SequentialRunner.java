@@ -170,7 +170,7 @@ public class SequentialRunner extends Runner implements Serializable {
         }
         for (Market market : markets) {
             market.itayoseOrderBooks();
-            System.out.println("# Itayose exchangePrice " + market.lastExecutedPrices.get((int) market.getTime()));
+            System.out.println("# Itayose exchangePrice " + market.getLastExecutedPrice());
         }
         for (Market market : markets) {
             market.check();

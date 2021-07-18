@@ -1,10 +1,13 @@
 package plham.samples.CI2002;
 
 import plham.core.*;
+import plham.core.agent.ArbitrageAgent;
+import plham.core.agent.FCNAgent;
 import plham.core.main.SequentialRunner;
 import plham.core.main.Simulator.Session;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
+// import plham.samples.MarketShare.MarketShareFCNAgent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,8 +88,8 @@ public class NewCI2002MainForLogging extends SimulationOutput {
     @Override
     public void marketOutput(OutputCollector out, SimulationStage stage, Market market) {
         long t = market.getTime();
-        out.log("Market:" + market.id +":"+market.getTime(), String.format("%s %s %s %s %s %s ", t, market.id, market.name,
-                market.getPrice(t), market.getFundamentalPrice(t), market.getRandom()));
+        out.log(t, "Market:" + market.id, String.format("%s %s %s %s %s tt:%s %s ", t, market.id, market.name,
+                market.getPrice(t), market.getFundamentalPrice(), market.getTradeVolume(), market.getRandomStatus()));
     }
 
     @Override
@@ -96,13 +99,63 @@ public class NewCI2002MainForLogging extends SimulationOutput {
 
     @Override
     public void sessionOutput(OutputCollector out, SimulationStage stage, Session s) {
-        out.log("_SESSION_NAME_", s.sessionName);
+        // out.log("_SESSION_NAME_", s.sessionName);
     }
-
+    //public static int orderCount=0;
     @Override
     public void orderSubmissionOutput(OutputCollector out, SimulationStage stage, Agent a, List<Order> orders, List<Market> markets) {
+       /*if(a instanceof MarketShareFCNAgent) {
+            StringBuffer buf = new StringBuffer();
+            for(Market m: markets) {
+                MarketShareFCNAgent agent = (MarketShareFCNAgent)a;
+                buf.append("m:" + m.id +"::");
+                ((MarketShareFCNAgent) a).getSumTradeVolumeX(m, buf);
+                buf.append("  ");
+            }
+            out.log(orders.get(0).timePlaced, "SumTrade:"+ a.id, buf.toString());
+        }*/
+        /*
+        if(orders.size()==0) return;
+        if(a instanceof ArbitrageAgent) {
+            String baseId = "X";
+            if(orders.size()>0) {
+                Order order = orders.get(0);
+                baseId = "B"+ ArbitrageAgent.backDoor + "B~~";
+            }
+
+            String tag = (orders.size() ==0)? "NoM(Arb)": "OkM(Arb)";
+            tag = tag + ":" + orderCount + ":";
+            long orderId = ArbitrageAgent.orderId++;
+            long time = 0;
+            if(orders.size()>0) orderCount++;
+            if(orderCount < 150) {
+                StringBuffer buf = new StringBuffer();
+                buf.append("Bo:"+ baseId);
+                for (Market m : markets) {
+                    ArbitrageAgent agent = (ArbitrageAgent) a;
+                    time = m.getTime();
+                    if (!(m instanceof IndexMarket)) {
+                        buf.append(", Normal"+m.id+":" + m.getPrice());
+                    } else {
+                        IndexMarket index = (IndexMarket) m;
+                        if (!index.isRunning() || !index.isAllMarketsRunning()) {
+                            buf.append(", Index"+m.id+ ":STOP");
+                        } else {
+                            buf.append(", Index"+m.id+ ":" + index.getPrice() + "/" + index.getIndex());
+                        }
+                    }
+                }
+                out.log(time, tag + orderId + ":" + a.id, buf.toString());
+            }
+        }
+*/
         for(Order order: orders) {
-            out.log("OrderSubmission:" + order.agentId + ":" + order.marketId +"@"+order.timePlaced, order.toString());
+  /*          Market m = markets.get((int)order.marketId);
+            String tag = "";
+            if(a instanceof FCNAgent) {
+                tag = ":" + ((FCNAgent) a).submitOrdersInfo(m);
+            }*/
+            out.log(order.timePlaced,"OrderSubmission("+a.getClass()+"):" + order.orderId +":"+order.agentId + ":" + order.marketId, order.toString() /*+ ":"+ tag*/);
         }
     }
     

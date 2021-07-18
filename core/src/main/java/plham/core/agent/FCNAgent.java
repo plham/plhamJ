@@ -96,7 +96,25 @@ public class FCNAgent extends plham.core.Agent {
         }
         return orders;
     }
-
+    /*
+    public String submitOrdersInfo(Market market) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("M:"+market.id + ":"+market.getClass());
+        if (!this.isMarketAccessible(market)) {
+            return "!isAccessible";
+        }
+        buf.append(", Rand:"+random.toString());
+        double fundamentalScale = 1.0 / Math.max(meanReversionTime, 1);
+        buf.append(", fundS:"+fundamentalScale);
+        buf.append(", fundP:"+market.getFundamentalPrice());
+        double fundamentalLogReturn = fundamentalScale * Math.log(market.getFundamentalPrice() / market.getPrice());
+        buf.append(", fundR:"+fundamentalLogReturn);
+        double chartScale = 1.0 / Math.max(timeWindowSize, 1);
+        buf.append(", chartS:"+chartScale);
+        buf.append(", price:" + market.getPrice());
+        return buf.toString();
+    }
+*/
     public List<Order> submitOrders(Market market) {
         List<Order> orders = new ArrayList<>();
         if (!this.isMarketAccessible(market)) {
@@ -115,11 +133,11 @@ public class FCNAgent extends plham.core.Agent {
         assert noiseWeight >= 0.0 : "noiseWeight >= 0.0";
 
         double fundamentalScale = 1.0 / Math.max(meanReversionTime, 1);
-        double fundamentalLogReturn = fundamentalScale * Math.log(market.getFundamentalPrice(t) / market.getPrice(t));
+        double fundamentalLogReturn = fundamentalScale * Math.log(market.getFundamentalPrice() / market.getPrice());
         assert isFinite(fundamentalLogReturn) : "isFinite(fundamentalLogReturn)";
 
         double chartScale = 1.0 / Math.max(timeWindowSize, 1);
-        double chartMeanLogReturn = chartScale * Math.log(market.getPrice(t) / market.getPrice(t - timeWindowSize));
+        double chartMeanLogReturn = chartScale * Math.log(market.getPrice() / market.getPrice(t - timeWindowSize));
         assert isFinite(chartMeanLogReturn) : "isFinite(chartMeanLogReturn)";
 
         double noiseLogReturn = 0.0 + noiseScale * helper.nextGaussian();
@@ -131,7 +149,7 @@ public class FCNAgent extends plham.core.Agent {
                         + noiseWeight * noiseLogReturn);
         assert isFinite(expectedLogReturn) : "isFinite(expectedLogReturn)";
 
-        double expectedFuturePrice = market.getPrice(t) * Math.exp(expectedLogReturn * timeWindowSize);
+        double expectedFuturePrice = market.getPrice() * Math.exp(expectedLogReturn * timeWindowSize);
         assert isFinite(expectedFuturePrice) : "isFinite(expectedFuturePrice)";
 
         if (marginType == MARGIN_FIXED) {
@@ -140,12 +158,12 @@ public class FCNAgent extends plham.core.Agent {
             double orderPrice = 0.0;
             long orderVolume = 1;
 
-            if (expectedFuturePrice > market.getPrice(t)) {
+            if (expectedFuturePrice > market.getPrice()) {
                 orderPrice = expectedFuturePrice * (1 - orderMargin);
                 orders.add(
                         new Order(Order.KIND_BUY_LIMIT_ORDER, this, market, orderPrice, orderVolume, timeWindowSize));
             }
-            if (expectedFuturePrice < market.getPrice(t)) {
+            if (expectedFuturePrice < market.getPrice()) {
                 orderPrice = expectedFuturePrice * (1 + orderMargin);
                 orders.add(
                         new Order(Order.KIND_SELL_LIMIT_ORDER, this, market, orderPrice, orderVolume, timeWindowSize));

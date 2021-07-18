@@ -45,7 +45,7 @@ public class TradingHaltMain extends SimulationOutput {
 		for (Market market : markets) {
 			long t = market.getTime();
 			System.out.println(String.format("%s %s %s %s %s %s %s  ", s.sessionName, t, market.id, market.name,
-					market.getPrice(t), market.getFundamentalPrice(t), market.isRunning()));
+					market.getPrice(), market.getFundamentalPrice(), market.isRunning()));
 		}
 	}
 }

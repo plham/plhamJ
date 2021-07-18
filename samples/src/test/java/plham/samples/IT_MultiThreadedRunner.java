@@ -49,7 +49,7 @@ public class IT_MultiThreadedRunner extends PlhamOutputTester {
             {"New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100", "src/test/resources/MultithreadedOutputs/PriceLimit.txt"},
             {"FatFinger", FatFingerMain.class, "src/test/resources/FatFinger/config.json", "100", "src/test/resources/MultithreadedOutputs/FatFinger.txt"},
             {"New FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100", "src/test/resources/MultithreadedOutputs/FatFinger.txt"},
-            {"DarkPool", DarkPoolMain.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"},
+// not supported   {"DarkPool", DarkPoolMain.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"},
             {"New DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
         });
 	    

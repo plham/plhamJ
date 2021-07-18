@@ -75,8 +75,7 @@ public class FundamentalPriceShock implements MarketEvent {
         assert marketId == market.id;
         long t = market.getTime();
         if (t >= triggerTime && t <= triggerTime + shockTimeLength) {
-            double price = market.fundamentalPrices.get((int) t);
-            market.fundamentalPrices.set((int) t, price * (1 + priceChangeRate));
+            market.changeFundamentaPrice(1+priceChangeRate);
         }
     }
 
