@@ -45,6 +45,11 @@ public class FundamentalPriceShock implements MarketEvent {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public FundamentalPriceShock setup(JSON.Value json, SimulatorFactory sim) {
         Market market = sim.getSimulatorInConstruction().getMarketByName(json.get("target"));
         marketId = market.id;
@@ -75,12 +80,7 @@ public class FundamentalPriceShock implements MarketEvent {
         assert marketId == market.id;
         long t = market.getTime();
         if (t >= triggerTime && t <= triggerTime + shockTimeLength) {
-            market.changeFundamentaPrice(1+priceChangeRate);
+            market.changeFundamentaPrice(1 + priceChangeRate);
         }
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 }

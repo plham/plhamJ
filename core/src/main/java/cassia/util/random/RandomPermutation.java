@@ -20,7 +20,7 @@ public class RandomPermutation<T> implements Iterable<T>, Serializable {
     public RandomPermutation(Random random, Iterable<T> list) {
         this.random = random;
         this.array = new ArrayList<>();
-        for(T t: list) {
+        for (T t : list) {
             this.array.add(t);
         }
     }

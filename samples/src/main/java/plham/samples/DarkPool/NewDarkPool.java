@@ -8,15 +8,13 @@ import plham.core.SimulationOutput;
 import plham.core.main.Simulator.Session;
 
 /**
- * Reference: Mizuta, Kosugi, Kusumoto, Matsumoto, Izumi (2014) Analysis of the
- * impact of dark pool to the market efficiency using an artificial market (in
- * Japanese).
+ * Reference: Mizuta, Kosugi, Kusumoto, Matsumoto, Izumi (2014) Analysis of the impact of dark pool to the market
+ * efficiency using an artificial market (in Japanese).
  */
 public class NewDarkPool extends SimulationOutput {
 
     /** Serial Version UID */
     private static final long serialVersionUID = -3107504389856037530L;
-
 
     @Override
     public void marketOutput(OutputCollector out, SimulationStage stage, Market market) {
@@ -26,24 +24,14 @@ public class NewDarkPool extends SimulationOutput {
 
             Double price = market.getPrice();
             long t = market.getTime();
-            String marketOutput = String.format("%s %s %s %s %s", t, market.id, market.name,
-                    market.getPrice(), market.getFundamentalPrice());
+            String marketOutput = String.format("%s %s %s %s %s", t, market.id, market.name, market.getPrice(),
+                    market.getFundamentalPrice());
 
             long tradeVolume = market.getTradeVolume();
 
             out.log(key, price);
             out.log(key, marketOutput);
             out.log(key, tradeVolume);
-            break;
-        default:
-        }
-    }
-
-    @Override
-    public void sessionOutput(OutputCollector out, SimulationStage stage, Session s) {
-        switch (stage) {
-        case WITH_PRINT_DURING_SESSION:
-            out.log("_SESSION_", s.sessionName);
             break;
         default:
         }
@@ -68,12 +56,22 @@ public class NewDarkPool extends SimulationOutput {
             double tradePrice = Double.NaN;
             if (darkVolume > 0) {
                 tradePrice = darkPrice;
-            } else if (litVolume > 0){
+            } else if (litVolume > 0) {
                 tradePrice = litPrice;
             }
 
             output.print(sessionName + " " + litString + " " + tradePrice + " " + litVolume + "  ");
             output.print(sessionName + " " + darkString + " " + tradePrice + " " + darkVolume + "  ");
+            break;
+        default:
+        }
+    }
+
+    @Override
+    public void sessionOutput(OutputCollector out, SimulationStage stage, Session s) {
+        switch (stage) {
+        case WITH_PRINT_DURING_SESSION:
+            out.log("_SESSION_", s.sessionName);
             break;
         default:
         }

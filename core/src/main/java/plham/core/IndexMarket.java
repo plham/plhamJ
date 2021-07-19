@@ -204,14 +204,13 @@ public class IndexMarket extends Market {
     }
 
     @Override
-    public void updateUsingFundamentalPrice(Fundamentals fundamentals) {
-        updateMarketPrice(getFundamentalPrice());
-    }
-    @Override
     public void updateFundamentalPrice(Fundamentals fundamentals) {
         /* do nothing */
     }
 
-
+    @Override
+    public void updateUsingFundamentalPrice(Fundamentals fundamentals) {
+        updateMarketPrice(getFundamentalPrice());
+    }
 
 }

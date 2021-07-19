@@ -1,7 +1,9 @@
 package plham.core.main;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import cassia.util.random.RandomPermutation;
@@ -19,35 +21,22 @@ import plham.core.util.Random;
  * A Runner class for sequential execution.
  */
 public class SequentialRunner extends Runner implements Serializable {
-    
+
     /**
-     * Basic {@link OutputCollector} implementation for the sequential runner.
-     * As there are no management of remote objects and no risk of concurrent outptuts, direct printing to {@link System#out}as part of method {@link #print(String)} is acceptable. 
+     * Basic {@link OutputCollector} implementation for the sequential runner. As there are no management of remote
+     * objects and no risk of concurrent outptuts, direct printing to {@link System#out}as part of method
+     * {@link #print(String)} is acceptable.
+     *
      * @author Patrick Finnerty
      *
      */
     public static class SequentialOutput implements OutputCollector {
 
         HashMap<String, List<String>> map = new HashMap<>();
-        
-        @Override
-        public void print(String message) {
-            System.out.println(message);
-        }
 
         @Override
         public void clear() {
             map.clear();
-        }
-
-        @Override
-        public List<String> getLog(String key) {
-            return map.get(key);
-        }
-
-        @Override
-        public List<String> removeLog(String key) {
-            return map.remove(key);
         }
 
         @Override
@@ -56,22 +45,37 @@ public class SequentialRunner extends Runner implements Serializable {
         }
 
         @Override
+        public List<String> getLog(String key) {
+            return map.get(key);
+        }
+
+        @Override
         public void log(String topic, Object o) {
-            List<String> listOfTopic = map.computeIfAbsent(topic, k -> {return new ArrayList<>();});
+            List<String> listOfTopic = map.computeIfAbsent(topic, k -> {
+                return new ArrayList<>();
+            });
             listOfTopic.add(o.toString());
         }
-        
+
+        @Override
+        public void print(String message) {
+            System.out.println(message);
+        }
+
+        @Override
+        public List<String> removeLog(String key) {
+            return map.remove(key);
+        }
+
     }
-    
-    
+
     private static final long serialVersionUID = -4747415797682000153L;
 
     public SequentialRunner(SimulatorFactory sim, SimulationOutput output) {
         super(output, sim);
     }
 
-    public List<List<Order>> collectOrders(long MAX_NORMAL_ORDERS,
-                                           Session s, OutputCollector out) {
+    public List<List<Order>> collectOrders(long MAX_NORMAL_ORDERS, Session s, OutputCollector out) {
         Simulator env = super.sim;
         List<Market> markets = env.markets;
         Iterable<Agent> agents = env.normalAgents;
@@ -89,7 +93,7 @@ public class SequentialRunner extends Runner implements Serializable {
                 break;
             }
             List<Order> orders = agent.submitOrders(markets);
-            if(s.withPrint)
+            if (s.withPrint)
                 output.orderSubmissionOutput(out, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
             if (orders.size() > 0) {
                 allOrders.add(orders);
@@ -253,8 +257,7 @@ public class SequentialRunner extends Runner implements Serializable {
         System.out.println("# EXECUTION TIME " + ((TIME_THE_END - TIME_THE_BEGINNING) / 1e+9));
     }
 
-    public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders,
-                                           Session s, OutputCollector out) {
+    public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders, Session s, OutputCollector out) {
         List<List<Order>> orders = collectOrders(maxNormalOrders, s, out);
         return handleOrders(orders, maxHifreqOrders);
     }

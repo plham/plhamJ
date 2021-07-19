@@ -62,22 +62,44 @@ public class Market implements Serializable {
             return assetVolumeDelta < 0;
         }
     }
+
+    public static class ExecutionLog {
+        public long buyAgentId;
+        public double exchangePrice;
+        public long exchangeVolume;
+        public boolean isSellMajor;
+        public long sellAgentId;
+        public long time;
+    }
+
+    public interface MarketEvent extends Event {
+
+        /**
+         * Method which performs the modification on the state of the simulation
+         *
+         * @param market the market on which this event may act on
+         */
+        void update(Market market);
+
+    }
+
     /**
-     * This represents a diff information of Markets.
-     * CachableArray broadcasts the diff from master to workers.
+     * This represents a diff information of Markets. CachableArray broadcasts the diff from master to workers.
      */
     static public class MarketUpdate implements Serializable {
         private static final long serialVersionUID = 6542203598162923906L;
 
         public static MarketUpdate pack(Market m) {
-            // System.out.println("Pack:" + m.id + ":" + m.getTime() + ":" + m.getTradeVolume() + ":" + m.getTradeVolume(m.getTime()));
-            if(m.getTime()==0)
-                return new MarketUpdate(m._isRunning, m.getLastMarketPrice(), m.getFundamentalPrice(), m.getTradeVolume(), m.getTime());
+            // System.out.println("Pack:" + m.id + ":" + m.getTime() + ":" + m.getTradeVolume() + ":" +
+            // m.getTradeVolume(m.getTime()));
+            if (m.getTime() == 0)
+                return new MarketUpdate(m._isRunning, m.getLastMarketPrice(), m.getFundamentalPrice(),
+                        m.getTradeVolume(), m.getTime());
             else {
                 long t = m.getTime();
-                return new MarketUpdate(m._isRunning, m.getLastMarketPrice(), m.getFundamentalPrice(), m.getTradeVolume(),
-                        m.getMarketPrice(t-1), m.getFundamentalPrice(t-1), m.getTradeVolume(t-1),
-                        t);
+                return new MarketUpdate(m._isRunning, m.getLastMarketPrice(), m.getFundamentalPrice(),
+                        m.getTradeVolume(), m.getMarketPrice(t - 1), m.getFundamentalPrice(t - 1),
+                        m.getTradeVolume(t - 1), t);
             }
 
         }
@@ -92,20 +114,21 @@ public class Market implements Serializable {
                 m.sumExecutedVolumes.set((int) t, mi.sumExecutedVolume);
                 m.setTime(t);
             } else {
-                assert(m.marketPrices.size() == mi.time);
+                assert (m.marketPrices.size() == mi.time);
                 m.marketPrices.add(mi.marketPrice);
-                assert(m.fundamentalPrices.size() == mi.time);
+                assert (m.fundamentalPrices.size() == mi.time);
                 m.fundamentalPrices.add(mi.fundamentalPrice);
-                assert(m.sumExecutedVolumes.size() == mi.time);
+                assert (m.sumExecutedVolumes.size() == mi.time);
                 m.sumExecutedVolumes.add(mi.sumExecutedVolume);
                 m.setTime(mi.time);
             }
-            if(t>0) {
-                m.marketPrices.set((int) t-1, mi.marketPriceM);
-                m.fundamentalPrices.set((int) t-1, mi.fundamentalPriceM);
-                m.sumExecutedVolumes.set((int) t-1, mi.sumExecutedVolumeM);
+            if (t > 0) {
+                m.marketPrices.set((int) t - 1, mi.marketPriceM);
+                m.fundamentalPrices.set((int) t - 1, mi.fundamentalPriceM);
+                m.sumExecutedVolumes.set((int) t - 1, mi.sumExecutedVolumeM);
             }
-            // System.out.println("UnPack:" + m.id + ":" + m.getTime() + ":" + m.getTradeVolume() + ":" + m.getTradeVolume(m.getTime()));
+            // System.out.println("UnPack:" + m.id + ":" + m.getTime() + ":" + m.getTradeVolume() + ":" +
+            // m.getTradeVolume(m.getTime()));
         }
 
         boolean _isRunning;
@@ -118,16 +141,8 @@ public class Market implements Serializable {
 
         long time;
 
-        public MarketUpdate(boolean _isRunning, double marketPrice, double fundamentalPrice, long sumExecutedVolume, long time) {
-            this._isRunning = _isRunning;
-            this.marketPrice = marketPrice;
-            this.fundamentalPrice = fundamentalPrice;
-            this.sumExecutedVolume = sumExecutedVolume;
-            this.time = time;
-        }
         public MarketUpdate(boolean _isRunning, double marketPrice, double fundamentalPrice, long sumExecutedVolume,
-                            double marketPriceM, double fundamentalPriceM, long sumExecutedVolumeM,
-                            long time) {
+                double marketPriceM, double fundamentalPriceM, long sumExecutedVolumeM, long time) {
             this._isRunning = _isRunning;
             this.marketPrice = marketPrice;
             this.fundamentalPrice = fundamentalPrice;
@@ -137,36 +152,26 @@ public class Market implements Serializable {
             this.fundamentalPriceM = fundamentalPriceM;
             this.sumExecutedVolumeM = sumExecutedVolumeM;
         }
-    }
-    public static class ExecutionLog {
-        public long buyAgentId;
-        public double exchangePrice;
-        public long exchangeVolume;
-        public boolean isSellMajor;
-        public long sellAgentId;
-        public long time;
-    }
 
-    public interface MarketEvent extends Event {
-
-        /**
-         * Method which performs the modification on the state of the simulation
-         * 
-         * @param market the market on which this event may act on
-         */
-        public abstract void update(Market market);
-
+        public MarketUpdate(boolean _isRunning, double marketPrice, double fundamentalPrice, long sumExecutedVolume,
+                long time) {
+            this._isRunning = _isRunning;
+            this.marketPrice = marketPrice;
+            this.fundamentalPrice = fundamentalPrice;
+            this.sumExecutedVolume = sumExecutedVolume;
+            this.time = time;
+        }
     }
 
     public interface OrderEvent extends Event {
 
         /**
          * Method which performs the modification on the state of the simulation
-         * 
+         *
          * @param market the market on which this event can act
          * @param order  the order on which this event can act
          */
-        public abstract void update(Market market, Order order);
+        void update(Market market, Order order);
 
     }
 
@@ -210,9 +215,9 @@ public class Market implements Serializable {
 
     protected boolean _isRunning;
 
-    protected transient List<List<AgentUpdate>> agentUpdates = new ArrayList<>();
     protected transient List<OrderEvent> afterOrderHandlingEvents = new ArrayList<>();
     protected transient List<MarketEvent> afterSimulationStepEvents = new ArrayList<>();
+    protected transient List<List<AgentUpdate>> agentUpdates = new ArrayList<>();
 
     protected transient List<OrderEvent> beforeOrderHandlingEvents = new ArrayList<>();
     protected transient List<MarketEvent> beforeSimulationStepEvents = new ArrayList<>();
@@ -305,6 +310,12 @@ public class Market implements Serializable {
         sellOrderBook.cancel(order);
     }
 
+    public final void changeFundamentaPrice(double scale) {
+        int index = fundamentalPrices.size() - 1;
+        double current = fundamentalPrices.get(index);
+        fundamentalPrices.set(index, current * scale);
+    }
+
     public void check() {
         long t = getTime();
         assert marketPrices.size() - 1 == t;
@@ -392,13 +403,15 @@ public class Market implements Serializable {
         executeOrders(buyOrder.getPrice(), buyOrder, sellOrder, false);
     }
 
+    public Order getBestBuyOrder() {
+        return buyOrderBook.getBestOrder();
+    }
+
     // TODO this method should be protected to normal agents.
     public double getBestBuyPrice() {
         return buyOrderBook.getBestPrice();
     }
-    public Order getBestBuyOrder() {
-        return buyOrderBook.getBestOrder();
-    }
+
     public Order getBestSellOrder() {
         return sellOrderBook.getBestOrder();
     }
@@ -436,16 +449,16 @@ public class Market implements Serializable {
             throw new NoSuchElementException();
         return marketPrices.get(0);
     }
-/*
-    protected double getLastFundamentalPrice() {
-        return fundamentalPrices.get(fundamentalPrices.size() - 1);
-    }*/
+
+    /*
+     * protected double getLastFundamentalPrice() { return fundamentalPrices.get(fundamentalPrices.size() - 1); }
+     */
+    public Double getLastExecutedPrice() {
+        return lastExecutedPrices.get((int) getTime());
+    }
 
     protected double getLastMarketPrice() {
         return marketPrices.get(marketPrices.size() - 1);
-    }
-    public Double getLastExecutedPrice() {
-        return lastExecutedPrices.get((int) getTime());
     }
 
     protected double getMarketPrice() {
@@ -582,6 +595,17 @@ public class Market implements Serializable {
         }
     }
 
+    public void handleItayoseUpdate(int buyUpdateSize, double exchangePrice, long sumExchangeVolume) {
+        long t = getTime();
+
+        long t1 = executedOrdersCounts.get((int) t);
+        executedOrdersCounts.set((int) t, t1 + buyUpdateSize);
+        lastExecutedPrices.set((int) t, exchangePrice);
+
+        long t2 = sumExecutedVolumes.get((int) t);
+        sumExecutedVolumes.set((int) t, t2 + sumExchangeVolume);
+    }
+
     public void handleOrder(Order order) {
         assert order.marketId == id;
         long t = getTime();
@@ -674,20 +698,10 @@ public class Market implements Serializable {
             handleSellMarketOrder(order);
         }
     }
-    public void handleItayoseUpdate(int buyUpdateSize, double exchangePrice, long sumExchangeVolume) {
-        long t = getTime();
-
-        long t1 = executedOrdersCounts.get((int) t);
-        executedOrdersCounts.set((int) t, t1 + buyUpdateSize);
-        lastExecutedPrices.set((int) t, exchangePrice);
-
-        long t2 = sumExecutedVolumes.get((int) t);
-        sumExecutedVolumes.set((int) t, t2 + sumExchangeVolume);
-    }
 
     public boolean hasNoAgentUpdamtes() {
         int size = agentUpdates.size();
-        return agentUpdates.get(size-1).isEmpty();
+        return agentUpdates.get(size - 1).isEmpty();
     }
 
     public boolean isRunning() {
@@ -721,12 +735,6 @@ public class Market implements Serializable {
 
     protected double roundSellPrice(double price) {
         return roundUpper(price, tickSize);
-    }
-
-    public final void changeFundamentaPrice(double scale) {
-        int index = fundamentalPrices.size()-1;
-        double current = fundamentalPrices.get(index);
-        fundamentalPrices.set(index, current*scale);
     }
 
     protected final void setFundamentalVolatility(double v) {
@@ -790,11 +798,6 @@ public class Market implements Serializable {
         return setup(json);
     }
 
-    @Override
-    public String toString() {
-        return "[Market"+ id + ", seed" + random + ", time: " + time.t + ", marketPrice" + getPrice();
-    }
-
     /**
      * Called by Simulator or Runners.
      */
@@ -802,6 +805,11 @@ public class Market implements Serializable {
         long t = getTime();
         double price = getNextMarketPrice();
         marketPrices.set((int) t, price);
+    }
+
+    @Override
+    public String toString() {
+        return "[Market" + id + ", seed" + random + ", time: " + time.t + ", marketPrice" + getPrice();
     }
 
     public void triggerAfterOrderHandlingEvents(Order order) {
@@ -834,6 +842,11 @@ public class Market implements Serializable {
         fundamentalPrices.add(price);
     }
 
+    public void updateFundamentalPrice(Fundamentals fundamentals) {
+        double nextFundamental = fundamentals.get(this);
+        updateFundamentalPrice(nextFundamental);
+    }
+
     public void updateMarketPrice() {
         double price = getNextMarketPrice();
         this.updateMarketPrice(price);
@@ -853,17 +866,6 @@ public class Market implements Serializable {
         agentUpdates.add(new ArrayList<AgentUpdate>());
     }
 
-    public void updateUsingFundamentalPrice(Fundamentals fundamentals) {
-        double nextFundamental = fundamentals.get(this);
-        updateMarketPrice(nextFundamental);
-        updateFundamentalPrice(nextFundamental);
-    }
-
-    public void updateFundamentalPrice(Fundamentals fundamentals) {
-        double nextFundamental = fundamentals.get(this);
-        updateFundamentalPrice(nextFundamental);
-    }
-
     /**
      * This method cleans the OrderBook, i.e. remove expired or canceled orders.
      */
@@ -879,12 +881,16 @@ public class Market implements Serializable {
     }
 
     /**
-     * update the time of market.
-     * Only the runner can call this method.
+     * update the time of market. Only the runner can call this method.
      */
     public void updateTime() {
         time.t++; // Call this explicitly!
     }
 
+    public void updateUsingFundamentalPrice(Fundamentals fundamentals) {
+        double nextFundamental = fundamentals.get(this);
+        updateMarketPrice(nextFundamental);
+        updateFundamentalPrice(nextFundamental);
+    }
 
 }

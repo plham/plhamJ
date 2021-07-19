@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * Ported from x10.util.Random
  */
 public final class Random implements Serializable {
-    private static final long serialVersionUID = -145083846754384274L;
     private static AtomicLong defaultGen = new AtomicLong(System.nanoTime());
     private static double DOUBLE_ULP = 1.0 / 9007199254740992L;
     private static float FLOAT_ULP = 1.0f / 16777216L;
     private static long GOLDEN_GAMMA = -7046029254386353131L;
+    private static final long serialVersionUID = -145083846754384274L;
 
     private static int mix32(long z) {
         long l = z;
@@ -87,6 +87,23 @@ public final class Random implements Serializable {
     public Random(long seed, long gamma) {
         this.seed = seed;
         this.gamma = gamma;
+    }
+
+    public Random copy() {
+        return new Random(seed, gamma);
+    }
+
+    @Override
+    public boolean equals(Object obj0) {
+        if (obj0 instanceof Random) {
+            Random obj = (Random) obj0;
+            return seed == obj.seed && gamma == obj.gamma;
+        }
+        return false;
+    }
+
+    public long getNthLong(long i) {
+        return mix64(seed + (i + 1) * gamma);
     }
 
     public boolean nextBoolean() {
@@ -221,22 +238,13 @@ public final class Random implements Serializable {
         seed += gamma;
         return seed;
     }
-    public long getNthLong(long i) {
-        return mix64(seed + (i+1) * gamma);
-    }
+
     public Random split() {
         return new Random(mix64(nextSeed()), mixGamma(nextSeed()));
     }
 
-    public Random copy() { return new Random(this.seed, this.gamma); }
-    public boolean equals(Object obj0) {
-        if(obj0 instanceof Random) {
-            Random obj = (Random) obj0;
-            return this.seed == obj.seed && this.gamma == obj.gamma;
-        }
-        return false;
-    }
+    @Override
     public String toString() {
-        return "Random["+ seed +","+gamma+"]";
+        return "Random[" + seed + "," + gamma + "]";
     }
 }

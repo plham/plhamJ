@@ -31,7 +31,7 @@ public class DoParameterizedJunitTest {
 
         // Code below allows us to extract the successive "Runner" instances
         // prepared by Parameterized. They are in member "runners" of the parent
-        // class Suite. 
+        // class Suite.
         Field runnersField = Suite.class.getDeclaredField("runners");
         runnersField.setAccessible(true);
         @SuppressWarnings("unchecked")

@@ -15,7 +15,12 @@ import cassia.util.JSON;
 import cassia.util.JSON.Value;
 import handist.collections.LongRange;
 import handist.collections.RangedList;
-import plham.core.*;
+import plham.core.Agent;
+import plham.core.Event;
+import plham.core.Fundamentals;
+import plham.core.HighFrequencyAgent;
+import plham.core.IndexMarket;
+import plham.core.Market;
 import plham.core.agent.ArbitrageAgent;
 import plham.core.agent.FCNAgent;
 import plham.core.event.FundamentalPriceShock;
@@ -38,9 +43,6 @@ import plham.core.util.Random;
 import plham.core.util.RandomSequenceBySplit;
 
 public class SimulatorFactory {
-
-    public Random randomForMarketsSetup;
-    public Random randomForAgentsSetup;
 
     /**
      * Utility class in charge of making the proper initialization for a SimulatorFactory by calling the 'register'
@@ -78,11 +80,13 @@ public class SimulatorFactory {
         public SimulationParser(File f) {
             this(JSON.parse(f));
         }
-        public SimulationParser(String fileName) {
-            this(new File(fileName));
-        }
+
         public SimulationParser(JSON.Value json) {
             CONFIG = json;
+        }
+
+        public SimulationParser(String fileName) {
+            this(new File(fileName));
         }
 
         /**
@@ -174,9 +178,11 @@ public class SimulatorFactory {
             // changed to the fullyQualifiedName of the corresponding class automatically
             if (legacyClassResolver.containsKey(implementingClassName)) {
                 String replacement = legacyClassResolver.get(implementingClassName);
-                System.err.println(
-                        "[WARNING] Implementation class \"" + implementingClassName + "\" for simulation participant \""
-                                + name + "\" was resolved to Java class \"" + replacement + "\"");
+                if (WARNING_FOR_LEGACY_CLASS) {
+                    System.err.println("[WARNING] Implementation class \"" + implementingClassName
+                            + "\" for simulation participant \"" + name + "\" was resolved to Java class \""
+                            + replacement + "\"");
+                }
                 implementingClassName = replacement;
             }
             try {
@@ -196,12 +202,24 @@ public class SimulatorFactory {
     }
 
     /**
+     * Property used to activate/deactivate the printing of warnings when parsing configuration files.
+     */
+    public final static String LEGACY_CLASS_WARNINGS_PROPERTY = "plham.legacyWarnings";
+
+    /**
      * Map containing mappings from "simple name" of classes as written in existing configuration files, to the
      * corresponding class' full Java name. This map is used to allow backward compatibility with older configuration
      * files in which the "simple name" of the classes to use for the simulation is written. Newer configuration files
      * should be written with the fully qualified name
      */
     static final Map<String, String> legacyClassResolver;
+    /**
+     * This private member is initialized based on the value assigned to property
+     * {@link #LEGACY_CLASS_WARNINGS_PROPERTY}. Is true by default, which results in the SimulatorFactory to print
+     * warning messages when "old" class implementation specification in JSon configuration files are used.
+     */
+    private static boolean WARNING_FOR_LEGACY_CLASS = Boolean
+            .parseBoolean(System.getProperty(LEGACY_CLASS_WARNINGS_PROPERTY, "false"));
 
     /**
      * Static constructor
@@ -234,18 +252,22 @@ public class SimulatorFactory {
         legacyClassResolver = resolver;
     }
 
-    public Map<String, Class> name2class;
     public Map<String, AgentGenerator> agentGenerators;
 
     public Map<String, AgentsInitializer> agentInitializers;
-    public JSON.Value CONFIG;
 
+    public JSON.Value CONFIG;
     public Map<String, EventGenerator> eventGenerators;
+
     public Map<String, EventInitializer> eventInitializers;
     private Simulator inConstruction = null;
+
     public Map<String, MarketGenerator> marketGenerators;
     public Map<String, MarketsInitializer> marketInitializers;
+    public Map<String, Class<?>> name2class;
     private SimulationParser parser;
+    public Random randomForAgentsSetup;
+    public Random randomForMarketsSetup;
 
     private SimulatorFactory() {
         name2class = new LinkedHashMap<>();
@@ -257,18 +279,17 @@ public class SimulatorFactory {
         eventGenerators = new LinkedHashMap<>();
     }
 
-    public SimulatorFactory(String configFilePath) throws Exception {
-        this();
-        parser = new SimulationParser(configFilePath);
-        parser.parseFile();
-    }
-
     public SimulatorFactory(JSON.Value config) throws Exception {
         this();
         parser = new SimulationParser(config);
         parser.parseFile();
     }
 
+    public SimulatorFactory(String configFilePath) throws Exception {
+        this();
+        parser = new SimulationParser(configFilePath);
+        parser.parseFile();
+    }
 
     public void addAgentGenerator(String name, AgentGenerator generator) {
         agentGenerators.put(name, generator);
@@ -310,7 +331,7 @@ public class SimulatorFactory {
     }
 
     public void addMarketInitializer(String className, MarketInitializer initializer) {
-//        final SimulatorFactory factory = this;
+        // final SimulatorFactory factory = this;
         MarketsInitializer initializers = new MarketsInitializer() {
             private static final long serialVersionUID = 2739579036719738032L;
 
@@ -320,7 +341,7 @@ public class SimulatorFactory {
                 List<Market> markets = new ArrayList<>((int) numMarkets);
                 Market market = initializer.initialize(id, name, random, json);
                 markets.add(market);
-//				factory.getSimulatorInConstruction().GLOBAL.put(name, markets);
+                // factory.getSimulatorInConstruction().GLOBAL.put(name, markets);
                 return markets;
             }
         };
@@ -346,7 +367,7 @@ public class SimulatorFactory {
     }
 
     public void createAllAgents(JSON.Value list, AgentAllocManager dm) {
-        long id = 0;
+        // long id = 0;
         List<String> sorted = JSONUtils.getDependencySortedList(CONFIG, list, "agents");
         long numAllAgents = 0;
 
@@ -408,7 +429,8 @@ public class SimulatorFactory {
                 String name = entry.getKey();
                 List<JSON.Value> configs = entry.getValue();
                 for (JSON.Value config : configs) {
-                    String className = config.get("class").toString();
+                    // String className = commented out but keeping the config.get("class") for potential side-effects
+                    config.get("class").toString();
                     long numAgents = config.get("numAgents").toLong();
                     LongRange range = new LongRange(lastAgentId, lastAgentId + numAgents);
                     lastAgentId += numAgents;
@@ -438,7 +460,8 @@ public class SimulatorFactory {
             String name = entry.getKey();
             List<JSON.Value> configs = entry.getValue();
             for (JSON.Value config : configs) {
-                String className = config.get("class").toString();
+                // String className = // commenting because unsused, but keeping the side-effect of config.get("class")
+                config.get("class").toString();
                 long numAgents = config.get("numAgents").toLong();
                 LongRange range = new LongRange(lastAgentId, lastAgentId + numAgents);
                 lastAgentId += numAgents;
@@ -447,7 +470,7 @@ public class SimulatorFactory {
                     createAgents(name, randoms, subList.getRange(), config, subList);
             }
         }
-//        System.err.println("# " + numAllAgents + " agents created.");
+        // System.err.println("# " + numAllAgents + " agents created.");
         return;
     }
 
@@ -476,7 +499,7 @@ public class SimulatorFactory {
                 events.add(ev);
             }
             allEvents.addAll(events);
-//			inConstruction.GLOBAL.put(name, events);
+            // inConstruction.GLOBAL.put(name, events);
         }
         return allEvents;
     }
@@ -554,7 +577,7 @@ public class SimulatorFactory {
             String className = CONFIG.get(name).get("class").toString();
             if (className.equals("EventGroup")) {
                 List<Event> eventGroup = createItemGroup(CONFIG.get(name), "EventGroup", "events");
-//				inConstruction.GLOBAL.put(name, eventGroup);
+                // inConstruction.GLOBAL.put(name, eventGroup);
                 events.addAll(eventGroup);
             } else {
                 assert eventInitializers.containsKey(className) : className + "'s initializer is not registered.";
@@ -568,11 +591,11 @@ public class SimulatorFactory {
                     throw e;
                 }
                 events.add(ev);
-//				inConstruction.GLOBAL.put(name, ev);
+                // inConstruction.GLOBAL.put(name, ev);
             }
         }
         // TODO
-//        inConstruction = null;
+        // inConstruction = null;
         return events;
     }
 
@@ -580,10 +603,11 @@ public class SimulatorFactory {
         Random RANDOM = inConstruction.RANDOM;
         JSONRandom random = new JSONRandom(RANDOM);
 
-        int N = markets.size();
+        // int N = commented-out but keeping markets.size()
+        markets.size();
         Fundamentals f = new Fundamentals(RANDOM);
 
-        for (Market m: markets) {
+        for (Market m : markets) {
             // TODO long->int
             double initialPrice = 0;
             try {
@@ -597,14 +621,14 @@ public class SimulatorFactory {
             }
             f.setInitial(m, initialPrice);
         }
-        for (Market m: markets) {
+        for (Market m : markets) {
             f.setDrift(m, 0.0);
             // (5/31, matsuura) commented out the line below. "fundamentalDrift"
             // never appeared in config files, nor in x10 sources currently.
             // f.setDrift(m,
             // random.nextRandom(CONFIG(m.name)("fundamentalDrift", "0.0")));
         }
-        for (Market m: markets) {
+        for (Market m : markets) {
             f.setVolatility(m, m.getFundamentalVolatility());
         }
         if (json.has("pairwise")) {
@@ -616,7 +640,7 @@ public class SimulatorFactory {
                 f.setCorrelation(mi, mj, random.nextRandom(triple.get(2)));
             }
         }
-        for (Market m: markets) {
+        for (Market m : markets) {
             f.setCorrelation(m, m, 1.0);
         }
 
@@ -630,8 +654,8 @@ public class SimulatorFactory {
         if (json.get("class").toString().equals(className)) { // A dummy class
             List<JSON.Value> list = json.get(keyword).asList();
             for (long i = 0; i < list.size(); i++) {
-//				String name = list.get((int) i).toString();
-//				items.add((T) inConstruction.GLOBAL.get(name)); // SEE:
+                // String name = list.get((int) i).toString();
+                // items.add((T) inConstruction.GLOBAL.get(name)); // SEE:
                 // getDependencySortedList()
             }
         }
@@ -658,11 +682,14 @@ public class SimulatorFactory {
         return ret;
     }
 
+    public Class<?> getClass(String name) {
+        return name2class.get(name);
+    }
+
     public Simulator getSimulatorInConstruction() {
         return inConstruction;
     }
 
-    public Class<?> getClass(String name) { return name2class.get(name); }
     public boolean judgeHFTorNot(String name) {
         Class<?> clazz = name2class.get(name);
         return HighFrequencyAgent.class.isAssignableFrom(clazz);
@@ -678,33 +705,34 @@ public class SimulatorFactory {
     public Simulator makeNewSimulation(long seed) { // for sequential use
         return makeNewSimulation(seed, false, true, new AgentAllocManager.Centric());
     }
+
     public Simulator makeNewSimulation(long seed, AgentAllocManager.Centric am) {
         return makeNewSimulation(seed, true, true, am);
     }
+
     /**
      * Takes all the accumulated initializers of this class, calls them, and stores the result in the provided Simulator
      * instance.
      *
-     * @param seed the seed used to initiliaze all the objects that participate in the computation
-     * @param skippableRandom represents whether the runner use skippable random assignments or not.
-     *                        Please use skippableRandome(=true) for distributed environments.
-     *                        This flag changes the random seed of agents and markets and their behaviors.
+     * @param seed            the seed used to initiliaze all the objects that participate in the computation
+     * @param skippableRandom represents whether the runner use skippable random assignments or not. Please use
+     *                        skippableRandome(=true) for distributed environments. This flag changes the random seed of
+     *                        agents and markets and their behaviors.
      * @return a build {@link Simulator} instance
      */
-    public Simulator makeNewSimulation(long seed, boolean skippableRandom, boolean genAgents,
-                                       AgentAllocManager am) {
+    public Simulator makeNewSimulation(long seed, boolean skippableRandom, boolean genAgents, AgentAllocManager am) {
         inConstruction = new Simulator();
         Simulator sim = inConstruction;
         // Allows access of the various initializers to the Simulator
         // instance directly through method SimulationFactory#getSimulatorInConstruction
 
-//		sim.GLOBAL = new LinkedHashMap<>();
+        // sim.GLOBAL = new LinkedHashMap<>();
         // JSON.extendDeeply(CONFIG, CONFIG);
         sim.RANDOM = new Random(seed);
 
         // Market initialization
-        this.randomForMarketsSetup = skippableRandom? sim.RANDOM.split(): sim.RANDOM;
-        this.randomForAgentsSetup = skippableRandom? sim.RANDOM.split(): sim.RANDOM;
+        randomForMarketsSetup = skippableRandom ? sim.RANDOM.split() : sim.RANDOM;
+        randomForAgentsSetup = skippableRandom ? sim.RANDOM.split() : sim.RANDOM;
         // TODO ->
         List<Market> markets = createAllMarkets(CONFIG.get("simulation").get("markets"));
         List<LongRange> mrange = new ArrayList<>();
@@ -713,16 +741,16 @@ public class SimulatorFactory {
         // <- TODO
         // Agent initialization
         sim.dm = am;
-        if(genAgents) {
+        if (genAgents) {
             createAllAgents(CONFIG.get("simulation").get("agents"), am);
         }
-//		sim.GLOBAL.put("agents", dm.getBody());
+        // sim.GLOBAL.put("agents", dm.getBody());
 
         // Fundamentals
         Fundamentals fundamentals = createFundamentals(markets,
                 CONFIG.get("simulation").getOrElse("fundamentalCorrelations", "{}"));
         sim.fundamentals = fundamentals;
-//		sim.GLOBAL.put("fundamentals", fundamentals);
+        // sim.GLOBAL.put("fundamentals", fundamentals);
 
         // Small correction to separate Agents and HighFrequencyAgents
         setupMarkets(sim.markets);
@@ -770,32 +798,23 @@ public class SimulatorFactory {
         }
     }
 
+    public void setupAgents() {
+        // TODO ugly
+        inConstruction.dm.finalSetup(inConstruction);
+        /*
+         * if(inConstruction.dm instanceof AllocManager.Centric) { AllocManager.Centric<Agent> dm =
+         * (AllocManager.Centric<Agent>) inConstruction.dm; ChunkedList<Agent> agents = new ChunkedList();
+         * agents.add(dm.getChunk()); // TODO List<Agent> normalAgents = new ArrayList<>(); List<Agent> hifreqAgents =
+         * new ArrayList<>(); for (Agent agent : agents) { if (agent instanceof HighFrequencyAgent) {
+         * hifreqAgents.add(agent); } else { normalAgents.add(agent); } } inConstruction.agents = agents;
+         * inConstruction.normalAgents = normalAgents; inConstruction.hifreqAgents = hifreqAgents; }
+         */
+    }
+
     public void setupMarkets(List<Market> markets) {
         for (Market market : markets) {
             market.env = inConstruction;
         }
         inConstruction.markets = markets;
-    }
-    public void setupAgents() {
-        // TODO ugly
-        inConstruction.dm.finalSetup(inConstruction);
-        /*if(inConstruction.dm instanceof AllocManager.Centric) {
-            AllocManager.Centric<Agent> dm = (AllocManager.Centric<Agent>) inConstruction.dm;
-            ChunkedList<Agent> agents = new ChunkedList();
-            agents.add(dm.getChunk());
-            // TODO
-            List<Agent> normalAgents = new ArrayList<>();
-            List<Agent> hifreqAgents = new ArrayList<>();
-            for (Agent agent : agents) {
-                if (agent instanceof HighFrequencyAgent) {
-                    hifreqAgents.add(agent);
-                } else {
-                    normalAgents.add(agent);
-                }
-            }
-            inConstruction.agents = agents;
-            inConstruction.normalAgents = normalAgents;
-            inConstruction.hifreqAgents = hifreqAgents;
-        }*/
     }
 }

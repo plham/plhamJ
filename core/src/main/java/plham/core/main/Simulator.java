@@ -10,7 +10,6 @@ import handist.collections.LongRange;
 import plham.core.Agent;
 import plham.core.Event;
 import plham.core.Fundamentals;
-import plham.core.IndexMarket;
 import plham.core.Market;
 import plham.core.util.AgentAllocManager;
 import plham.core.util.Random;
@@ -54,24 +53,24 @@ public class Simulator {
     }
 
     public ChunkedList<Agent> agents;
-    // public Map<String, Object> GLOBAL;
-    public List<Event> sessionEvents;
+    // Allocation manager for the Agents
+    AgentAllocManager dm;
+    public Fundamentals fundamentals;
     public ChunkedList<Agent> hifreqAgents;
+
     public Map<String, List<LongRange>> marketName2Ranges;
 
     public List<Market> markets;
-
     public ChunkedList<Agent> normalAgents;
     public long numAgents;
+
     public Random RANDOM;
+
+    // public Map<String, Object> GLOBAL;
+    public List<Event> sessionEvents;
 
     public List<Session> sessions;
 
-    public Fundamentals fundamentals;
-
-    // Allocation manager for the Agents
-    AgentAllocManager dm;
-    
     public Simulator() {
     }
 
@@ -81,8 +80,9 @@ public class Simulator {
     }
 
     public Agent getAgentByName(String name) {
-        for(Agent a: agents) {
-            if(a.name.equals(name)) return a;
+        for (Agent a : agents) {
+            if (a.name.equals(name))
+                return a;
         }
         return null;
     }
@@ -98,8 +98,8 @@ public class Simulator {
     public List<Agent> getAgentsByName(String name) {
 //		return getItemsByName(name);
         ArrayList<Agent> toReturn = new ArrayList<>();
-        for(Agent a: agents) {
-            if(a.name.equals(name))
+        for (Agent a : agents) {
+            if (a.name.equals(name))
                 toReturn.add(a);
         }
         return toReturn;
