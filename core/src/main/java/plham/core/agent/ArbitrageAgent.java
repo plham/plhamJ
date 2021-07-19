@@ -55,12 +55,9 @@ public class ArbitrageAgent extends HighFrequencyAgent {
         super(id, name, random);
     }
 
-   /*
-    public static long orderId = 0;
-    public long nextOrderId() {
-        return orderId;
-    }
-    */
+    /*
+     * public static long orderId = 0; public long nextOrderId() { return orderId; }
+     */
 
     @Override
     public ArbitrageAgent setup(JSON.Value json, SimulatorFactory sim) {

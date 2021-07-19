@@ -55,6 +55,11 @@ public class PriceLimitRule implements OrderEvent {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public PriceLimitRule setup(JSON.Value json, SimulatorFactory sim) {
         Market referenceMarket = sim.getSimulatorInConstruction().getMarketByName(json.get("referenceMarket"));
         referenceMarketId = referenceMarket.id;
@@ -76,10 +81,5 @@ public class PriceLimitRule implements OrderEvent {
                 activationCount++;
             }
         }
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 }

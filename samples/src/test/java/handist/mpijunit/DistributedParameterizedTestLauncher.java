@@ -1,4 +1,5 @@
 package handist.mpijunit;
+
 /*******************************************************************************
  * Copyright (c) 2021 Handy Tools for Distributed Computing (HanDist) project.
  *
@@ -10,15 +11,13 @@ package handist.mpijunit;
  * SPDX-License-Identifier: EPL-1.0
  ******************************************************************************/
 
-
 import apgas.impl.DebugFinish;
 import apgas.mpi.MPILauncher;
 import handist.collections.dist.TeamedPlaceGroup;
 
 /**
- * This class is used to transparently call the regular {@link MPILauncher} with
- * the main class as {@link DoJunitTest} and the arguments received. It is also
- * responsible for adding the library's plugin to the {@link MPILauncher} before
+ * This class is used to transparently call the regular {@link MPILauncher} with the main class as {@link DoJunitTest}
+ * and the arguments received. It is also responsible for adding the library's plugin to the {@link MPILauncher} before
  * calling it.
  *
  * @author Patrick Finnerty
@@ -48,7 +47,7 @@ public class DistributedParameterizedTestLauncher {
         }
 
         System.setProperty(apgas.impl.Config.APGAS_FINISH, DebugFinish.class.getCanonicalName());
-        
+
         // Call TeamedPlaceGroup setup method to add its plugin to MPILauncher
         TeamedPlaceGroup.setup();
 

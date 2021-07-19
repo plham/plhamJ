@@ -36,6 +36,9 @@ public class FCNAgent extends plham.core.Agent {
     public static void register(SimulatorFactory sim) {
         String className = "FCNAgent";
         sim.addAgentInitializer(className, new AgentInitializer() {
+            /** Serial Version UID */
+            private static final long serialVersionUID = -2286430372167712705L;
+
             @Override
             public Agent initialize(long id, String name, Random random, JSON.Value json) {
                 return new FCNAgent(id, name, random).setup(json, sim);
@@ -96,25 +99,16 @@ public class FCNAgent extends plham.core.Agent {
         }
         return orders;
     }
+
     /*
-    public String submitOrdersInfo(Market market) {
-        StringBuffer buf = new StringBuffer();
-        buf.append("M:"+market.id + ":"+market.getClass());
-        if (!this.isMarketAccessible(market)) {
-            return "!isAccessible";
-        }
-        buf.append(", Rand:"+random.toString());
-        double fundamentalScale = 1.0 / Math.max(meanReversionTime, 1);
-        buf.append(", fundS:"+fundamentalScale);
-        buf.append(", fundP:"+market.getFundamentalPrice());
-        double fundamentalLogReturn = fundamentalScale * Math.log(market.getFundamentalPrice() / market.getPrice());
-        buf.append(", fundR:"+fundamentalLogReturn);
-        double chartScale = 1.0 / Math.max(timeWindowSize, 1);
-        buf.append(", chartS:"+chartScale);
-        buf.append(", price:" + market.getPrice());
-        return buf.toString();
-    }
-*/
+     * public String submitOrdersInfo(Market market) { StringBuffer buf = new StringBuffer(); buf.append("M:"+market.id
+     * + ":"+market.getClass()); if (!this.isMarketAccessible(market)) { return "!isAccessible"; }
+     * buf.append(", Rand:"+random.toString()); double fundamentalScale = 1.0 / Math.max(meanReversionTime, 1);
+     * buf.append(", fundS:"+fundamentalScale); buf.append(", fundP:"+market.getFundamentalPrice()); double
+     * fundamentalLogReturn = fundamentalScale * Math.log(market.getFundamentalPrice() / market.getPrice());
+     * buf.append(", fundR:"+fundamentalLogReturn); double chartScale = 1.0 / Math.max(timeWindowSize, 1);
+     * buf.append(", chartS:"+chartScale); buf.append(", price:" + market.getPrice()); return buf.toString(); }
+     */
     public List<Order> submitOrders(Market market) {
         List<Order> orders = new ArrayList<>();
         if (!this.isMarketAccessible(market)) {
@@ -190,11 +184,12 @@ public class FCNAgent extends plham.core.Agent {
         }
         return orders;
     }
+
+    @Override
     public String toString() {
-        return "Agent:"+id + "[rnd:" + random +",cw:" + chartWeight + ",fw:" + fundamentalWeight
-                + ",following:"+ isChartFollowing +
-                ", mtype: " + marginType + ", mrt:" + meanReversionTime +
-                ", ns:" + noiseScale + ", nw:" + noiseWeight + ", om:" + orderMargin +
-                ", tws:" + timeWindowSize + ", cash:" + cashAmount + "]";
+        return "Agent:" + id + "[rnd:" + random + ",cw:" + chartWeight + ",fw:" + fundamentalWeight + ",following:"
+                + isChartFollowing + ", mtype: " + marginType + ", mrt:" + meanReversionTime + ", ns:" + noiseScale
+                + ", nw:" + noiseWeight + ", om:" + orderMargin + ", tws:" + timeWindowSize + ", cash:" + cashAmount
+                + "]";
     }
 }

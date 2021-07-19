@@ -66,6 +66,11 @@ public class TradingHaltRule implements MarketEvent, OrderEvent {
         }
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
     public void setReferencePrice(Double referencePrice) {
         this.referencePrice = referencePrice;
     }
@@ -118,11 +123,6 @@ public class TradingHaltRule implements MarketEvent, OrderEvent {
     @Override
     public void update(Market market, Order order) {
         this.update(market);
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
 }

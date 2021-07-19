@@ -132,7 +132,7 @@ public class OrderBook implements Serializable {
      */
     public synchronized boolean removeAllWhere(Predicate<Order> condition) {
 //        System.err.println("size:" + queue.size()); // FIXME For debug purposes, don't forget to remove 
-        
+
         // Old code located below
 //        int size = queue.size();
 //        Order[] orders = queue.toArray(new Order[size]);
@@ -148,19 +148,19 @@ public class OrderBook implements Serializable {
 //                }
 //            }
 //        }
-//        
+//
 //        queue.clear();
 //        for (Order order : list) {
 //            if (null != order) {
 //                queue.add(order);
 //            }
 //        }
-//        
+//
 //        return queue.size() < size;
-        
+
         boolean removed = false;
         Iterator<Order> it = queue.iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             if (condition.test(it.next())) {
                 it.remove();
                 removed = true;

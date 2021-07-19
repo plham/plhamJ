@@ -143,6 +143,16 @@ final public class RandomSequenceBySplit extends RangedList<Random> {
     }
 
     @Override
+    protected Object[] getBody() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected long getBodyOffset() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public LongRange getRange() {
         return new LongRange(0, size());
     }
@@ -214,16 +224,6 @@ final public class RandomSequenceBySplit extends RangedList<Random> {
 
     @Override
     public List<Random> toList(LongRange r) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected Object[] getBody() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected long getBodyOffset() {
         throw new UnsupportedOperationException();
     }
 }

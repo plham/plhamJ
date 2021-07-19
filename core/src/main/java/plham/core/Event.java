@@ -10,13 +10,13 @@ import plham.core.main.SimulatorFactory;
  */
 public interface Event extends Serializable {
 
-    public Event setup(Value value, SimulatorFactory sim);
-
     /**
      * Provides the name of this event
-     * 
+     *
      * @return the string given to this event in the configuration file of the simulation
      */
-    public String getName();
+    String getName();
+
+    Event setup(Value value, SimulatorFactory sim);
 
 }

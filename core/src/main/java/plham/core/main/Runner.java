@@ -18,8 +18,8 @@ public abstract class Runner implements Serializable {
     public boolean _PROFILE = false;
 
     transient SimulatorFactory factory;
-    transient Simulator sim;
     SimulationOutput output;
+    transient Simulator sim;
 
     public Runner(SimulationOutput out, SimulatorFactory f) {
 //		sim = s;

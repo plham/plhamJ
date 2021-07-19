@@ -49,6 +49,11 @@ public class OrderMistakeShock implements MarketEvent {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public OrderMistakeShock setup(JSON.Value json, SimulatorFactory sim) {
         Simulator s = sim.getSimulatorInConstruction();
         Market market = s.getMarketByName(json.get("target"));
@@ -87,10 +92,5 @@ public class OrderMistakeShock implements MarketEvent {
             }
             market.handleOrder(order);
         }
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 }
