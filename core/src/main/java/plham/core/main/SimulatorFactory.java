@@ -37,10 +37,12 @@ import plham.core.model.MarketGenerator;
 import plham.core.model.MarketInitializer;
 import plham.core.model.MarketsInitializer;
 import plham.core.util.AgentAllocManager;
+import plham.core.util.AgentGeneratorForEachMarket;
 import plham.core.util.JSONRandom;
 import plham.core.util.JSONUtils;
 import plham.core.util.Random;
 import plham.core.util.RandomSequenceBySplit;
+import plham.core.util.SimpleMarketGenerator;
 
 public class SimulatorFactory {
 
@@ -240,6 +242,8 @@ public class SimulatorFactory {
         resolver.put(OrderMistakeShock.class.getSimpleName(), OrderMistakeShock.class.getCanonicalName());
         resolver.put(PriceLimitRule.class.getSimpleName(), PriceLimitRule.class.getCanonicalName());
         resolver.put(TradingHaltRule.class.getSimpleName(), TradingHaltRule.class.getCanonicalName());
+        resolver.put(SimpleMarketGenerator.class.getSimpleName(), SimpleMarketGenerator.class.getCanonicalName());
+        resolver.put(AgentGeneratorForEachMarket.class.getSimpleName(), AgentGeneratorForEachMarket.class.getCanonicalName());
 
         // Below are the names of the classes present in module "samples"
         resolver.put("CancelFCNAgent", "plham.samples.CancelTest.CancelFCNAgent");
@@ -249,6 +253,7 @@ public class SimulatorFactory {
         resolver.put("MarketMakerAgent", "plham.samples.MarketShare.MarketMakerAgent");
         resolver.put("MarketShareFCNAgent", "plham.samples.MarketShare.MarketShareFCNAgent");
         resolver.put("PriceLimitFCNAgent", "plham.samples.PriceLimit.PriceLimitFCNAgent");
+        resolver.put("WorkloadFCNAgent",  "plham.samples.blackscholes.WorkloadFCNAgent");
         legacyClassResolver = resolver;
     }
 
@@ -357,7 +362,8 @@ public class SimulatorFactory {
         try {
             String className = json.get("class").toString();
             AgentsInitializer initializer = agentInitializers.get(className);
-            assert initializer != null : "Initializer is not defined for class '" + className + "'";
+//            assert initializer != null : "Initializer is not defined for class '" + className + "'";
+            if (initializer == null) System.err.println("INITIALIZER NOT DEFINE FOR CLASS " + className);
             initializer.initialize(name, randoms, range, json, agents);
         } catch (Exception e) {
             System.err.println("An error occurred while creating " + name + ", from " + JSON.dump(json));
@@ -667,6 +673,7 @@ public class SimulatorFactory {
         MarketsInitializer initializer = marketInitializers.get(className);
         assert initializer != null : "Initializer is not defined for class '" + className + "'";
         try {
+            if (initializer == null) System.err.println("PROBLEM FOR CLASS " + className);
             return initializer.initialize(id, name, random, json);
         } catch (Exception e) {
             System.err.println("An error occurred while creating " + name + ", from " + JSON.dump(json));

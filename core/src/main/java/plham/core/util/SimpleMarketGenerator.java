@@ -6,6 +6,7 @@ import java.util.List;
 
 import cassia.util.JSON;
 import cassia.util.JSON.Value;
+import plham.core.Market;
 import plham.core.main.SimulatorFactory;
 import plham.core.model.MarketGenerator;
 
@@ -35,6 +36,7 @@ public class SimpleMarketGenerator implements Serializable {
                 long from = json.get("from").toLong();
                 long to = json.get("to").toLong();
                 JSON.Value base = json.get("base");
+
                 List<JSON.Value> ret = new ArrayList<>();
                 long n = to - from;
                 for (long i = 0; i <= n; i++) {
@@ -46,6 +48,11 @@ public class SimpleMarketGenerator implements Serializable {
                 return ret;
             }
         });
+        
+        // FIXME 2021/09/15 Patrick Finnery: Here we should call the register method 
+        // of the class specified in the configuration of the "SimpleMarketGenerator".
+        // This class may be "Market", but it could be a different one.
+        Market.register(sim);
 
     }
 }

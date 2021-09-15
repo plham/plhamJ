@@ -38,36 +38,37 @@ public class IT_DistributedRunner extends PlhamOutputTester {
         // in the 2D array below are the configurations for each sample program
         Collection<Object[]> parameters = Arrays.asList(new Object[][] {
                 /* Simulation name, OutpuClass, JSON configuration file, SEED, expected output */
-                { "New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100",
+                { "New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "false",  "100",
                         "src/test/resources/MultithreadedOutputs/CI2002.txt" },
-                { "New CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100",
+                { "New CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "false", "100",
                         "src/test/resources/MultithreadedOutputs/CancelTest.txt" },
-                { "MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100",
+                { "MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "false", "100",
                         "src/test/resources/MultithreadedOutputs/MarketShare.txt" },
-                { "New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100",
+                { "New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json","false", "100",
                         "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt" }, // using the "shortened"
                                                                                            // version of FatTail
-                { "New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json", "100",
+                { "New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json","false", "100",
                         "src/test/resources/MultithreadedOutputs/TradingHalt.txt" },
-                { "New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json", "100",
+                { "New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json","false", "100",
                         "src/test/resources/MultithreadedOutputs/ShockTransfer.txt" },
-                { "New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100",
+                { "New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json","false", "100",
                         "src/test/resources/MultithreadedOutputs/PriceLimit.txt" },
-                { "FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100",
+                { "FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json","false", "100",
                         "src/test/resources/MultithreadedOutputs/FatFinger.txt" },
-// Not Supported yet {"DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
+                { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json","true", "100", "src/test/resources/BlackScholes/expected_output.txt"},
+                { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json","true", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"}//,
+//                {"DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json","false", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
         });
-
         return parameters;
     }
 
     @Rule
     public transient TestName nameOfCurrentTest = new TestName();
 
-    public IT_DistributedRunner(String parameterName, Class<?> outputClass, String jsonFile, String seed,
+    public IT_DistributedRunner(String parameterName, Class<?> outputClass, String jsonFile, String pipeline, String seed,
             String expectedResultFile) {
         super("Distributed_4hosts_" + parameterName, ParallelRunnerDist.class, expectedResultFile,
-                outputClass.getCanonicalName(), jsonFile, seed);
+                outputClass.getCanonicalName(), jsonFile, seed, pipeline);
     }
 
     @After
