@@ -309,12 +309,14 @@ public final class ParallelRunnerMT extends Runner {
             System.err.println("\tOutput class (defines the outputs to extract from the simulation)");
             System.err.println("\tJSON configuration file");
             System.err.println("\tseed");
+            System.err.println("\tuse pipeline?");
             System.err.println("\tparallelism level (optional)");
         }
 
         String outputClassName = args[0];
         String JsonConfigurationFile = args[1];
         String seedArg = args[2];
+        String pipelineArg = args[3];
 
         SimulationOutput simulationOutput = null;
 
@@ -350,12 +352,21 @@ public final class ParallelRunnerMT extends Runner {
             e.printStackTrace();
             return;
         }
+        
+        boolean withPipeline;
+        try {
+            withPipeline = Boolean.parseBoolean(pipelineArg);
+        } catch (Exception e) {
+            System.err.println("Problem encountered when attempting to obtain pipeline configuration");
+            e.printStackTrace();
+            return;
+        }
 
         ParallelRunnerMT runner;
 
         try {
-            if (3 < args.length) {
-                runner = new ParallelRunnerMT(simulationOutput, factory, Integer.parseInt(args[3]));
+            if (4 < args.length) {
+                runner = new ParallelRunnerMT(simulationOutput, factory, Integer.parseInt(args[4]));
             } else {
                 runner = new ParallelRunnerMT(simulationOutput, factory);
             }
@@ -365,7 +376,7 @@ public final class ParallelRunnerMT extends Runner {
             return;
         }
 
-        runner.run(seed);
+        runner.run(seed, withPipeline);
     }
 
     @SuppressWarnings("unchecked")

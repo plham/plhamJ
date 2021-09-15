@@ -454,12 +454,14 @@ public final class ParallelRunnerDist extends Runner {
             System.err.println("\tOutput class (defines the outputs to extract from the simulation)");
             System.err.println("\tJSON configuration file");
             System.err.println("\tseed");
+            System.err.println("\tuse pipeline?");
             System.err.println("\tparallelism level (optional)");
         }
 
         String outputClassName = args[0];
         String JsonConfigurationFile = args[1];
         String seedArg = args[2];
+        String pipelineArg = args[3];
 
         SimulationOutput simulationOutput = null;
 
@@ -495,12 +497,21 @@ public final class ParallelRunnerDist extends Runner {
             e.printStackTrace();
             return;
         }
+        
+        boolean withPipeline;
+        try {
+            withPipeline = Boolean.parseBoolean(pipelineArg);
+        } catch (Exception e) {
+            System.err.println("Problem encountered when attempting to obtain pipeline configuration");
+            e.printStackTrace();
+            return;
+        }
 
         ParallelRunnerDist runner;
 
         try {
-            if (3 < args.length) {
-                runner = new ParallelRunnerDist(simulationOutput, factory, Integer.parseInt(args[3]));
+            if (4 < args.length) {
+                runner = new ParallelRunnerDist(simulationOutput, factory, Integer.parseInt(args[4]));
             } else {
                 runner = new ParallelRunnerDist(simulationOutput, factory);
             }
@@ -510,7 +521,7 @@ public final class ParallelRunnerDist extends Runner {
             return;
         }
 
-        runner.run(seed);
+        runner.run(seed, withPipeline);
     }
 
     transient DistAllocManager _am;
@@ -572,7 +583,7 @@ public final class ParallelRunnerDist extends Runner {
     }
 
     /**
-     * DistRunner calcuarates the distribution of agents and then requests factory for agent/markets creation.
+     * DistRunner calculates the distribution of agents and then requests factory for agent/markets creation.
      */
     void createAllAgents() {
         Value list = factory.CONFIG.get("simulation").get("agents");
@@ -961,8 +972,9 @@ public final class ParallelRunnerDist extends Runner {
             for (Session session : sim.sessions) {
 //                session.print();
                 // TODO master only??
-                if (isMaster)
-                    sim.sessionEvents = factory.createEventsForASession(session, sim);
+                if (isMaster) {
+                    sim.sessionEvents = factory.createEventsForASession(session, sim);                    
+                }
                 outputSession(isMaster, output, out, session, SimulationStage.BEGIN_SESSION, bh.markets, bh.allAgents,
                         sim.sessionEvents);
                 iterateMarketUpdates(out, session, sim.fundamentals);

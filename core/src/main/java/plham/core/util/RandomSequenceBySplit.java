@@ -9,6 +9,7 @@ import java.util.function.Function;
 import handist.collections.Chunk;
 import handist.collections.LongRange;
 import handist.collections.RangedList;
+import handist.collections.RangedListIterator;
 
 /**
  * This generates a sequence of Randoms split from a given Random, and only allows sequential access to its elements.
@@ -142,12 +143,10 @@ final public class RandomSequenceBySplit extends RangedList<Random> {
         return (current = r);
     }
 
-    @Override
     protected Object[] getBody() {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     protected long getBodyOffset() {
         throw new UnsupportedOperationException();
     }
@@ -175,7 +174,7 @@ final public class RandomSequenceBySplit extends RangedList<Random> {
         throw new UnsupportedOperationException();
     }
 
-    public ListIterator<Random> listIterator() {
+    public RangedListIterator<Random> listIterator() {
         throw new UnsupportedOperationException();
     }
 
@@ -225,5 +224,29 @@ final public class RandomSequenceBySplit extends RangedList<Random> {
     @Override
     public List<Random> toList(LongRange r) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RangedListIterator<Random> listIterator(long from) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected Iterator<Random> subIterator(LongRange range) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected RangedListIterator<Random> subListIterator(LongRange range) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected RangedListIterator<Random> subListIterator(LongRange range, long from) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

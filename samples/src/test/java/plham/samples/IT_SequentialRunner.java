@@ -51,7 +51,10 @@ public class IT_SequentialRunner extends PlhamOutputTester {
                 { FatFingerMain.class, "src/test/resources/FatFinger/config.json", "100",
                         "src/test/resources/FatFinger/correct_output.txt" },
                 { DarkPoolMain.class, "src/test/resources/DarkPool/config.json", "100",
-                        "src/test/resources/DarkPool/correct_output.txt" } });
+                        "src/test/resources/DarkPool/correct_output.txt" },
+                { ShockTransferMain.class, "src/test/resources/BlackScholes/config-a099.json", "100", 
+                            "src/test/resources/BlackScholes/sequential_expected_output.txt"}
+                        });
     }
 
     public IT_SequentialRunner(Class<?> mainClass, String config, String seed, String expectedOutput) {
