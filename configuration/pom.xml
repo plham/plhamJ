@@ -107,7 +107,6 @@
 					<configuration>
 						<forkNode
 							implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
-
 						<systemPropertyVariables>
 							<mpirunner.mpiImpl>mpj-native</mpirunner.mpiImpl>
 							<mpirunner.notificationsPath>target/mpi-junit</mpirunner.notificationsPath>
@@ -151,6 +150,13 @@
 					<configuration>
 						<forkNode
 							implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
+						<systemPropertyVariables>
+							<mpirunner.mpiImpl>mpj-native</mpirunner.mpiImpl>
+							<mpirunner.notificationsPath>target/mpi-junit</mpirunner.notificationsPath>
+							<mpirunner.keepNotifications>true</mpirunner.keepNotifications>
+							<mpirunner.mpirunOptions>--oversubscribe</mpirunner.mpirunOptions>
+							<mpirunner.parseNotifications>0</mpirunner.parseNotifications>
+						</systemPropertyVariables>
 					</configuration>
 				</plugin>
 				<plugin>

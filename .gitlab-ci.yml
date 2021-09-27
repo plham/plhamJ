@@ -17,23 +17,7 @@ project_compile:
     - source /home/gitlab-runner/.profile
     - mvn $MAVEN_CLI_OPTS -U clean compile
 
-unit_tests:
-  stage: test
-  script:
-    - source /home/gitlab-runner/.profile
-    - mvn $MAVEN_CLI_OPTS test
-  artifacts:
-    when: always
-    reports:
-      junit:
-        - core/target/surefire-reports/TEST-*.xml
-        - samples/target/surefire-reports/TEST-*.xml
-    paths:
-        - core/target/surefire-reports/TEST-*.xml
-        - samples/target/surefire-reports/TEST-*.xml
-    expire_in: 1 week
-
-integration_tests:
+tests:
   stage: test
   script:
     - source /home/gitlab-runner/.profile
@@ -42,12 +26,15 @@ integration_tests:
     when: always
     reports:
       junit:
+        - core/target/surefire-reports/TEST-*.xml
+        - samples/target/surefire-reports/TEST-*.xml
+        - core/target/failsafe-reports/TEST-*.xml
+        - samples/target/failsafe-reports/TEST-*.xml
+    paths:
+        - core/target/surefire-reports/TEST-*.xml
+        - samples/target/surefire-reports/TEST-*.xml
         - samples/target/failsafe-reports/TEST-*.xml
         - core/target/failsafe-reports/TEST-*.xml
-    paths:
-      - samples/target/failsafe-reports/TEST-*.xml
-      - core/target/failsafe-reports/TEST-*.xml
-      - samples/target/plhamoutputtester/*.txt
-      - target/site/*
+        - samples/target/plhamoutputtester/*.txt
+        - target/site/*
     expire_in: 1 week
-

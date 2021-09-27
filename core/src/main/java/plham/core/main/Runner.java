@@ -10,16 +10,16 @@ import plham.core.SimulationOutput;
  */
 public abstract class Runner implements Serializable {
 
-    protected static double HIFREQ_SUBMIT_RATE = System.getenv("HIFREQ_SUBMIT_RATE") != null
-            ? Double.valueOf(System.getenv("HIFREQ_SUBMIT_RATE"))
-            : 1.0d;
+//    protected static double HIFREQ_SUBMIT_RATE = System.getenv("HIFREQ_SUBMIT_RATE") != null
+//            ? Double.valueOf(System.getenv("HIFREQ_SUBMIT_RATE"))
+//            : 1.0d;
 
     private static final long serialVersionUID = 4487185718113921593L;
     public boolean _PROFILE = false;
 
-    transient SimulatorFactory factory;
-    SimulationOutput output;
-    transient Simulator sim;
+    protected transient SimulatorFactory factory;
+    protected SimulationOutput output;
+    protected transient Simulator sim;
 
     public Runner(SimulationOutput out, SimulatorFactory f) {
 //		sim = s;

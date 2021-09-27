@@ -275,6 +275,11 @@ public final class ParallelRunnerMT extends Runner {
     public static final String PARALLEL_RUNNER_THREAD_PROPERTY = "parallelrunnerthreads";
 
     private static final long serialVersionUID = -8642146572725786897L;
+    /**
+     * Property which when set to true will force the use of the pipelined schedule even if there are
+     * no long-term agents in the simulation.  
+     */
+    public static final String FORCE_PIPELINE_SCHEDULE = "plhamj.forcePipeline";
 
     /**
      * Utility method which checks how many threads this runner should run with
@@ -282,14 +287,6 @@ public final class ParallelRunnerMT extends Runner {
      * @return the level of parallelism desired
      */
     private static int initializeNThreads() {
-        // String NTHREADS_ENV = System.getenv("NTHREADS");
-        // if (NTHREADS_ENV != null) {
-        // try {
-        // return Integer.parseInt(NTHREADS_ENV);
-        // } catch (RuntimeException e) {
-        // System.err.println("[Env: NTHREADS] " + NTHREADS_ENV + " is not integer (parse error).");
-        // }
-        // } else {
         return Integer.parseInt(System.getProperty(PARALLEL_RUNNER_THREAD_PROPERTY, DEFAULT_THREAD_COUNT));
     }
 
@@ -309,14 +306,12 @@ public final class ParallelRunnerMT extends Runner {
             System.err.println("\tOutput class (defines the outputs to extract from the simulation)");
             System.err.println("\tJSON configuration file");
             System.err.println("\tseed");
-            System.err.println("\tuse pipeline?");
             System.err.println("\tparallelism level (optional)");
         }
 
         String outputClassName = args[0];
         String JsonConfigurationFile = args[1];
         String seedArg = args[2];
-        String pipelineArg = args[3];
 
         SimulationOutput simulationOutput = null;
 
@@ -353,20 +348,11 @@ public final class ParallelRunnerMT extends Runner {
             return;
         }
         
-        boolean withPipeline;
-        try {
-            withPipeline = Boolean.parseBoolean(pipelineArg);
-        } catch (Exception e) {
-            System.err.println("Problem encountered when attempting to obtain pipeline configuration");
-            e.printStackTrace();
-            return;
-        }
-
         ParallelRunnerMT runner;
 
         try {
-            if (4 < args.length) {
-                runner = new ParallelRunnerMT(simulationOutput, factory, Integer.parseInt(args[4]));
+            if (3 < args.length) { // If more than 3 arguments
+                runner = new ParallelRunnerMT(simulationOutput, factory, Integer.parseInt(args[3]));
             } else {
                 runner = new ParallelRunnerMT(simulationOutput, factory);
             }
@@ -376,7 +362,7 @@ public final class ParallelRunnerMT extends Runner {
             return;
         }
 
-        runner.run(seed, withPipeline);
+        runner.run(seed);
     }
 
     @SuppressWarnings("unchecked")
@@ -467,7 +453,7 @@ public final class ParallelRunnerMT extends Runner {
                 m.tickUpdateMarketPrice();
             }
 
-            if (HIFREQ_SUBMIT_RATE < tmpRandom.nextDouble()) {
+            if (s.highFreqSubmissionRate < tmpRandom.nextDouble()) {
                 continue;
             }
 
@@ -644,17 +630,13 @@ public final class ParallelRunnerMT extends Runner {
 
     @Override
     public void run(long seed) {
-        run(seed, false);
-    }
-
-    @SuppressWarnings("deprecation")
-    public void run(long seed, boolean pipeline) {
         long TIME_INIT = System.nanoTime();
         OutputCollector out = this.out;
 
         LongShortCentric dm = new LongShortCentric();
         sim = factory.makeNewSimulation(seed, true, true, dm);
-
+        pipeline = longTs.size() != 0 || Boolean.parseBoolean(System.getProperty(FORCE_PIPELINE_SCHEDULE, "false"));
+        
         long TIME_THE_BEGINNING = System.nanoTime();
         if (pipeline) {
             this.pipeline = pipeline;

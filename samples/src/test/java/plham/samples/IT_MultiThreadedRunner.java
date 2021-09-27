@@ -36,41 +36,41 @@ public class IT_MultiThreadedRunner extends PlhamOutputTester {
         // in the 2D array below are the configurations for each sample program
         Collection<Object[]> parameters = Arrays.asList(new Object[][] {
                 /* SimulatorOutput, JSON configuration file, SEED, expected output */
-                { "CI2002", CI2002Main.class, "src/test/resources/CI2002/config.json","false", "100",
+                { "CI2002", CI2002Main.class, "src/test/resources/CI2002/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/CI2002.txt" },
-                { "New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json","false", "100",
+                { "New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/CI2002.txt" },
-                { "CancelTest", CI2002Main.class, "src/test/resources/CancelTest/config.json","false", "100",
+                { "CancelTest", CI2002Main.class, "src/test/resources/CancelTest/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/CancelTest.txt" },
-                { "MarketShare", MarketShareMain.class, "src/test/resources/MarketShare/config.json","false", "100",
+                { "MarketShare", MarketShareMain.class, "src/test/resources/MarketShare/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/MarketShare.txt" },
-                { "New MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json","false", "100",
+                { "New MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/MarketShare.txt" },
-                { "FatTail", CI2002Main.class, "src/test/resources/FatTail/config-shortened.json","false", "100",
+                { "FatTail", CI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100",
                         "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt" }, // using the "shortened"
                                                                                            // version of FatTail
-                { "New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json","false", "100",
+                { "New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100",
                         "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt" },
-                { "TradingHalt", TradingHaltMain.class, "src/test/resources/TradingHalt/config.json","false", "100",
+                { "TradingHalt", TradingHaltMain.class, "src/test/resources/TradingHalt/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/TradingHalt.txt" },
-                { "New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json","false", "100",
+                { "New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/TradingHalt.txt" },
-                { "ShockTransfer", ShockTransferMain.class, "src/test/resources/ShockTransfer/config.json","false", "100",
+                { "ShockTransfer", ShockTransferMain.class, "src/test/resources/ShockTransfer/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/ShockTransfer.txt" },
-                { "New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json","false", "100",
+                { "New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/ShockTransfer.txt" },
-                { "PriceLimit", CI2002Main.class, "src/test/resources/PriceLimit/config.json","false", "100",
+                { "PriceLimit", CI2002Main.class, "src/test/resources/PriceLimit/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/PriceLimit.txt" },
-                { "New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json","false", "100",
+                { "New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/PriceLimit.txt" },
-                { "FatFinger", FatFingerMain.class, "src/test/resources/FatFinger/config.json","false", "100",
+                { "FatFinger", FatFingerMain.class, "src/test/resources/FatFinger/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/FatFinger.txt" },
-                { "New FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json","false", "100",
+                { "New FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/FatFinger.txt" },
-                { "New DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json", "false", "100",
+                { "New DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/DarkPool.txt" }
-                        //,
-//                { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "true", "100", "src/test/resources/BlackScholes/expected_output.txt"}
+//                        ,
+//                { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", "src/test/resources/BlackScholes/expected_output.txt"}
         });
 
         // We create 3 configurations per sample,
@@ -99,9 +99,9 @@ public class IT_MultiThreadedRunner extends PlhamOutputTester {
         return toReturn;
     }
 
-    public IT_MultiThreadedRunner(String testName, Class<?> outputClass, String jsonConfig, String pipeline, String seed,
+    public IT_MultiThreadedRunner(String testName, Class<?> outputClass, String jsonConfig, String seed,
             String expectedOutput, String parallelism) {
         super("ParallelRunner_" + testName + "_" + parallelism + "threads", ParallelRunnerMT.class, expectedOutput,
-                outputClass.getCanonicalName(), jsonConfig, seed, pipeline, parallelism);
+                outputClass.getCanonicalName(), jsonConfig, seed, parallelism);
     }
 }

@@ -782,6 +782,7 @@ public class SimulatorFactory {
             }
             s.maxNormalOrders = json.getOrElse("maxNormalOrders", String.valueOf(markets.size())).toLong();
             s.maxHighFreqOrders = json.getOrElse("maxHifreqOrders", "0").toLong();
+            s.highFreqSubmissionRate = json.getOrElse("hifreqSubmitRate", "1.0d").toDouble();
 
             ArrayList<String> eventNames = new ArrayList<>();
             if (json.has("events")) {

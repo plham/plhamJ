@@ -109,7 +109,7 @@ public class SequentialRunner extends Runner implements Serializable {
         return allOrders;
     }
 
-    public List<List<Order>> handleOrders(List<List<Order>> localOrders, long MAX_HIFREQ_ORDERS) {
+    public List<List<Order>> handleOrders(Session s, List<List<Order>> localOrders, long MAX_HIFREQ_ORDERS) {
         long beginTime = System.nanoTime();
         List<List<Order>> allOrders = new ArrayList<>();
         List<Market> markets = sim.markets;
@@ -132,7 +132,7 @@ public class SequentialRunner extends Runner implements Serializable {
                 m.tickUpdateMarketPrice();
             }
 
-            if (HIFREQ_SUBMIT_RATE < tmpRandom.nextDouble()) {
+            if (s.highFreqSubmissionRate < tmpRandom.nextDouble()) {
                 continue;
             }
 
@@ -259,6 +259,6 @@ public class SequentialRunner extends Runner implements Serializable {
 
     public List<List<Order>> updateMarkets(long maxNormalOrders, long maxHifreqOrders, Session s, OutputCollector out) {
         List<List<Order>> orders = collectOrders(maxNormalOrders, s, out);
-        return handleOrders(orders, maxHifreqOrders);
+        return handleOrders(s, orders, maxHifreqOrders);
     }
 }
