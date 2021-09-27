@@ -31,8 +31,8 @@ public class Simulator {
         public String sessionName;
         public boolean withOrderExecution;
         public boolean withOrderPlacement;
-
-        boolean withPrint;
+        public boolean withPrint;
+        public double highFreqSubmissionRate;
 
         void print() {
             System.out.println("# SESSION: " + sessionName);
@@ -54,7 +54,7 @@ public class Simulator {
 
     public ChunkedList<Agent> agents;
     // Allocation manager for the Agents
-    AgentAllocManager dm;
+    public AgentAllocManager dm;
     public Fundamentals fundamentals;
     public ChunkedList<Agent> hifreqAgents;
 

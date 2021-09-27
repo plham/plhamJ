@@ -1,5 +1,6 @@
 package plham.samples.DistParallel;
 
+import handist.collections.dist.TeamedPlaceGroup;
 import plham.core.main.ParallelRunnerDist;
 import plham.core.main.SimulatorFactory;
 import plham.core.util.Random;
@@ -18,7 +19,7 @@ public class DistParallelMain {
             seed = new Random().nextLong(Long.MAX_VALUE / 2); // MEMO: main()
         }
         System.err.println("# Running with seed: " + seed);
-        final ParallelRunnerDist runner = new ParallelRunnerDist(sim, factory);
-        runner.run(seed);
+        final ParallelRunnerDist runner = ParallelRunnerDist.initializeRunner(seed, sim, factory, TeamedPlaceGroup.getWorld()); 
+        runner.run();
     }
 }

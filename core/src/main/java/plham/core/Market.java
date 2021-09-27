@@ -332,7 +332,7 @@ public class Market implements Serializable {
 
     protected void executeAgentUpdate(ChunkedList<Agent> agents, AgentUpdate update) {
         long id = update.agentId;
-        Agent agent = agents.get((int) id);
+        Agent agent = agents.get(id);
         if (agent != null) {
             agent.executeUpdate(update);
         }

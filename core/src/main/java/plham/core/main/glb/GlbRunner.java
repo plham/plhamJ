@@ -1,4 +1,4 @@
-package plham.core.main;
+package plham.core.main.glb;
 
 import static apgas.Constructs.*;
 
@@ -36,11 +36,13 @@ import plham.core.SimulationOutput.SimulationStage;
 import plham.core.Order;
 import plham.core.OutputCollector;
 import plham.core.SimulationOutput;
+import plham.core.main.Simulator;
 import plham.core.main.Simulator.Session;
+import plham.core.main.SimulatorFactory;
 import plham.core.util.AgentAllocManager;
 import plham.core.util.Random;
 
-public class ParallelRunnerDist extends PlaceLocalObject {
+public class GlbRunner extends PlaceLocalObject {
 
     /**
      * This class is used for compatibility with sequential version of Market. As the markets assumes agents in the same
@@ -67,9 +69,9 @@ public class ParallelRunnerDist extends PlaceLocalObject {
      * Class in charge of collecting the distributed entries during the various phases during which
      * an user defined output is made.  
      * @author Patrick Finnerty
-     * @see ParallelRunnerDist#makeSimulationOutput(SimulationStage)
-     * @see ParallelRunnerDist#makeSessionOutput(Session, SimulationStage)
-     * @see ParallelRunnerDist#makeWithPrintOutput(Session, SimulationStage)
+     * @see GlbRunner#makeSimulationOutput(SimulationStage)
+     * @see GlbRunner#makeSessionOutput(Session, SimulationStage)
+     * @see GlbRunner#makeWithPrintOutput(Session, SimulationStage)
      */
     private class DistributedOutputCollector implements OutputCollector, Serializable {
         private static final long serialVersionUID = 5777744274622700033L;
@@ -343,7 +345,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
      * @param pg place group on which the simulation will be run
      * @return runner instance ready to launch the computation
      */
-    public static ParallelRunnerDist initializeRunner(long seed, SimulationOutput simulationOutput, SimulatorFactory f, TeamedPlaceGroup pg) {
+    public static GlbRunner initializeRunner(long seed, SimulationOutput simulationOutput, SimulatorFactory f, TeamedPlaceGroup pg) {
         Place root = here(); // Root is going to be the place where high-frequency agents are located
 
         // We create every distributed collections first
@@ -369,8 +371,8 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         // distributed collections given as parameter. 
         // We also initialize the various Agents on each place as
         // necessary. 
-        ParallelRunnerDist toReturn = PlaceLocalObject.make(pg.places(), () -> {
-            ParallelRunnerDist localRunner = new ParallelRunnerDist(root, pg, simulationOutput, config, seed, 
+        GlbRunner toReturn = PlaceLocalObject.make(pg.places(), () -> {
+            GlbRunner localRunner = new GlbRunner(root, pg, simulationOutput, config, seed, 
                     contractedOrdersCol, allAgentsCol, lAgentsCol, sAgentsCol, 
                     lOrdersCol, sOrdersCol, marketsCol, outputCollectorMap);
 
@@ -444,7 +446,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
 
         // Create the simulator
         long TIME_INIT = System.nanoTime();
-        ParallelRunnerDist runnerOnWorld = ParallelRunnerDist.initializeRunner(seed, simulationOutput, factory, TeamedPlaceGroup.getWorld());
+        GlbRunner runnerOnWorld = GlbRunner.initializeRunner(seed, simulationOutput, factory, TeamedPlaceGroup.getWorld());
         TIME_INIT = System.nanoTime() - TIME_INIT;
         System.err.println("# initialization time " + TIME_INIT);
 
@@ -504,7 +506,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
     /** Simulator providing local access methods to other objects on local host*/
     transient Simulator sim;
 
-    private ParallelRunnerDist(Place r, TeamedPlaceGroup pg, SimulationOutput simulationOutput, Value config, long s, DistMultiMap<Long, AgentUpdate> contractedOrdersCol, 
+    private GlbRunner(Place r, TeamedPlaceGroup pg, SimulationOutput simulationOutput, Value config, long s, DistMultiMap<Long, AgentUpdate> contractedOrdersCol, 
             DistCol<Agent> allAgentsCol, DistCol<Agent> lAgentsCol, DistCol<Agent> sAgentsCol, 
             DistBag<List<Order>> lOrdersCol, DistBag<List<Order>> sOrdersCol, 
             CachableArray<Market> marketsCol, DistMap<String, List<String>> outputCollectorMap) throws Exception {
