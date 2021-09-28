@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import handist.collections.Bag;
 import handist.collections.Chunk;
@@ -23,6 +24,7 @@ import handist.collections.dist.DistCol;
 import handist.collections.dist.DistMap;
 import handist.collections.dist.DistMultiMap;
 import handist.collections.dist.TeamedPlaceGroup;
+import static handist.collections.glb.GlobalLoadBalancer.underGLB;
 import apgas.Place;
 import apgas.util.PlaceLocalObject;
 import cassia.util.JSON.Value;
@@ -124,7 +126,7 @@ public class GlbRunner extends PlaceLocalObject {
             map.delete(key);
             return toReturn;
         }
-        
+
         /**
          * Relocates all logged entries onto the master of the simulation so that the
          * {@link SimulationOutput#postProcess(OutputCollector, SimulationStage)} can
@@ -200,6 +202,7 @@ public class GlbRunner extends PlaceLocalObject {
                         Chunk<Agent> chunk = new Chunk<>(range);
                         arbitrageurs.add(chunk);
                         allAgents.add(chunk);
+                        System.err.println("# HFT CHUNK ADDED: " + chunk.getRange());
                         return chunk;
                     } else {
                         return RangedListView.emptyView();
@@ -219,8 +222,10 @@ public class GlbRunner extends PlaceLocalObject {
                         allAgents.add(chunk);
                         if (classType.startsWith("short")) {
                             sAgents.add(chunk);
+                            System.err.println("# SHORT-TERM CHUNK ADDED " + here() + ": " + chunk.getRange());
                         } else if (classType.startsWith("long")) {
                             lAgents.add(chunk);
+                            System.err.println("# LONG-TERM CHUNK ADDED " + here() + ": " + chunk.getRange());
                         } else {
                             throw new IllegalArgumentException("Unknown schedule option:" + classType);
                         }
@@ -297,7 +302,7 @@ public class GlbRunner extends PlaceLocalObject {
             return true;
         }
     }
-    
+
     /**
      * Randomized order used to sort the Orders received on master
      */
@@ -353,6 +358,9 @@ public class GlbRunner extends PlaceLocalObject {
         DistCol<Agent> allAgentsCol = new DistCol<>(pg);
         DistCol<Agent> lAgentsCol = new DistCol<>(pg);
         DistCol<Agent> sAgentsCol = new DistCol<>(pg);
+        // TODO define extra property to switch lifeline used
+        lAgentsCol.GLB.setLifeline(PlhamLifeline.class);
+        sAgentsCol.GLB.setLifeline(PlhamLifeline.class);
         DistBag<List<Order>> lOrdersCol = new DistBag<>(pg);
         DistBag<List<Order>> sOrdersCol = new DistBag<>(pg);
         DistMap<String, List<String>> outputCollectorMap = new DistMap<>(pg);
@@ -453,7 +461,7 @@ public class GlbRunner extends PlaceLocalObject {
         // Run simulation
         runnerOnWorld.run();
     }
-    
+
     /**************************************************************************
      * Members related to the simulation participants                         *
      *************************************************************************/
@@ -480,7 +488,7 @@ public class GlbRunner extends PlaceLocalObject {
     final CachableArray<Market> markets;
     /** Class specifying the outputs to make during the simulation*/
     final transient SimulationOutput output;
-    
+
     /**************************************************************************
      * Members related to runtime                                             *
      *************************************************************************/
@@ -579,6 +587,21 @@ public class GlbRunner extends PlaceLocalObject {
             }
         });
     }
+    
+    /**
+     * Calls for the update of all short-term agents on this local host
+     */
+    private void executeShortTermAgentUpdate() {
+        contractedOrders.parallelForEach((idx, updates) -> {
+            // Retrieve the Agent from either sAgents or lAgents
+            Agent a = sAgents.get(idx);
+
+            // Execute all the updates for this Agent one by one
+            for (AgentUpdate u : updates) {
+                a.executeUpdate(u);
+            }
+        });
+    }
 
     private void handleOrders(Session session) {
         long beginTime = System.nanoTime();
@@ -648,54 +671,67 @@ public class GlbRunner extends PlaceLocalObject {
             throw new RuntimeException("Was about to start a session without order placement, this should not happen");
         }
 
-        if (isMaster) {
-            marketSetup(session.withOrderExecution);
-        }
+        marketSetup(session.withOrderExecution);
 
         for (long id = 0; id < session.iterationSteps; id ++) {
-            final long idc = id; // final for use inside lambda expression
+            // final long idc = id; // final for use inside lambda expression
+            iterSetup();
 
-            if (isMaster) {
-                iterSetup();
-            }
-            markets.<MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack);
+            placeGroup.broadcastFlat(()->{
+                markets.<MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack);
+            });
 
             // Submit short-term agent orders and gather them on root
-            sOrders.clear();
-            submitOrders(idc, sAgents, sOrders, session);
-            try {
-                sOrders.TEAM.gather(master);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException("[GlbRunner] relocating contracted orders of long-term agents failed", e);
-            }
+            //            sOrders.clear();
+            // submitOrders(idc, sAgents, sOrders, session);
+            underGLB(()->{
+                sAgents.GLB.toBag((Agent agent,Consumer<List<Order>> orderCollector)->{
+                    List<Order> orders = agent.submitOrders(markets);
+                    if (session.withPrint) {
+                        output.orderSubmissionOutput(collector, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
+                    }
+                    if (orders != null && !orders.isEmpty()) {
+                        orderCollector.accept(orders);
+                    }
+                }, sOrders); 
+            });
 
-            if (isMaster) {
-                addOrders(sOrders);
-                handleOrders(session);
-                updateMarketMisc(session);
-            }
+            placeGroup.broadcastFlat(()->{
+                try {
+                    sOrders.TEAM.gather(master);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("[GlbRunner] relocating contracted orders of long-term agents failed", e);
+                }
+                // Update distribution of sAgents after the GLB part completed
+                sAgents.updateDist();
 
-            if (session.withPrint) {
-                makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
-            }
 
-            if (isMaster) postStepMarketUpdate();
+                if (isMaster) {
+                    addOrders(sOrders);
+                    handleOrders(session);
+                    updateMarketMisc(session);
+                }
 
-            for (Market market: markets) {
-                market.updateTime();
-            }   
+                if (session.withPrint) {
+                    makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
+                }
 
-            try {
-                contractedOrders.relocate(allAgents.getDistributionLong());
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException("Problem encountered when transmitting contracted orders to remote agents", e);
-            }
+                if (isMaster) postStepMarketUpdate();
 
-            if (!isMaster) {
-                executeRemoteAgentUpdate();
-            }
+                for (Market market: markets) {
+                    market.updateTime();
+                }   
+
+                try {
+                    contractedOrders.relocate(sAgents.getDistributionLong()); // not allAgents, as only sAgents are used in this schedule
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Problem encountered when transmitting contracted orders to remote agents", e);
+                }
+
+                executeShortTermAgentUpdate();
+            });
         }
         if (isMaster && session.withPrint) {
             makeWithPrintOutput(session, SimulationStage.WITH_PRINT_END_SESSION);
@@ -708,13 +744,13 @@ public class GlbRunner extends PlaceLocalObject {
             throw new RuntimeException("Was about to start a session without order placement, this should not happen");
         }
 
-        if (isMaster) {
-            marketSetup(session.withOrderExecution);
-            iterSetup();
-        }
-        // Broadcast the updated state of the market on every host
-        markets.<Market.MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack);
+        marketSetup(session.withOrderExecution);
+        iterSetup();
 
+        // Broadcast the updated state of the market on every host
+        placeGroup.broadcastFlat(()->{
+            markets.<Market.MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack);
+        });
         // Run every iteration required by the session
         for (long id = 0; id < session.iterationSteps; id++) {
             final long idc = id; // Final long for use in closures 
@@ -869,7 +905,7 @@ public class GlbRunner extends PlaceLocalObject {
         outputAgent(stage);
 
         collector.transferLogsToMaster();
-        
+
         if (isMaster) output.postProcess(collector, stage);
         // Remove all collected entries before next output
         collector.clear();
@@ -986,23 +1022,23 @@ public class GlbRunner extends PlaceLocalObject {
         long simulationStart = System.nanoTime();
         placeGroup.broadcastFlat(()->{
             makeSimulationOutput(SimulationStage.BEGIN_SIMULATION);
-
-            for (Session session : sim.sessions) {
-                if (isMaster) {
-                    sim.sessionEvents = factory.createEventsForASession(session, sim);
-                }
+        });
+        for (Session session : sim.sessions) {
+            sim.sessionEvents = factory.createEventsForASession(session, sim);
+            placeGroup.broadcastFlat(()->{    
                 makeSessionOutput(session, SimulationStage.BEGIN_SESSION);
-
-                // placeGroup.barrier(); // This barrier was used when timing the simulator
-                if (usePipeline) {
-                    iterateMarketUpdatesPipeline(session);
-                } else {
-                    iterateMarketUpdatesNoPipeline(session);
-                }
-
-                makeSessionOutput(session, SimulationStage.END_SESSION);
+            });
+            // placeGroup.barrier(); // This barrier was used when timing the simulator
+            if (usePipeline) {
+                iterateMarketUpdatesPipeline(session);
+            } else {
+                iterateMarketUpdatesNoPipeline(session);
             }
-
+            placeGroup.broadcastFlat(()->{
+                makeSessionOutput(session, SimulationStage.END_SESSION);
+            });
+        }
+        placeGroup.broadcastFlat(()->{
             makeSimulationOutput(SimulationStage.END_SIMULATION);
         });
         long simulationStop = System.nanoTime();

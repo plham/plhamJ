@@ -6,7 +6,6 @@ import java.util.Collection;
 
 import org.junit.After;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -24,7 +23,6 @@ import plham.samples.MarketShare.NewMarketShare;
 import plham.samples.ShockTransfer.NewShockTransfer;
 import plham.samples.TradingHalt.NewTradingHalt;
 
-@Ignore
 @ParameterizedMpiConfig(ranks = 4, launcher = DistributedParameterizedTestLauncher.class, timeout = 90l)
 @RunWith(ParameterizedMpi.class)
 public class IT_GlbRunner extends PlhamOutputTester {
@@ -50,9 +48,9 @@ public class IT_GlbRunner extends PlhamOutputTester {
             { "New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100",
             "src/test/resources/MultithreadedOutputs/PriceLimit.txt" },
             { "FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100",
-            "src/test/resources/MultithreadedOutputs/FatFinger.txt" },
-            { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", "src/test/resources/BlackScholes/expected_output.txt"},
-            { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"}
+            "src/test/resources/MultithreadedOutputs/FatFinger.txt" }//,
+//            { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", "src/test/resources/BlackScholes/expected_output.txt"},
+//            { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"}
         });
         return parameters;
     }
