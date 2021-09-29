@@ -24,6 +24,8 @@ import handist.collections.dist.DistCol;
 import handist.collections.dist.DistMap;
 import handist.collections.dist.DistMultiMap;
 import handist.collections.dist.TeamedPlaceGroup;
+import handist.collections.glb.lifeline.Lifeline;
+
 import static handist.collections.glb.GlobalLoadBalancer.underGLB;
 import apgas.Place;
 import apgas.util.PlaceLocalObject;
@@ -341,6 +343,15 @@ public class GlbRunner extends PlaceLocalObject {
      * no long-term agents in the simulation.  
      */
     public static final String FORCE_PIPELINE_SCHEDULE = "plhamj.forcePipeline";
+    
+    /**
+     * Property which allows to choose the lifeline strategy used to relocate agents between hosts
+     */
+    public static final String LIFELINE_CLASS = "plhamj.lifeline";
+    /**
+     * Default value for {@link #LIFELINE_CLASS} property
+     */
+    public static final String LIFELINE_CLASS_DEFAULT = PlhamLifeline.class.getCanonicalName();
 
     /**
      * Factory method to prepare a simulation
@@ -350,6 +361,7 @@ public class GlbRunner extends PlaceLocalObject {
      * @param pg place group on which the simulation will be run
      * @return runner instance ready to launch the computation
      */
+    @SuppressWarnings("unchecked")
     public static GlbRunner initializeRunner(long seed, SimulationOutput simulationOutput, SimulatorFactory f, TeamedPlaceGroup pg) {
         Place root = here(); // Root is going to be the place where high-frequency agents are located
 
@@ -358,9 +370,23 @@ public class GlbRunner extends PlaceLocalObject {
         DistCol<Agent> allAgentsCol = new DistCol<>(pg);
         DistCol<Agent> lAgentsCol = new DistCol<>(pg);
         DistCol<Agent> sAgentsCol = new DistCol<>(pg);
-        // TODO define extra property to switch lifeline used
-        lAgentsCol.GLB.setLifeline(PlhamLifeline.class);
-        sAgentsCol.GLB.setLifeline(PlhamLifeline.class);
+
+        String lifelineName = System.getProperty(LIFELINE_CLASS, LIFELINE_CLASS_DEFAULT);
+        Class<? extends Lifeline> lifelineClass = null;
+        try {
+            lifelineClass = (Class<? extends Lifeline>) Class.forName(lifelineName);
+        } catch (Exception e) {
+            System.err.println("Could not find class " + lifelineName);
+            e.printStackTrace();
+            System.err.println("Using " + LIFELINE_CLASS_DEFAULT + " instead");
+            try {
+                lifelineClass = (Class<? extends Lifeline>) Class.forName(LIFELINE_CLASS_DEFAULT);
+            } catch (ClassNotFoundException e1) {
+                e1.printStackTrace();
+            }
+        }
+        lAgentsCol.GLB.setLifeline(lifelineClass);
+        sAgentsCol.GLB.setLifeline(lifelineClass);
         DistBag<List<Order>> lOrdersCol = new DistBag<>(pg);
         DistBag<List<Order>> sOrdersCol = new DistBag<>(pg);
         DistMap<String, List<String>> outputCollectorMap = new DistMap<>(pg);
