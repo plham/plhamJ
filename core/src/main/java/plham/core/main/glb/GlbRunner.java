@@ -2,6 +2,7 @@ package plham.core.main.glb;
 
 import static apgas.Constructs.*;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,10 +22,12 @@ import handist.collections.dist.CachableArray;
 import handist.collections.dist.DistBag;
 import handist.collections.dist.DistChunkedList;
 import handist.collections.dist.DistCol;
+import handist.collections.dist.DistLog;
 import handist.collections.dist.DistMap;
 import handist.collections.dist.DistMultiMap;
 import handist.collections.dist.TeamedPlaceGroup;
 import handist.collections.glb.lifeline.Lifeline;
+import handist.collections.glb.util.GlbLog;
 
 import static handist.collections.glb.GlobalLoadBalancer.underGLB;
 import apgas.Place;
@@ -354,6 +357,13 @@ public class GlbRunner extends PlaceLocalObject {
     public static final String LIFELINE_CLASS_DEFAULT = PlhamLifeline.class.getCanonicalName();
 
     /**
+     * Property which can be used to specify a file to which the logged events will be written
+     * after the computation has completed (i.e. -D{@value #SAVE_LOG_TO_FILE}=<file name>). 
+     * Leave undefined to discard the data logged during the {@link GlbRunner} execution.
+     */
+    public static final String SAVE_LOG_TO_FILE = "glbrunner.logfile";
+
+    /**
      * Factory method to prepare a simulation
      * @param seed the seed used to launch the simulation
      * @param simulationOutput the output to be extracted from the simulation
@@ -370,6 +380,7 @@ public class GlbRunner extends PlaceLocalObject {
         DistCol<Agent> allAgentsCol = new DistCol<>(pg);
         DistCol<Agent> lAgentsCol = new DistCol<>(pg);
         DistCol<Agent> sAgentsCol = new DistCol<>(pg);
+        DistLog log = new DistLog(pg);
 
         String lifelineName = System.getProperty(LIFELINE_CLASS, LIFELINE_CLASS_DEFAULT);
         Class<? extends Lifeline> lifelineClass = null;
@@ -408,7 +419,7 @@ public class GlbRunner extends PlaceLocalObject {
         GlbRunner toReturn = PlaceLocalObject.make(pg.places(), () -> {
             GlbRunner localRunner = new GlbRunner(root, pg, simulationOutput, config, seed, 
                     contractedOrdersCol, allAgentsCol, lAgentsCol, sAgentsCol, 
-                    lOrdersCol, sOrdersCol, marketsCol, outputCollectorMap);
+                    lOrdersCol, sOrdersCol, marketsCol, outputCollectorMap, log);
 
             // Create all agents
             localRunner.createAllAgents();
@@ -486,6 +497,16 @@ public class GlbRunner extends PlaceLocalObject {
 
         // Run simulation
         runnerOnWorld.run();
+        
+        // Post simulation, write the logged data to a file if specified
+        if (System.getProperties().contains(SAVE_LOG_TO_FILE)) {
+            try {
+                new GlbLog(runnerOnWorld.logger).saveToFile(new File(System.getProperty(SAVE_LOG_TO_FILE)));
+            } catch (Exception e) {
+                System.err.println("# Problem encountered while saving distributed log to file");
+                e.printStackTrace();
+            }
+        }
     }
 
     /**************************************************************************
@@ -520,6 +541,8 @@ public class GlbRunner extends PlaceLocalObject {
      *************************************************************************/
     /** Flag used to toggle the performance tracking parts of the runner */
     public boolean _PROFILE = false;
+    /** Local handle of the distributed logging system */
+    final DistLog logger;
     /** Group of processes on which the simulation is running */
     final transient TeamedPlaceGroup placeGroup;
     /** "Root" of the simulation, where high-frequency traders are located and orders processed */
@@ -543,7 +566,7 @@ public class GlbRunner extends PlaceLocalObject {
     private GlbRunner(Place r, TeamedPlaceGroup pg, SimulationOutput simulationOutput, Value config, long s, DistMultiMap<Long, AgentUpdate> contractedOrdersCol, 
             DistCol<Agent> allAgentsCol, DistCol<Agent> lAgentsCol, DistCol<Agent> sAgentsCol, 
             DistBag<List<Order>> lOrdersCol, DistBag<List<Order>> sOrdersCol, 
-            CachableArray<Market> marketsCol, DistMap<String, List<String>> outputCollectorMap) throws Exception {
+            CachableArray<Market> marketsCol, DistMap<String, List<String>> outputCollectorMap, DistLog log) throws Exception {
         contractedOrders = contractedOrdersCol;
         allAgents = allAgentsCol;
         lAgents = lAgentsCol;
@@ -555,6 +578,7 @@ public class GlbRunner extends PlaceLocalObject {
         markets = marketsCol;
         placeGroup = pg;
         seed = s;
+        logger = log;
 
         collector = new DistributedOutputCollector(outputCollectorMap);
         isMaster = here() == master;
@@ -710,7 +734,7 @@ public class GlbRunner extends PlaceLocalObject {
             // Submit short-term agent orders and gather them on root
             //            sOrders.clear();
             // submitOrders(idc, sAgents, sOrders, session);
-            underGLB(()->{
+            underGLB(logger, ()->{
                 sAgents.GLB.toBag((Agent agent,Consumer<List<Order>> orderCollector)->{
                     List<Order> orders = agent.submitOrders(markets);
                     if (session.withPrint) {
