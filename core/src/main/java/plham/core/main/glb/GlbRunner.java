@@ -26,6 +26,9 @@ import handist.collections.dist.DistLog;
 import handist.collections.dist.DistMap;
 import handist.collections.dist.DistMultiMap;
 import handist.collections.dist.TeamedPlaceGroup;
+import handist.collections.function.SerializableBiConsumer;
+import handist.collections.glb.DistFuture;
+import handist.collections.glb.GlobalLoadBalancer;
 import handist.collections.glb.lifeline.Lifeline;
 import handist.collections.glb.util.GlbLog;
 
@@ -346,7 +349,7 @@ public class GlbRunner extends PlaceLocalObject {
      * no long-term agents in the simulation.  
      */
     public static final String FORCE_PIPELINE_SCHEDULE = "plhamj.forcePipeline";
-    
+
     /**
      * Property which allows to choose the lifeline strategy used to relocate agents between hosts
      */
@@ -493,11 +496,11 @@ public class GlbRunner extends PlaceLocalObject {
         long TIME_INIT = System.nanoTime();
         GlbRunner runnerOnWorld = GlbRunner.initializeRunner(seed, simulationOutput, factory, TeamedPlaceGroup.getWorld());
         TIME_INIT = System.nanoTime() - TIME_INIT;
-        System.err.println("# initialization time " + TIME_INIT);
+        System.err.println("# INIT TIME (s) " + TIME_INIT/1e9);
 
         // Run simulation
         runnerOnWorld.run();
-        
+
         // Post simulation, write the logged data to a file if specified
         if (System.getProperties().contains(SAVE_LOG_TO_FILE)) {
             try {
@@ -547,8 +550,8 @@ public class GlbRunner extends PlaceLocalObject {
     final transient TeamedPlaceGroup placeGroup;
     /** "Root" of the simulation, where high-frequency traders are located and orders processed */
     final transient Place master;
-    /** Level of parallelism available / to use on the local host */
-    private final int PARALLELISM;
+    //    /** Level of parallelism available / to use on the local host */
+    //    private final int PARALLELISM;
     /** Seed used to run the simulation */
     final long seed;
     /** Initial allocation of agents over the hosts, not initialized as part of the constructor */
@@ -588,7 +591,7 @@ public class GlbRunner extends PlaceLocalObject {
             keptOrders = null;
         }
 
-        PARALLELISM = Runtime.getRuntime().availableProcessors();
+        //        PARALLELISM = Runtime.getRuntime().availableProcessors();
 
         factory = new SimulatorFactory(config);
         agentAllocationManager = new GlbAllocManager(pg, master, allAgentsCol, sAgentsCol, lAgentsCol);
@@ -620,24 +623,24 @@ public class GlbRunner extends PlaceLocalObject {
         factory.createAllAgents(agentConfigList, agentAllocationManager);
     }
 
-    /**
-     * Routine used to update the long-term and/or short-term agents held locally which have
-     * made a trade. The information that a trade was made is contained in the 
-     * {@link #contractedOrders} member, with the index at which the updates are stored 
-     * corresponding to the agent to which the update needs to be delivered.
-     */
-    private void executeRemoteAgentUpdate() {
-        contractedOrders.parallelForEach((idx, updates) -> {
-            // Retrieve the Agent from either sAgents or lAgents
-            Agent a = allAgents.get(idx);
+    //    /**
+    //     * Routine used to update the long-term and/or short-term agents held locally which have
+    //     * made a trade. The information that a trade was made is contained in the 
+    //     * {@link #contractedOrders} member, with the index at which the updates are stored 
+    //     * corresponding to the agent to which the update needs to be delivered.
+    //     */
+    //    private void executeRemoteAgentUpdate() {
+    //        contractedOrders.parallelForEach((idx, updates) -> {
+    //            // Retrieve the Agent from either sAgents or lAgents
+    //            Agent a = allAgents.get(idx);
+    //
+    //            // Execute all the updates for this Agent one by one
+    //            for (AgentUpdate u : updates) {
+    //                a.executeUpdate(u);
+    //            }
+    //        });
+    //    }
 
-            // Execute all the updates for this Agent one by one
-            for (AgentUpdate u : updates) {
-                a.executeUpdate(u);
-            }
-        });
-    }
-    
     /**
      * Calls for the update of all short-term agents on this local host
      */
@@ -732,19 +735,16 @@ public class GlbRunner extends PlaceLocalObject {
             });
 
             // Submit short-term agent orders and gather them on root
-            //            sOrders.clear();
-            // submitOrders(idc, sAgents, sOrders, session);
-            underGLB(logger, ()->{
-                sAgents.GLB.toBag((Agent agent,Consumer<List<Order>> orderCollector)->{
-                    List<Order> orders = agent.submitOrders(markets);
-                    if (session.withPrint) {
-                        output.orderSubmissionOutput(collector, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
-                    }
-                    if (orders != null && !orders.isEmpty()) {
-                        orderCollector.accept(orders);
-                    }
-                }, sOrders); 
-            });
+            sAgents.GLB.toBag((Agent agent,Consumer<List<Order>> orderCollector)->{
+                List<Order> orders = agent.submitOrders(markets);
+                if (session.withPrint) {
+                    output.orderSubmissionOutput(collector, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
+                }
+                if (orders != null && !orders.isEmpty()) {
+                    orderCollector.accept(orders);
+                }
+            }, sOrders).result(); // blocking call 
+
 
             placeGroup.broadcastFlat(()->{
                 try {
@@ -797,6 +797,20 @@ public class GlbRunner extends PlaceLocalObject {
         marketSetup(session.withOrderExecution);
         iterSetup();
 
+        /** 
+         * Action performed by sAgents and lAgents under GLB. 
+         * Kept as final variable to reduce code size
+         */
+        final SerializableBiConsumer<Agent, Consumer<List<Order>>> orderSubmissionAction = (agent, orderCollector)->{
+            List<Order> orders = agent.submitOrders(markets);
+            if (session.withPrint) {
+                output.orderSubmissionOutput(collector, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
+            }
+            if (orders != null && !orders.isEmpty()) {
+                orderCollector.accept(orders);
+            }
+        };
+
         // Broadcast the updated state of the market on every host
         placeGroup.broadcastFlat(()->{
             markets.<Market.MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack);
@@ -804,15 +818,19 @@ public class GlbRunner extends PlaceLocalObject {
         // Run every iteration required by the session
         for (long id = 0; id < session.iterationSteps; id++) {
             final long idc = id; // Final long for use in closures 
+            System.err.println("Iteration " + idc + " starting");
 
             // PART 1: Compute short-term agents orders,
             //         Relocate long-term orders to Place 0 (if not 1st iteration)
             sOrders.clear(); // Prepare bag to receive the orders from short-term agents
-            finish(() -> {
-                async(()-> submitOrders(idc, sAgents, sOrders, session));
 
-                // If not the 1st iteration of the session ...
-                if (idc > 0) {
+            DistFuture<DistBag<List<Order>>> sAgentFuture = sAgents.GLB.toBag(orderSubmissionAction, sOrders);
+            GlobalLoadBalancer.start(); // Launch the GLB computations asynchronously
+            // In parallel, proceed with a number of relocations
+            if (idc > 0) {
+                placeGroup.broadcastFlat(()->{
+                    // If not the 1st iteration of the session ...
+
                     // ... relocate contracted orders for update  ...
                     try {
                         contractedOrders.relocate(allAgents.getDistributionLong());
@@ -826,92 +844,111 @@ public class GlbRunner extends PlaceLocalObject {
                     if (isMaster) {
                         addOrders(lOrders);
                     }
-                }
-            });
 
-            // If not on master, execute the contracted orders' update
-            if (!isMaster) {
-                executeRemoteAgentUpdate();
+                });
             }
 
-            // Part 2: Compute long-term agents orders,
-            //         Relocate short-term orders to Place 0
-            finish(()-> {
-                if (!isMaster) {
-                    async(()-> submitOrders(idc, lAgents, lOrders, session));
-                }
+            // Block until short-term orders complete execution
+            sAgentFuture.result();
 
+            // Execute the contracted orders' update
+            //            executeRemoteAgentUpdate(); FIXME
+
+            System.err.println("Iteration " + idc + " part 1 complete");
+
+            // Part 2: Compute long-term agents orders,
+            //  Overlapping:
+            //         Relocate short-term orders to Place 0
+            //         Handle the orders
+            DistFuture<DistBag<List<Order>>> lAgentFuture = lAgents.GLB.toBag(orderSubmissionAction, lOrders);
+            GlobalLoadBalancer.start();
+
+            placeGroup.broadcastFlat(()->{
                 try {
                     sOrders.TEAM.gather(master);
                 } catch (Exception e) {
                     e.printStackTrace();
                     throw new RuntimeException("[GlbRunner] relocation contracted orders of short-term agents", e);
                 }
+            });
 
-                if (isMaster) {
-                    addOrders(sOrders);
-                    handleOrders(session);
-                    if (idc + 1 < session.iterationSteps) {
-                        // Misc. updates to perform
-                        updateMarketMisc(session);
-                    }
-                }
-            }); // long-term agents have placed their orders in the lOrders distributed bag
+            System.err.println("Iteration " + idc + " part 2 sOrders relocation complete");
+
+            addOrders(sOrders);
+            handleOrders(session);
+            if (idc + 1 < session.iterationSteps) {
+                // Misc. updates to perform
+                updateMarketMisc(session);
+            }
 
             // Output during session (except if last iteration of the session)
             if (idc + 1 < session.iterationSteps && session.withPrint) {
                 makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
             }
 
-            if (isMaster) {
-                postStepMarketUpdate();
-                if (idc + 1 < session.iterationSteps) {
-                    for (Market m : markets) {
-                        m.updateTime();
-                    }
-                    iterSetup();
+            postStepMarketUpdate();
+            if (idc + 1 < session.iterationSteps) {
+                for (Market m : markets) {
+                    m.updateTime();
                 }
+                iterSetup();
             }
-            markets.<Market.MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack);
+            lAgentFuture.result(); // Block until long-term agent submission has completed
+            System.err.println("Iteration " + idc + " part 2 lOrders Computed");
+
+            placeGroup.broadcastFlat(()-> markets.<Market.MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack)); // FIXME necessary?
+
         } // End of the for loop over session iteration
 
         // Part 1 bis
         // Extra block to handle the long-term orders generated in part 2 of the last iteration of the for loop
         { 
-            lOrders.TEAM.gather(master);
-            if (isMaster) {
-                addOrders(lOrders);
-                handleOrders(session);
-                updateMarketMisc(session);
-            }
+            placeGroup.broadcastFlat(()-> {
+                lOrders.TEAM.gather(master);
+                if (isMaster) {
+                    addOrders(lOrders);
+                    handleOrders(session);
+                    updateMarketMisc(session);
+                }
+                try {
+                    contractedOrders.relocate(allAgents.getDistributionLong());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("[GlbRunner] relocating contracted orders failed" ,e);
+                }
 
-            try {
-                contractedOrders.relocate(allAgents.getDistributionLong());
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException("[GlbRunner] relocating contracted orders failed" ,e);
-            }
-            if (isMaster) {
+
+                //                executeRemoteAgentUpdate(); FIXME
                 if (session.withPrint) {
                     makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
                 }
-                postStepMarketUpdate();
-            } else {
-                // TODO 27th September 2021 
-                // Should the output call be made BEFORE or AFTER the agents receive their 
-                // update? Left as "AFTER" for now, might be revisited later.
-                // This does not matter if the the SimulationOutput#agentOutput method is 
-                // not overridden. 
-                executeRemoteAgentUpdate();
-                if (session.withPrint) {
-                    makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
+                if (isMaster) {
+                    postStepMarketUpdate();
                 }
-            }
+
+
+                //                if (isMaster) {
+                //                    if (session.withPrint) {
+                //                        makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
+                //                    }
+                //                    postStepMarketUpdate();
+                //                } else {
+                //                    // TODO 27th September 2021 
+                //                    // Should the output call be made BEFORE or AFTER the agents receive their 
+                //                    // update? Left as "AFTER" for now, might be revisited later.
+                //                    // This does not matter if the the SimulationOutput#agentOutput method is 
+                //                    // not overridden. 
+                //                    executeRemoteAgentUpdate();
+                //                    if (session.withPrint) {
+                //                        makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
+                //                    }
+                //                }
+            });
         } // end of Part 1 bis extra block
 
         // Last output of the session if "withPrint" set
         if (session.withPrint) {
-            makeWithPrintOutput(session, SimulationStage.WITH_PRINT_END_SESSION);
+            placeGroup.broadcastFlat(()-> makeWithPrintOutput(session, SimulationStage.WITH_PRINT_END_SESSION));
         }
     }
 
@@ -1080,9 +1117,9 @@ public class GlbRunner extends PlaceLocalObject {
             });
             // placeGroup.barrier(); // This barrier was used when timing the simulator
             if (usePipeline) {
-                iterateMarketUpdatesPipeline(session);
+                underGLB(logger, ()->iterateMarketUpdatesPipeline(session));
             } else {
-                iterateMarketUpdatesNoPipeline(session);
+                underGLB(logger, ()->iterateMarketUpdatesNoPipeline(session));
             }
             placeGroup.broadcastFlat(()->{
                 makeSessionOutput(session, SimulationStage.END_SESSION);
@@ -1092,36 +1129,36 @@ public class GlbRunner extends PlaceLocalObject {
             makeSimulationOutput(SimulationStage.END_SIMULATION);
         });
         long simulationStop = System.nanoTime();
-        System.err.println("# EXECUTION TIME " + (simulationStop - simulationStart)/1e+9);
+        System.err.println("# EXECUTION TIME (s) " + (simulationStop - simulationStart)/1e+9);
     }
 
-    /**
-     * Sub-routine used to compute the orders of the specified agents (long-term or short-term) and place them in the specified bag
-     * @param iteration the iteration number being computed
-     * @param agents the collection of agents whose orders are being computed
-     * @param orderBag the bag into which the orders are gathered as they are being generated
-     * @param session the session in progress
-     */
-    private void submitOrders(long iteration, DistCol<Agent> agents, DistBag<List<Order>> orderBag, Session session) {
-        try {
-            agents.parallelForEach(PARALLELISM, (agent, orderCollector) -> {
-                List<Order> orders = agent.submitOrders(markets);
-                if (session.withPrint) {
-                    output.orderSubmissionOutput(collector, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
-                }
-                if (orders != null && !orders.isEmpty()) {
-                    orderCollector.accept(orders);
-                }
-            }, orderBag);
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-            if (e.getCause() != null) {
-                System.err.println("---------- cause of errors -----------");
-                e.getCause().printStackTrace(System.err);
-            }
-            throw e;
-        }
-    }
+    //    /**
+    //     * Sub-routine used to compute the orders of the specified agents (long-term or short-term) and place them in the specified bag
+    //     * @param iteration the iteration number being computed
+    //     * @param agents the collection of agents whose orders are being computed
+    //     * @param orderBag the bag into which the orders are gathered as they are being generated
+    //     * @param session the session in progress
+    //     */
+    //    private void submitOrders(long iteration, DistCol<Agent> agents, DistBag<List<Order>> orderBag, Session session) {
+    //        try {
+    //            agents.parallelForEach(PARALLELISM, (agent, orderCollector) -> {
+    //                List<Order> orders = agent.submitOrders(markets);
+    //                if (session.withPrint) {
+    //                    output.orderSubmissionOutput(collector, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
+    //                }
+    //                if (orders != null && !orders.isEmpty()) {
+    //                    orderCollector.accept(orders);
+    //                }
+    //            }, orderBag);
+    //        } catch (Exception e) {
+    //            e.printStackTrace(System.err);
+    //            if (e.getCause() != null) {
+    //                System.err.println("---------- cause of errors -----------");
+    //                e.getCause().printStackTrace(System.err);
+    //            }
+    //            throw e;
+    //        }
+    //    }
 
     /**
      * Sub-routine called after processing orders
