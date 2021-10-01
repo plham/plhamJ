@@ -623,23 +623,23 @@ public class GlbRunner extends PlaceLocalObject {
         factory.createAllAgents(agentConfigList, agentAllocationManager);
     }
 
-    //    /**
-    //     * Routine used to update the long-term and/or short-term agents held locally which have
-    //     * made a trade. The information that a trade was made is contained in the 
-    //     * {@link #contractedOrders} member, with the index at which the updates are stored 
-    //     * corresponding to the agent to which the update needs to be delivered.
-    //     */
-    //    private void executeRemoteAgentUpdate() {
-    //        contractedOrders.parallelForEach((idx, updates) -> {
-    //            // Retrieve the Agent from either sAgents or lAgents
-    //            Agent a = allAgents.get(idx);
-    //
-    //            // Execute all the updates for this Agent one by one
-    //            for (AgentUpdate u : updates) {
-    //                a.executeUpdate(u);
-    //            }
-    //        });
-    //    }
+        /**
+         * Routine used to update the long-term and/or short-term agents held locally which have
+         * made a trade. The information that a trade was made is contained in the 
+         * {@link #contractedOrders} member, with the index at which the updates are stored 
+         * corresponding to the agent to which the update needs to be delivered.
+         */
+        private void executeRemoteAgentUpdate() {
+            contractedOrders.parallelForEach((idx, updates) -> {
+                // Retrieve the Agent from either sAgents or lAgents
+                Agent a = allAgents.get(idx);
+    
+                // Execute all the updates for this Agent one by one
+                for (AgentUpdate u : updates) {
+                    a.executeUpdate(u);
+                }
+            });
+        }
 
     /**
      * Calls for the update of all short-term agents on this local host
@@ -825,7 +825,9 @@ public class GlbRunner extends PlaceLocalObject {
             sOrders.clear(); // Prepare bag to receive the orders from short-term agents
 
             DistFuture<DistBag<List<Order>>> sAgentFuture = sAgents.GLB.toBag(orderSubmissionAction, sOrders);
-            GlobalLoadBalancer.start(); // Launch the GLB computations asynchronously
+            //GlobalLoadBalancer.start(); // Launch the GLB computations asynchronously
+            sAgentFuture.result();
+            System.err.println("Iteration " + idc + " part 1 short-term orders computed");
             // In parallel, proceed with a number of relocations
             if (idc > 0) {
                 placeGroup.broadcastFlat(()->{
@@ -844,17 +846,17 @@ public class GlbRunner extends PlaceLocalObject {
                     if (isMaster) {
                         addOrders(lOrders);
                     }
-
                 });
+                System.err.println("Iteration " + idc + " part 1 contracts and processing done");
             }
 
             // Block until short-term orders complete execution
-            sAgentFuture.result();
+//            sAgentFuture.result(); FIXME 
 
             // Execute the contracted orders' update
-            //            executeRemoteAgentUpdate(); FIXME
+            placeGroup.broadcastFlat(()-> executeRemoteAgentUpdate());
 
-            System.err.println("Iteration " + idc + " part 1 complete");
+            System.err.println("Iteration " + idc + " part 1 updates completed");
 
             // Part 2: Compute long-term agents orders,
             //  Overlapping:
@@ -862,6 +864,7 @@ public class GlbRunner extends PlaceLocalObject {
             //         Handle the orders
             DistFuture<DistBag<List<Order>>> lAgentFuture = lAgents.GLB.toBag(orderSubmissionAction, lOrders);
             GlobalLoadBalancer.start();
+            lAgentFuture.result();
 
             placeGroup.broadcastFlat(()->{
                 try {
@@ -870,20 +873,26 @@ public class GlbRunner extends PlaceLocalObject {
                     e.printStackTrace();
                     throw new RuntimeException("[GlbRunner] relocation contracted orders of short-term agents", e);
                 }
+                
+                if (isMaster) {
+                    System.err.println("Iteration " + idc + " part 2 sOrders relocation complete");
+                    addOrders(sOrders);
+                    handleOrders(session);
+                    if (idc + 1 < session.iterationSteps) {
+                        // Misc. updates to perform
+                        updateMarketMisc(session);
+                    }
+                    System.err.println("Iteration " + idc + " part 2 orders handled");
+                }
             });
+            
+//            lAgentFuture.result(); // Block until operation complete
+            System.err.println("Iteration " + idc + " part 2 lOrders computed");
 
-            System.err.println("Iteration " + idc + " part 2 sOrders relocation complete");
-
-            addOrders(sOrders);
-            handleOrders(session);
-            if (idc + 1 < session.iterationSteps) {
-                // Misc. updates to perform
-                updateMarketMisc(session);
-            }
 
             // Output during session (except if last iteration of the session)
             if (idc + 1 < session.iterationSteps && session.withPrint) {
-                makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
+                placeGroup.broadcastFlat(()->makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION));
             }
 
             postStepMarketUpdate();
@@ -893,7 +902,6 @@ public class GlbRunner extends PlaceLocalObject {
                 }
                 iterSetup();
             }
-            lAgentFuture.result(); // Block until long-term agent submission has completed
             System.err.println("Iteration " + idc + " part 2 lOrders Computed");
 
             placeGroup.broadcastFlat(()-> markets.<Market.MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack)); // FIXME necessary?
@@ -918,7 +926,7 @@ public class GlbRunner extends PlaceLocalObject {
                 }
 
 
-                //                executeRemoteAgentUpdate(); FIXME
+                executeRemoteAgentUpdate(); // FIXME
                 if (session.withPrint) {
                     makeWithPrintOutput(session, SimulationStage.WITH_PRINT_DURING_SESSION);
                 }
