@@ -851,7 +851,7 @@ public class GlbRunner extends PlaceLocalObject {
             }
 
             // Block until short-term orders complete execution
-//            sAgentFuture.result(); FIXME 
+            // sAgentFuture.result(); 
 
             // Execute the contracted orders' update
             placeGroup.broadcastFlat(()-> executeRemoteAgentUpdate());
@@ -863,7 +863,7 @@ public class GlbRunner extends PlaceLocalObject {
             //         Relocate short-term orders to Place 0
             //         Handle the orders
             DistFuture<DistBag<List<Order>>> lAgentFuture = lAgents.GLB.toBag(orderSubmissionAction, lOrders);
-            GlobalLoadBalancer.start();
+            //GlobalLoadBalancer.start();
             lAgentFuture.result();
 
             placeGroup.broadcastFlat(()->{

@@ -49,9 +49,9 @@ public class IT_GlbRunner_Hypercube extends PlhamOutputTester {
             { "New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100",
             "src/test/resources/MultithreadedOutputs/PriceLimit.txt" },
             { "FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100",
-            "src/test/resources/MultithreadedOutputs/FatFinger.txt" }//,
-//            { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", "src/test/resources/BlackScholes/expected_output.txt"},
-//            { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"}
+            "src/test/resources/MultithreadedOutputs/FatFinger.txt" },
+            { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", "src/test/resources/BlackScholes/expected_output.txt"},
+            { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"}
         });
         return parameters;
     }

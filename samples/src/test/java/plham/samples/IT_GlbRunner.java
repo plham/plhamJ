@@ -24,7 +24,7 @@ import plham.samples.MarketShare.NewMarketShare;
 import plham.samples.ShockTransfer.NewShockTransfer;
 import plham.samples.TradingHalt.NewTradingHalt;
 
-@ParameterizedMpiConfig(ranks = 4, launcher = DistributedParameterizedTestLauncher.class, timeout = 90l)
+@ParameterizedMpiConfig(ranks = 4, launcher = DistributedParameterizedTestLauncher.class, timeout = 120l)
 @RunWith(ParameterizedMpi.class)
 public class IT_GlbRunner extends PlhamOutputTester {
 
@@ -33,25 +33,25 @@ public class IT_GlbRunner extends PlhamOutputTester {
         // in the 2D array below are the configurations for each sample program
         Collection<Object[]> parameters = Arrays.asList(new Object[][] {
             /* Simulation name, OutpuClass, JSON configuration file, SEED, expected output */
-//            { "New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100",
-//            "src/test/resources/MultithreadedOutputs/CI2002.txt" },
-//            { "New CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100",
-//            "src/test/resources/MultithreadedOutputs/CancelTest.txt" },
-//            { "MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100",
-//            "src/test/resources/MultithreadedOutputs/MarketShare.txt" },
-//            { "New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100",
-//            "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt" }, // using the "shortened"
-//            // version of FatTail
-//            { "New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json", "100",
-//            "src/test/resources/MultithreadedOutputs/TradingHalt.txt" },
-//            { "New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json", "100",
-//            "src/test/resources/MultithreadedOutputs/ShockTransfer.txt" },
-//            { "New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100",
-//            "src/test/resources/MultithreadedOutputs/PriceLimit.txt" },
-//            { "FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100",
-//            "src/test/resources/MultithreadedOutputs/FatFinger.txt" },
-            { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", "src/test/resources/BlackScholes/expected_output.txt"}
-//            { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"}
+            { "New CI2002", NewCI2002Main.class, "src/test/resources/CI2002/config.json", "100",
+            "src/test/resources/MultithreadedOutputs/CI2002.txt" },
+            { "New CancelTest", NewCI2002Main.class, "src/test/resources/CancelTest/config.json", "100",
+            "src/test/resources/MultithreadedOutputs/CancelTest.txt" },
+            { "MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100",
+            "src/test/resources/MultithreadedOutputs/MarketShare.txt" },
+            { "New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100",
+            "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt" }, // using the "shortened"
+            // version of FatTail
+            { "New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json", "100",
+            "src/test/resources/MultithreadedOutputs/TradingHalt.txt" },
+            { "New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json", "100",
+            "src/test/resources/MultithreadedOutputs/ShockTransfer.txt" },
+            { "New PriceLimit", NewCI2002Main.class, "src/test/resources/PriceLimit/config.json", "100",
+            "src/test/resources/MultithreadedOutputs/PriceLimit.txt" },
+            { "FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100",
+            "src/test/resources/MultithreadedOutputs/FatFinger.txt" },
+            { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", "src/test/resources/BlackScholes/expected_output.txt"},
+            { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"}
         });
         return parameters;
     }
