@@ -210,7 +210,7 @@ public class GlbRunner extends PlaceLocalObject {
                         Chunk<Agent> chunk = new Chunk<>(range);
                         arbitrageurs.add(chunk);
                         allAgents.add(chunk);
-                        System.err.println("# HFT CHUNK ADDED: " + chunk.getRange());
+//                        System.err.println("# HFT CHUNK ADDED: " + chunk.getRange());
                         return chunk;
                     } else {
                         return RangedListView.emptyView();
@@ -230,10 +230,10 @@ public class GlbRunner extends PlaceLocalObject {
                         allAgents.add(chunk);
                         if (classType.startsWith("short")) {
                             sAgents.add(chunk);
-                            System.err.println("# SHORT-TERM CHUNK ADDED " + here() + ": " + chunk.getRange());
+//                            System.err.println("# SHORT-TERM CHUNK ADDED " + here() + ": " + chunk.getRange());
                         } else if (classType.startsWith("long")) {
                             lAgents.add(chunk);
-                            System.err.println("# LONG-TERM CHUNK ADDED " + here() + ": " + chunk.getRange());
+//                            System.err.println("# LONG-TERM CHUNK ADDED " + here() + ": " + chunk.getRange());
                         } else {
                             throw new IllegalArgumentException("Unknown schedule option:" + classType);
                         }
@@ -451,6 +451,8 @@ public class GlbRunner extends PlaceLocalObject {
             System.err.println("\tOutput class (defines the outputs to extract from the simulation");
             System.err.println("\tJSON configuration file");
             System.err.println("\tseed");
+            System.err.println("\t[JSON warmup] Configuration for warmup (optional)");
+            return;
         }
 
         // Argument parsing
@@ -494,8 +496,19 @@ public class GlbRunner extends PlaceLocalObject {
 
         // Create the simulator
         long TIME_INIT = System.nanoTime();
+        if (args.length > 3) {
+            try {
+                System.err.println("# Launching Warmup");
+                SimulatorFactory warmupFactory = new SimulatorFactory(args[3]);
+                GlbRunner.initializeRunner(100, new SimulationOutput(), warmupFactory, TeamedPlaceGroup.getWorld()).run();
+            } catch (Exception e) {
+                System.err.println("Error during warmup");
+                e.printStackTrace();
+            }
+        }
+
         GlbRunner runnerOnWorld = GlbRunner.initializeRunner(seed, simulationOutput, factory, TeamedPlaceGroup.getWorld());
-        TIME_INIT = System.nanoTime() - TIME_INIT;
+        TIME_INIT = System.nanoTime() - TIME_INIT;        
         System.err.println("# INIT TIME (s) " + TIME_INIT/1e9);
 
         // Run simulation
@@ -623,23 +636,23 @@ public class GlbRunner extends PlaceLocalObject {
         factory.createAllAgents(agentConfigList, agentAllocationManager);
     }
 
-        /**
-         * Routine used to update the long-term and/or short-term agents held locally which have
-         * made a trade. The information that a trade was made is contained in the 
-         * {@link #contractedOrders} member, with the index at which the updates are stored 
-         * corresponding to the agent to which the update needs to be delivered.
-         */
-        private void executeRemoteAgentUpdate() {
-            contractedOrders.parallelForEach((idx, updates) -> {
-                // Retrieve the Agent from either sAgents or lAgents
-                Agent a = allAgents.get(idx);
-    
-                // Execute all the updates for this Agent one by one
-                for (AgentUpdate u : updates) {
-                    a.executeUpdate(u);
-                }
-            });
-        }
+    /**
+     * Routine used to update the long-term and/or short-term agents held locally which have
+     * made a trade. The information that a trade was made is contained in the 
+     * {@link #contractedOrders} member, with the index at which the updates are stored 
+     * corresponding to the agent to which the update needs to be delivered.
+     */
+    private void executeRemoteAgentUpdate() {
+        contractedOrders.parallelForEach((idx, updates) -> {
+            // Retrieve the Agent from either sAgents or lAgents
+            Agent a = allAgents.get(idx);
+
+            // Execute all the updates for this Agent one by one
+            for (AgentUpdate u : updates) {
+                a.executeUpdate(u);
+            }
+        });
+    }
 
     /**
      * Calls for the update of all short-term agents on this local host
@@ -827,7 +840,7 @@ public class GlbRunner extends PlaceLocalObject {
             DistFuture<DistBag<List<Order>>> sAgentFuture = sAgents.GLB.toBag(orderSubmissionAction, sOrders);
             //GlobalLoadBalancer.start(); // Launch the GLB computations asynchronously
             sAgentFuture.result();
-            System.err.println("Iteration " + idc + " part 1 short-term orders computed");
+//            System.err.println("Iteration " + idc + " part 1 short-term orders computed");
             // In parallel, proceed with a number of relocations
             if (idc > 0) {
                 placeGroup.broadcastFlat(()->{
@@ -847,7 +860,7 @@ public class GlbRunner extends PlaceLocalObject {
                         addOrders(lOrders);
                     }
                 });
-                System.err.println("Iteration " + idc + " part 1 contracts and processing done");
+//                System.err.println("Iteration " + idc + " part 1 contracts and processing done");
             }
 
             // Block until short-term orders complete execution
@@ -856,7 +869,7 @@ public class GlbRunner extends PlaceLocalObject {
             // Execute the contracted orders' update
             placeGroup.broadcastFlat(()-> executeRemoteAgentUpdate());
 
-            System.err.println("Iteration " + idc + " part 1 updates completed");
+//            System.err.println("Iteration " + idc + " part 1 updates completed");
 
             // Part 2: Compute long-term agents orders,
             //  Overlapping:
@@ -873,21 +886,21 @@ public class GlbRunner extends PlaceLocalObject {
                     e.printStackTrace();
                     throw new RuntimeException("[GlbRunner] relocation contracted orders of short-term agents", e);
                 }
-                
+
                 if (isMaster) {
-                    System.err.println("Iteration " + idc + " part 2 sOrders relocation complete");
+//                    System.err.println("Iteration " + idc + " part 2 sOrders relocation complete");
                     addOrders(sOrders);
                     handleOrders(session);
                     if (idc + 1 < session.iterationSteps) {
                         // Misc. updates to perform
                         updateMarketMisc(session);
                     }
-                    System.err.println("Iteration " + idc + " part 2 orders handled");
+//                    System.err.println("Iteration " + idc + " part 2 orders handled");
                 }
             });
-            
-//            lAgentFuture.result(); // Block until operation complete
-            System.err.println("Iteration " + idc + " part 2 lOrders computed");
+
+            //            lAgentFuture.result(); // Block until operation complete
+//            System.err.println("Iteration " + idc + " part 2 lOrders computed");
 
 
             // Output during session (except if last iteration of the session)
@@ -902,7 +915,7 @@ public class GlbRunner extends PlaceLocalObject {
                 }
                 iterSetup();
             }
-            System.err.println("Iteration " + idc + " part 2 lOrders Computed");
+//            System.err.println("Iteration " + idc + " part 2 lOrders Computed");
 
             placeGroup.broadcastFlat(()-> markets.<Market.MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack)); // FIXME necessary?
 

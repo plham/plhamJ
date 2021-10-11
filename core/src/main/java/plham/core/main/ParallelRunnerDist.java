@@ -446,7 +446,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         long TIME_INIT = System.nanoTime();
         ParallelRunnerDist runnerOnWorld = ParallelRunnerDist.initializeRunner(seed, simulationOutput, factory, TeamedPlaceGroup.getWorld());
         TIME_INIT = System.nanoTime() - TIME_INIT;
-        System.err.println("# initialization time " + TIME_INIT);
+        System.err.println("# initialization time " + (TIME_INIT / 1e9));
 
         // Run simulation
         runnerOnWorld.run();
