@@ -401,6 +401,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
             System.err.println("\tOutput class (defines the outputs to extract from the simulation");
             System.err.println("\tJSON configuration file");
             System.err.println("\tseed");
+            System.err.println("\tConfiguration for warmup (optional)");
         }
 
         // Argument parsing
@@ -444,6 +445,18 @@ public class ParallelRunnerDist extends PlaceLocalObject {
 
         // Create the simulator
         long TIME_INIT = System.nanoTime();
+        
+        if (args.length > 3) { // Warmup
+            try {
+                System.err.println("# Launching Warmup");
+                SimulatorFactory warmupFactory = new SimulatorFactory(args[3]);
+                ParallelRunnerDist.initializeRunner(100, new SimulationOutput(), warmupFactory, TeamedPlaceGroup.getWorld()).run();
+            } catch (Exception e) {
+                System.err.println("Error during warmup");
+                e.printStackTrace();
+            }
+        }
+        
         ParallelRunnerDist runnerOnWorld = ParallelRunnerDist.initializeRunner(seed, simulationOutput, factory, TeamedPlaceGroup.getWorld());
         TIME_INIT = System.nanoTime() - TIME_INIT;
         System.err.println("# initialization time " + (TIME_INIT / 1e9));
