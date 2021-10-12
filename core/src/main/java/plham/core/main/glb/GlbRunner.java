@@ -28,7 +28,6 @@ import handist.collections.dist.DistMultiMap;
 import handist.collections.dist.TeamedPlaceGroup;
 import handist.collections.function.SerializableBiConsumer;
 import handist.collections.glb.DistFuture;
-import handist.collections.glb.GlobalLoadBalancer;
 import handist.collections.glb.lifeline.Lifeline;
 import handist.collections.glb.util.GlbLog;
 
@@ -790,7 +789,7 @@ public class GlbRunner extends PlaceLocalObject {
                 markets.<MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack);
             });
 
-            // Submit short-term agent orders and gather them on root
+            // Submit short-term agent orders
             sAgents.GLB.toBag((Agent agent,Consumer<List<Order>> orderCollector)->{
                 List<Order> orders = agent.submitOrders(markets);
                 if (session.withPrint) {
@@ -809,9 +808,9 @@ public class GlbRunner extends PlaceLocalObject {
                     e.printStackTrace();
                     throw new RuntimeException("[GlbRunner] relocating contracted orders of long-term agents failed", e);
                 }
+
                 // Update distribution of sAgents after the GLB part completed
                 sAgents.updateDist();
-
 
                 if (isMaster) {
                     addOrders(sOrders);
