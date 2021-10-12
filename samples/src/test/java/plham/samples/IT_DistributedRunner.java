@@ -19,6 +19,7 @@ import handist.mpijunit.ParameterizedMpi.ParameterizedMpiConfig;
 import plham.core.main.ParallelRunnerDist;
 import plham.core.main.SimulatorFactory;
 import plham.samples.CI2002.NewCI2002Main;
+import plham.samples.DarkPool.NewDarkPool;
 import plham.samples.MarketShare.NewMarketShare;
 import plham.samples.ShockTransfer.NewShockTransfer;
 import plham.samples.TradingHalt.NewTradingHalt;
@@ -45,8 +46,7 @@ public class IT_DistributedRunner extends PlhamOutputTester {
                 { "MarketShare", NewMarketShare.class, "src/test/resources/MarketShare/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/MarketShare.txt" },
                 { "New FatTail", NewCI2002Main.class, "src/test/resources/FatTail/config-shortened.json", "100",
-                        "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt" }, // using the "shortened"
-                                                                                           // version of FatTail
+                        "src/test/resources/MultithreadedOutputs/FatTail-shortened.txt" }, // using the "shortened" version of FatTail
                 { "New TradingHalt", NewTradingHalt.class, "src/test/resources/TradingHalt/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/TradingHalt.txt" },
                 { "New ShockTransfer", NewShockTransfer.class, "src/test/resources/ShockTransfer/config.json", "100",
@@ -56,8 +56,8 @@ public class IT_DistributedRunner extends PlhamOutputTester {
                 { "FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100",
                         "src/test/resources/MultithreadedOutputs/FatFinger.txt" },
                 { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", "src/test/resources/BlackScholes/expected_output.txt"},
-                { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"}//,
-//                {"DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json","false", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"}
+                { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", "src/test/resources/BlackScholes/expected_shutdown_output.txt"},
+//                {"DarkPool", NewDarkPool.class, "src/test/resources/DarkPool/config.json", "100", "src/test/resources/MultithreadedOutputs/DarkPool.txt"} // FIXME
         });
         return parameters;
     }
