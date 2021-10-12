@@ -6,6 +6,7 @@ import java.util.Collection;
 
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -24,6 +25,7 @@ import plham.samples.MarketShare.NewMarketShare;
 import plham.samples.ShockTransfer.NewShockTransfer;
 import plham.samples.TradingHalt.NewTradingHalt;
 
+@Ignore
 @ParameterizedMpiConfig(ranks = 4, launcher = DistributedParameterizedTestLauncher.class, timeout = 120l)
 @RunWith(ParameterizedMpi.class)
 public class IT_GlbRunner extends PlhamOutputTester {

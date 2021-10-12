@@ -6,6 +6,7 @@ import java.util.Collection;
 
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -24,6 +25,7 @@ import plham.samples.MarketShare.NewMarketShare;
 import plham.samples.ShockTransfer.NewShockTransfer;
 import plham.samples.TradingHalt.NewTradingHalt;
 
+@Ignore
 @ParameterizedMpiConfig(ranks = 4, launcher = DistributedParameterizedTestLauncher.class, timeout = 90l)
 @RunWith(ParameterizedMpi.class)
 public class IT_GlbRunner_Hypercube extends PlhamOutputTester {
@@ -51,9 +53,9 @@ public class IT_GlbRunner_Hypercube extends PlhamOutputTester {
             { "FatFinger", NewCI2002Main.class, "src/test/resources/FatFinger/config.json", "100",
             "src/test/resources/MultithreadedOutputs/FatFinger.txt", "src/test/resources/CI2002/config.json" },
             { "BlackScholes", NewShockTransfer.class, "src/test/resources/BlackScholes/config-a099.json", "100", 
-            "src/test/resources/BlackScholes/expected_output.txt", "src/test/resources/BlackScholes/bs-warmup.json"},
-            { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", 
-            "src/test/resources/BlackScholes/expected_shutdown_output.txt", "src/test/resources/BlackScholes/bs-warmup.json"}
+            "src/test/resources/BlackScholes/expected_output.txt", "src/test/resources/BlackScholes/bs-warmup.json"}//,
+//            { "BlackScholes with load", NewShockTransfer.class, "src/test/resources/BlackScholes/config-shutdown.json", "100", 
+//            "src/test/resources/BlackScholes/expected_shutdown_output.txt", "src/test/resources/BlackScholes/bs-warmup.json"}
         });
         return parameters;
     }

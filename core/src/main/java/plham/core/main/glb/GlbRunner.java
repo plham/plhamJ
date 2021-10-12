@@ -426,11 +426,16 @@ public class GlbRunner extends PlaceLocalObject {
 
             // Create all agents
             localRunner.createAllAgents();
+            // Re-split the allocated chunks for better parallelism with
+            // the existing GLB infrastructure
+            teamed_splitAgentsToParallelismLevel(localRunner.sAgents);
+            teamed_splitAgentsToParallelismLevel(localRunner.lAgents);
+            
             allAgentsCol.updateDist();
 
             return localRunner;
         });
-
+        
         // Modifications specific to master     
         allAgentsCol.setProxyGenerator((index) -> {
             return new AgentUpdateProxy(index, contractedOrdersCol);
@@ -525,6 +530,43 @@ public class GlbRunner extends PlaceLocalObject {
         }
     }
 
+    /**
+     * Sub-routine used to further split the chunks so that there are enough chunks for each thread 
+     * to receive some work when the GLB program starts. 
+     * The distribution of the agent collection is updated in a teamed activity at the end of this 
+     * procedure.
+     */
+    private static void teamed_splitAgentsToParallelismLevel(DistCol<Agent> agents) {
+        Collection<LongRange> initialRanges = agents.getAllRanges();
+        int rangeCount = initialRanges.size();
+        if (rangeCount == 0) {
+            // Not possible to increase number of chunks if no elements contained locally
+            // Update distribution in case of remote changes and return
+            agents.updateDist();
+            return;
+        }
+        final int workerThreadCount = Runtime.getRuntime().availableProcessors();
+        int dividingFactor = 1;
+        while (rangeCount * dividingFactor < workerThreadCount) {
+            dividingFactor ++;
+        }
+        
+        if (dividingFactor <= 1) {
+            return;
+        } else {
+//            System.err.println(here() + " further dividing chunks into " + dividingFactor);
+        }
+        
+        // Else, divide each chunk into `dividingFactor` parts
+        for (LongRange range : initialRanges) {
+            List<LongRange> splitRanges = range.split(dividingFactor);
+            for (LongRange split : splitRanges) {
+                agents.splitChunks(split);
+            }
+        }
+//        System.err.println(here() + " done splitting ranges");
+        agents.updateDist();
+    }
     /**************************************************************************
      * Members related to the simulation participants                         *
      *************************************************************************/
@@ -549,9 +591,9 @@ public class GlbRunner extends PlaceLocalObject {
     final DistBag<List<Order>> lOrders;
     /** Markets available to traders during the simulation */
     final CachableArray<Market> markets;
+
     /** Class specifying the outputs to make during the simulation*/
     final transient SimulationOutput output;
-
     /**************************************************************************
      * Members related to runtime                                             *
      *************************************************************************/
@@ -576,6 +618,7 @@ public class GlbRunner extends PlaceLocalObject {
      * containing the high-frequency traders and where all orders are processed.  
      */ 
     final boolean isMaster;
+
     /** Simulator providing local access methods to other objects on local host*/
     transient Simulator sim;
 
@@ -620,7 +663,7 @@ public class GlbRunner extends PlaceLocalObject {
             m.env = sim;
         }
     }
-
+    
     /**
      * Method used to add orders received from remote agents into the processing
      * machine located on the "master" of the simulation 
