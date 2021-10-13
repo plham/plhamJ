@@ -1,5 +1,6 @@
 package plham.core.main;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +71,72 @@ public class SequentialRunner extends Runner implements Serializable {
     }
 
     private static final long serialVersionUID = -4747415797682000153L;
+
+    /**
+     * Main method for Sequential runner. Arguments are as follows:
+     * <ol>
+     * <li>Class producing the output based on the simulation information
+     * <li>JSON configuration file for the simulation
+     * <li>Seed (integer)
+     * </ol>
+     * @param args
+     */
+    public static void main(String [] args) {
+        if (args.length < 3) {
+            System.err.println("Program arguments for seuqential runner:");
+            System.err.println("\tOutput class (defines the outputs to extract from the simulation");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed");
+            return;
+        }
+
+        // Argument parsing
+        String outputClassName = args[0];
+        String JsonConfigurationFile = args[1];
+        String seedArg = args[2];
+
+        SimulationOutput simulationOutput = null;
+
+        try {
+            Class<?> outputClass = Class.forName(outputClassName);
+            simulationOutput = (SimulationOutput) outputClass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            System.err.println("Could not create an instance of outputClassName");
+            e.printStackTrace();
+            return;
+        } catch (ClassNotFoundException e) {
+            System.err.println("Could not find class " + outputClassName);
+            System.err.println("Check you classpath and for any typo");
+            e.printStackTrace();
+            return;
+        }
+
+        SimulatorFactory factory;
+        if (new File(JsonConfigurationFile).canRead()) {
+            try {
+                factory = new SimulatorFactory(JsonConfigurationFile);
+            } catch (Exception e) {
+                System.err.println("Problem encountered when attemting to open file " + JsonConfigurationFile);
+                e.printStackTrace();
+                return;
+            }
+        } else {
+            System.err.println("Could not read from file " + JsonConfigurationFile + ". Check that the file exists and that you have the correct permissions.");
+            return;
+        }
+
+        long seed;
+        try {
+            seed = Long.parseLong(seedArg);
+        } catch (NumberFormatException e) {
+            System.err.println("Could not parse the seed " + seedArg);
+            e.printStackTrace();
+            return;
+        }
+
+        SequentialRunner runner = new SequentialRunner(factory, simulationOutput);
+        runner.run(seed);
+    }
 
     public SequentialRunner(SimulatorFactory sim, SimulationOutput output) {
         super(output, sim);
@@ -184,8 +251,8 @@ public class SequentialRunner extends Runner implements Serializable {
             sim.updateFundamentals(fundamentals);
             for (Market market : markets) {
                 market.triggerBeforeSimulationStepEvents(); // Assuming the
-                                                            // markets in
-                                                            // dependency order.
+                // markets in
+                // dependency order.
             }
             // System.out.println("#hoge1-3:t="+t);
             if (s.withOrderPlacement) {
@@ -237,12 +304,12 @@ public class SequentialRunner extends Runner implements Serializable {
 
         for (Session session : sim.sessions) {
             session.print();
-//			sim.GLOBAL.put("events", factory.createEventsForASession(session, sim));
+            //			sim.GLOBAL.put("events", factory.createEventsForASession(session, sim));
             sim.sessionEvents = factory.createEventsForASession(session, sim);
             output.beginSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
             output.postProcess(out, SimulationStage.BEGIN_SESSION);
             out.map.clear();
-//			iterateMarketUpdates(session, (Fundamentals) sim.GLOBAL.get("fundamentals"));
+            //			iterateMarketUpdates(session, (Fundamentals) sim.GLOBAL.get("fundamentals"));
             iterateMarketUpdates(out, session, sim.fundamentals);
             output.endSession(out, session, sim.markets, sim.agents, sim.sessionEvents);
             output.postProcess(out, SimulationStage.END_SESSION);

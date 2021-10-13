@@ -23,6 +23,12 @@ public class MarketShareMain extends SimulationOutput {
     private static final long serialVersionUID = 182717018142244006L;
 
     public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Arguments for MarketShareMain");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed (optional)");
+            return;
+        }
         try {
             final MarketShareMain sim = new MarketShareMain();
             SimulatorFactory factory = new SimulatorFactory(args[0]);

@@ -20,6 +20,12 @@ public class ShockTransferMain extends SimulationOutput {
     private static final long serialVersionUID = -5912846100236874197L;
 
     public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Arguments for ShockTransferMain");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed (optional)");
+            return;
+        }
         try {
             final ShockTransferMain sim = new ShockTransferMain();
             SimulatorFactory factory = new SimulatorFactory(args[0]);

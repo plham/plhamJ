@@ -393,11 +393,12 @@ public class ParallelRunnerDist extends PlaceLocalObject {
     public static void main(String[] args) {
         // Argument checking
         if (args.length < 3) {
-            System.err.println("Program arguments for GlbRunner:");
+            System.err.println("Program arguments for distributed runner:");
             System.err.println("\tOutput class (defines the outputs to extract from the simulation");
             System.err.println("\tJSON configuration file");
             System.err.println("\tseed");
             System.err.println("\tConfiguration for warmup (optional)");
+            return;
         }
 
         // Argument parsing

@@ -74,7 +74,17 @@ Some example programs are included with this library in the "samples" module. Fo
 ~/plhamJ/ $: java -cp target/plhamj-0.0.1-SNAPSHOT-jar-with-dependencies.jar plham.samples.CI2002.CI2002Main samples/src/main/resources/CI2002/config.json 100
 ```
 
-For other sequential programs, simply switch the main class and the input JSON file. 
+For other sequential programs, simply switch the main class and the input JSON file in the command above. More generically, you can use the `SequentialRunner` as the main class and specify the class used to produce the outputs as parameter as shown below:
+
+```
+~/plhamJ/ $: java -cp target/plhamj-0.0.1-SNAPSHOT-jar-with-dependencies.jar plham.core.main.SequentialRunner <output class> <JSON configuration> <seed>
+````
+
+i.e. for the CI2002 simulation:
+
+```
+~/plhamJ/ $: java -cp target/plhamj-0.0.1-SNAPSHOT-jar-with-dependencies.jar plham.core.main.SequentialRunner plham.samples.CI2002.CI2002Main samples/src/main/resources/CI2002/config.json 100
+```
 
 Other runner implementations: TODO
 

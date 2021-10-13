@@ -8,6 +8,12 @@ import plham.samples.CI2002.CI2002Main;
 public class FatTailMain {
 
     public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Arguments for FatTailMain");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed (optional)");
+            return;
+        }
         try {
             final CI2002Main sim = new CI2002Main();
             SimulatorFactory factory = new SimulatorFactory(args[0]);

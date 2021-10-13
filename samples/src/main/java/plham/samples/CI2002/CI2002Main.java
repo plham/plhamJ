@@ -19,6 +19,12 @@ public class CI2002Main extends SimulationOutput {
     private static final long serialVersionUID = 2493462616283426664L;
 
     public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Arguments for CI2002Main");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed (optional)");
+            return;
+        }
         try {
             final CI2002Main sim = new CI2002Main();
             SimulatorFactory factory = new SimulatorFactory(args[0]);
