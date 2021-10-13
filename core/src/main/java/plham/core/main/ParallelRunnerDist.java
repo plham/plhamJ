@@ -2,6 +2,7 @@ package plham.core.main;
 
 import static apgas.Constructs.*;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,9 +21,11 @@ import handist.collections.dist.CachableArray;
 import handist.collections.dist.DistBag;
 import handist.collections.dist.DistChunkedList;
 import handist.collections.dist.DistCol;
+import handist.collections.dist.DistLog;
 import handist.collections.dist.DistMap;
 import handist.collections.dist.DistMultiMap;
 import handist.collections.dist.TeamedPlaceGroup;
+import handist.collections.util.SavedLog;
 import apgas.Place;
 import apgas.util.PlaceLocalObject;
 import cassia.util.JSON.Value;
@@ -348,14 +351,13 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         DistBag<List<Order>> lOrdersCol = new DistBag<>(pg);
         DistBag<List<Order>> sOrdersCol = new DistBag<>(pg);
         DistMap<String, List<String>> outputCollectorMap = new DistMap<>(pg);
-
+        DistLog log = new DistLog(pg);
+        
         // Creating a simulator in anticipation to initialize distributed array of markets
         // The factory instance `f` should not be used any further, a proper instance will be present
         // in each GlbRunner
         Simulator simulator = f.makeNewSimulation(seed, true, false, new GlbAllocManager(pg, root, allAgentsCol, sAgentsCol, lAgentsCol));
         CachableArray<Market> marketsCol = CachableArray.make(pg, simulator.markets);
-
-        System.err.println("#<init> distributed collections created");
 
         final Value config = f.CONFIG;
 
@@ -366,7 +368,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         ParallelRunnerDist toReturn = PlaceLocalObject.make(pg.places(), () -> {
             ParallelRunnerDist localRunner = new ParallelRunnerDist(root, pg, simulationOutput, config, seed, 
                     contractedOrdersCol, allAgentsCol, lAgentsCol, sAgentsCol, 
-                    lOrdersCol, sOrdersCol, marketsCol, outputCollectorMap);
+                    lOrdersCol, sOrdersCol, marketsCol, outputCollectorMap, log);
 
             // Create all agents
             localRunner.createAllAgents();
@@ -437,26 +439,45 @@ public class ParallelRunnerDist extends PlaceLocalObject {
             return;
         }
 
-        // Create the simulator
-        long TIME_INIT = System.nanoTime();
-        
-        if (args.length > 3) { // Warmup
+        // Optional Warmup
+        if (args.length > 3) { 
+            final String warmupFile = args[3];
             try {
-                System.err.println("# Launching Warmup");
-                SimulatorFactory warmupFactory = new SimulatorFactory(args[3]);
+                System.err.println("# Launching Warmup " + warmupFile);
+                long warmupTime = System.nanoTime();
+                SimulatorFactory warmupFactory = new SimulatorFactory(warmupFile);
                 ParallelRunnerDist.initializeRunner(100, new SimulationOutput(), warmupFactory, TeamedPlaceGroup.getWorld()).run();
+                warmupTime = System.nanoTime() - warmupTime;
+                System.err.println("# Warmup completed in " + (warmupTime/1e9));
             } catch (Exception e) {
                 System.err.println("Error during warmup");
                 e.printStackTrace();
             }
         }
-        
+
+        // Create the simulator
+        long TIME_INIT = System.nanoTime();
         ParallelRunnerDist runnerOnWorld = ParallelRunnerDist.initializeRunner(seed, simulationOutput, factory, TeamedPlaceGroup.getWorld());
         TIME_INIT = System.nanoTime() - TIME_INIT;
-        System.err.println("# initialization time " + (TIME_INIT / 1e9));
+        System.err.println("# INITIALIZATION TIME " + (TIME_INIT / 1e9));
 
         // Run simulation
+        long simulationStart = System.nanoTime();
         runnerOnWorld.run();
+        long simulationStop = System.nanoTime();
+        System.err.println("# EXECUTION TIME " + (simulationStop - simulationStart)/1e+9);
+        
+        // Post simulation, write the logged data to a file if specified
+        if (System.getProperties().containsKey(Config.SAVE_LOG_TO_FILE)) {
+            String fileName = System.getProperty(Config.SAVE_LOG_TO_FILE);
+            System.err.println("# Saving distributed log to " + fileName);
+            try {
+                new SavedLog(runnerOnWorld.logger).saveToFile(new File(fileName));
+            } catch (Exception e) {
+                System.err.println("# Problem encountered while saving distributed log to file");
+                e.printStackTrace();
+            }
+        }
     }
     
     /**************************************************************************
@@ -497,6 +518,8 @@ public class ParallelRunnerDist extends PlaceLocalObject {
     final transient Place master;
     /** Level of parallelism available / to use on the local host */
     private final int PARALLELISM;
+    /** Logger into which the events that occur during the simulation are recorded */
+    final DistLog logger;
     /** Seed used to run the simulation */
     final long seed;
     /** Initial allocation of agents over the hosts, not initialized as part of the constructor */
@@ -514,7 +537,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
     private ParallelRunnerDist(Place r, TeamedPlaceGroup pg, SimulationOutput simulationOutput, Value config, long s, DistMultiMap<Long, AgentUpdate> contractedOrdersCol, 
             DistCol<Agent> allAgentsCol, DistCol<Agent> lAgentsCol, DistCol<Agent> sAgentsCol, 
             DistBag<List<Order>> lOrdersCol, DistBag<List<Order>> sOrdersCol, 
-            CachableArray<Market> marketsCol, DistMap<String, List<String>> outputCollectorMap) throws Exception {
+            CachableArray<Market> marketsCol, DistMap<String, List<String>> outputCollectorMap, DistLog log) throws Exception {
         contractedOrders = contractedOrdersCol;
         allAgents = allAgentsCol;
         lAgents = lAgentsCol;
@@ -526,6 +549,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         markets = marketsCol;
         placeGroup = pg;
         seed = s;
+        logger = log;
 
         collector = new DistributedOutputCollector(outputCollectorMap);
         isMaster = here() == master;
@@ -988,7 +1012,6 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         // of long-term agents in the simulation
         final boolean usePipeline = agentAllocationManager.hasLong() || Boolean.parseBoolean(System.getProperty(Config.FORCE_PIPELINE_SCHEDULE, "false"));
 
-        long simulationStart = System.nanoTime();
         placeGroup.broadcastFlat(()->{
             makeSimulationOutput(SimulationStage.BEGIN_SIMULATION);
 
@@ -1010,8 +1033,6 @@ public class ParallelRunnerDist extends PlaceLocalObject {
 
             makeSimulationOutput(SimulationStage.END_SIMULATION);
         });
-        long simulationStop = System.nanoTime();
-        System.err.println("# EXECUTION TIME " + (simulationStop - simulationStart)/1e+9);
     }
 
     /**

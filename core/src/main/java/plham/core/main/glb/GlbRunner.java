@@ -29,7 +29,7 @@ import handist.collections.dist.TeamedPlaceGroup;
 import handist.collections.function.SerializableBiConsumer;
 import handist.collections.glb.DistFuture;
 import handist.collections.glb.lifeline.Lifeline;
-import handist.collections.glb.util.GlbLog;
+import handist.collections.util.SavedLog;
 
 import static handist.collections.glb.GlobalLoadBalancer.underGLB;
 import apgas.Place;
@@ -389,8 +389,6 @@ public class GlbRunner extends PlaceLocalObject {
         Simulator simulator = f.makeNewSimulation(seed, true, false, new GlbAllocManager(pg, root, allAgentsCol, sAgentsCol, lAgentsCol));
         CachableArray<Market> marketsCol = CachableArray.make(pg, simulator.markets);
 
-        System.err.println("#<init> distributed collections created");
-
         final Value config = f.CONFIG;
 
         // Then we create the "GlbRunner" on every place with all the
@@ -477,30 +475,40 @@ public class GlbRunner extends PlaceLocalObject {
             return;
         }
 
-        // Create the simulator
-        long TIME_INIT = System.nanoTime();
+        // Optional Warmup
         if (args.length > 3) {
+            final String warmupFile = args[3];
             try {
-                System.err.println("# Launching Warmup");
-                SimulatorFactory warmupFactory = new SimulatorFactory(args[3]);
+                System.err.println("# Launching Warmup " + warmupFile);
+                long warmupTime = System.nanoTime();
+                SimulatorFactory warmupFactory = new SimulatorFactory(warmupFile);
                 GlbRunner.initializeRunner(100, new SimulationOutput(), warmupFactory, TeamedPlaceGroup.getWorld()).run();
+                warmupTime = System.nanoTime() - warmupTime;
+                System.err.println("# Warmup completed in (s) " + (warmupTime / 1e9));
             } catch (Exception e) {
                 System.err.println("Error during warmup");
                 e.printStackTrace();
             }
         }
 
+        // Create the simulator
+        long TIME_INIT = System.nanoTime();
         GlbRunner runnerOnWorld = GlbRunner.initializeRunner(seed, simulationOutput, factory, TeamedPlaceGroup.getWorld());
         TIME_INIT = System.nanoTime() - TIME_INIT;        
         System.err.println("# INIT TIME (s) " + TIME_INIT/1e9);
 
         // Run simulation
+        long simulationStart = System.nanoTime();
         runnerOnWorld.run();
+        long simulationStop = System.nanoTime();
+        System.err.println("# EXECUTION TIME (s) " + (simulationStop - simulationStart)/1e+9);
 
         // Post simulation, write the logged data to a file if specified
-        if (System.getProperties().contains(Config.SAVE_LOG_TO_FILE)) {
+        if (System.getProperties().containsKey(Config.SAVE_LOG_TO_FILE)) {
+            String fileName = System.getProperty(Config.SAVE_LOG_TO_FILE);
+            System.err.println("# Saving distributed log to " + fileName);
             try {
-                new GlbLog(runnerOnWorld.logger).saveToFile(new File(System.getProperty(Config.SAVE_LOG_TO_FILE)));
+                new SavedLog(runnerOnWorld.logger).saveToFile(new File(fileName));
             } catch (Exception e) {
                 System.err.println("# Problem encountered while saving distributed log to file");
                 e.printStackTrace();
@@ -1149,7 +1157,6 @@ public class GlbRunner extends PlaceLocalObject {
         // of long-term agents in the simulation
         final boolean usePipeline = agentAllocationManager.hasLong() || Boolean.parseBoolean(System.getProperty(Config.FORCE_PIPELINE_SCHEDULE, "false"));
 
-        long simulationStart = System.nanoTime();
         placeGroup.broadcastFlat(()->{
             makeSimulationOutput(SimulationStage.BEGIN_SIMULATION);
         });
@@ -1171,8 +1178,6 @@ public class GlbRunner extends PlaceLocalObject {
         placeGroup.broadcastFlat(()->{
             makeSimulationOutput(SimulationStage.END_SIMULATION);
         });
-        long simulationStop = System.nanoTime();
-        System.err.println("# EXECUTION TIME (s) " + (simulationStop - simulationStart)/1e+9);
     }
 
     /**
