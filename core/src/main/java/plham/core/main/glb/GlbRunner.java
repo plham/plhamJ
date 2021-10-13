@@ -45,6 +45,7 @@ import plham.core.SimulationOutput.SimulationStage;
 import plham.core.Order;
 import plham.core.OutputCollector;
 import plham.core.SimulationOutput;
+import plham.core.main.Config;
 import plham.core.main.Simulator;
 import plham.core.main.Simulator.Session;
 import plham.core.main.SimulatorFactory;
@@ -344,28 +345,6 @@ public class GlbRunner extends PlaceLocalObject {
     private static final long serialVersionUID = -5954081821861048344L;
 
     /**
-     * Property which when set to true will force the use of the pipelined schedule even if there are
-     * no long-term agents in the simulation.  
-     */
-    public static final String FORCE_PIPELINE_SCHEDULE = "plhamj.forcePipeline";
-
-    /**
-     * Property which allows to choose the lifeline strategy used to relocate agents between hosts
-     */
-    public static final String LIFELINE_CLASS = "plhamj.lifeline";
-    /**
-     * Default value for {@link #LIFELINE_CLASS} property
-     */
-    public static final String LIFELINE_CLASS_DEFAULT = PlhamLifeline.class.getCanonicalName();
-
-    /**
-     * Property which can be used to specify a file to which the logged events will be written
-     * after the computation has completed (i.e. -D{@value #SAVE_LOG_TO_FILE}=<file name>). 
-     * Leave undefined to discard the data logged during the {@link GlbRunner} execution.
-     */
-    public static final String SAVE_LOG_TO_FILE = "glbrunner.logfile";
-
-    /**
      * Factory method to prepare a simulation
      * @param seed the seed used to launch the simulation
      * @param simulationOutput the output to be extracted from the simulation
@@ -384,16 +363,16 @@ public class GlbRunner extends PlaceLocalObject {
         DistCol<Agent> sAgentsCol = new DistCol<>(pg);
         DistLog log = new DistLog(pg);
 
-        String lifelineName = System.getProperty(LIFELINE_CLASS, LIFELINE_CLASS_DEFAULT);
+        String lifelineName = System.getProperty(Config.LIFELINE_CLASS, Config.LIFELINE_CLASS_DEFAULT);
         Class<? extends Lifeline> lifelineClass = null;
         try {
             lifelineClass = (Class<? extends Lifeline>) Class.forName(lifelineName);
         } catch (Exception e) {
             System.err.println("Could not find class " + lifelineName);
             e.printStackTrace();
-            System.err.println("Using " + LIFELINE_CLASS_DEFAULT + " instead");
+            System.err.println("Using " + Config.LIFELINE_CLASS_DEFAULT + " instead");
             try {
-                lifelineClass = (Class<? extends Lifeline>) Class.forName(LIFELINE_CLASS_DEFAULT);
+                lifelineClass = (Class<? extends Lifeline>) Class.forName(Config.LIFELINE_CLASS_DEFAULT);
             } catch (ClassNotFoundException e1) {
                 e1.printStackTrace();
             }
@@ -519,9 +498,9 @@ public class GlbRunner extends PlaceLocalObject {
         runnerOnWorld.run();
 
         // Post simulation, write the logged data to a file if specified
-        if (System.getProperties().contains(SAVE_LOG_TO_FILE)) {
+        if (System.getProperties().contains(Config.SAVE_LOG_TO_FILE)) {
             try {
-                new GlbLog(runnerOnWorld.logger).saveToFile(new File(System.getProperty(SAVE_LOG_TO_FILE)));
+                new GlbLog(runnerOnWorld.logger).saveToFile(new File(System.getProperty(Config.SAVE_LOG_TO_FILE)));
             } catch (Exception e) {
                 System.err.println("# Problem encountered while saving distributed log to file");
                 e.printStackTrace();
@@ -1168,7 +1147,7 @@ public class GlbRunner extends PlaceLocalObject {
     public void run() {
         // First, determine which schedule needs to be used based on the presence
         // of long-term agents in the simulation
-        final boolean usePipeline = agentAllocationManager.hasLong() || Boolean.parseBoolean(System.getProperty(FORCE_PIPELINE_SCHEDULE, "false"));
+        final boolean usePipeline = agentAllocationManager.hasLong() || Boolean.parseBoolean(System.getProperty(Config.FORCE_PIPELINE_SCHEDULE, "false"));
 
         long simulationStart = System.nanoTime();
         placeGroup.broadcastFlat(()->{
@@ -1195,34 +1174,6 @@ public class GlbRunner extends PlaceLocalObject {
         long simulationStop = System.nanoTime();
         System.err.println("# EXECUTION TIME (s) " + (simulationStop - simulationStart)/1e+9);
     }
-
-    //    /**
-    //     * Sub-routine used to compute the orders of the specified agents (long-term or short-term) and place them in the specified bag
-    //     * @param iteration the iteration number being computed
-    //     * @param agents the collection of agents whose orders are being computed
-    //     * @param orderBag the bag into which the orders are gathered as they are being generated
-    //     * @param session the session in progress
-    //     */
-    //    private void submitOrders(long iteration, DistCol<Agent> agents, DistBag<List<Order>> orderBag, Session session) {
-    //        try {
-    //            agents.parallelForEach(PARALLELISM, (agent, orderCollector) -> {
-    //                List<Order> orders = agent.submitOrders(markets);
-    //                if (session.withPrint) {
-    //                    output.orderSubmissionOutput(collector, SimulationStage.WITH_PRINT_DURING_SESSION, agent, orders, markets);
-    //                }
-    //                if (orders != null && !orders.isEmpty()) {
-    //                    orderCollector.accept(orders);
-    //                }
-    //            }, orderBag);
-    //        } catch (Exception e) {
-    //            e.printStackTrace(System.err);
-    //            if (e.getCause() != null) {
-    //                System.err.println("---------- cause of errors -----------");
-    //                e.getCause().printStackTrace(System.err);
-    //            }
-    //            throw e;
-    //        }
-    //    }
 
     /**
      * Sub-routine called after processing orders

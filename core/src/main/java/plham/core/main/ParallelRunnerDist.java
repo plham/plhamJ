@@ -330,12 +330,6 @@ public class ParallelRunnerDist extends PlaceLocalObject {
     private static final long serialVersionUID = -5954081821861048344L;
 
     /**
-     * Property which when set to true will force the use of the pipelined schedule even if there are
-     * no long-term agents in the simulation.  
-     */
-    public static final String FORCE_PIPELINE_SCHEDULE = "plhamj.forcePipeline";
-
-    /**
      * Factory method to prepare a simulation
      * @param seed the seed used to launch the simulation
      * @param simulationOutput the output to be extracted from the simulation
@@ -992,7 +986,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
     public void run() {
         // First, determine which schedule needs to be used based on the presence
         // of long-term agents in the simulation
-        final boolean usePipeline = agentAllocationManager.hasLong() || Boolean.parseBoolean(System.getProperty(FORCE_PIPELINE_SCHEDULE, "false"));
+        final boolean usePipeline = agentAllocationManager.hasLong() || Boolean.parseBoolean(System.getProperty(Config.FORCE_PIPELINE_SCHEDULE, "false"));
 
         long simulationStart = System.nanoTime();
         placeGroup.broadcastFlat(()->{

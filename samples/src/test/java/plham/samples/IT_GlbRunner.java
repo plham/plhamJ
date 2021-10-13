@@ -1,5 +1,7 @@
 package plham.samples;
 
+import static plham.core.main.Config.*;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,7 +105,7 @@ public class IT_GlbRunner extends PlhamOutputTester {
         super.before();
         final String slifeline = lifeline;
         TeamedPlaceGroup.getWorld().broadcastFlat(()->{
-            System.setProperty(GlbRunner.LIFELINE_CLASS, slifeline);
+            System.setProperty(LIFELINE_CLASS, slifeline);
             System.setProperty(PLHAMOUTPUTTEST_CREATE_OUTPUT, "true");
             System.setProperty(SimulatorFactory.LEGACY_CLASS_WARNINGS_PROPERTY, "false");
             System.setProperty(handist.collections.glb.Config.GRANULARITY, "100");
