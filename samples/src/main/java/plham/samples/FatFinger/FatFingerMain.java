@@ -19,6 +19,12 @@ public class FatFingerMain extends CI2002Main {
     private static final long serialVersionUID = -7694108079145450061L;
 
     public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Arguments for FatFingerMain");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed (optional)");
+            return;
+        }
         try {
             final FatFingerMain sim = new FatFingerMain();
             SimulatorFactory factory = new SimulatorFactory(args[0]);

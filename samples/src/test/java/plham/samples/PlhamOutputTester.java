@@ -169,7 +169,7 @@ public abstract class PlhamOutputTester {
      * @throws IOException               if it occurs when parsing the results of the execution and comparing it with
      *                                   the file in which the expected output resides.
      */
-    @Test(timeout = 60000)
+    @Test(timeout = 110000)
     public void checkProgramOutput() throws NoSuchMethodException, SecurityException, IllegalAccessException,
             IllegalArgumentException, IOException, Throwable {
         output = new FileOutputStream(temporaryOutput);

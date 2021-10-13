@@ -23,6 +23,12 @@ public class DarkPoolMain extends SimulationOutput {
     private static final long serialVersionUID = -3107504389856037530L;
 
     public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Arguments for DarkPoolMain");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed (optional)");
+            return;
+        }
         try {
             final DarkPoolMain sim = new DarkPoolMain();
             SimulatorFactory factory = new SimulatorFactory(args[0]);

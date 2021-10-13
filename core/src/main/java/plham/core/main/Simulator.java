@@ -1,5 +1,6 @@
 package plham.core.main;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,9 @@ public class Simulator {
      * All the characteristics of a session are gathered in this class
      *
      */
-    public class Session {
+    public class Session implements Serializable {
+        /** Serializable Version UID */
+        private static final long serialVersionUID = 340356225894528700L;
         public List<String> eventsToInitialize;
         public boolean forDummyTimeseries;
         public long iterationSteps;

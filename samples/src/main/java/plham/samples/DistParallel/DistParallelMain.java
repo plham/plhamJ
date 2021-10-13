@@ -9,6 +9,12 @@ import plham.samples.CI2002.NewCI2002MainForLogging;
 public class DistParallelMain {
 
     public static void main(final String[] args) throws Exception {
+        if (args.length < 1) {
+            System.err.println("Arguments for DistParallelMain");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed (optional)");
+            return;
+        }
         final NewCI2002MainForLogging sim = new NewCI2002MainForLogging();
 
         SimulatorFactory factory = new SimulatorFactory(args[0]);

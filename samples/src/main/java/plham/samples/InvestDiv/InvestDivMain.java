@@ -12,6 +12,12 @@ import plham.samples.TradingHalt.TradingHaltMain;
 public class InvestDivMain {
 
     public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Arguments for InvestDivMain");
+            System.err.println("\tJSON configuration file");
+            System.err.println("\tseed (optional)");
+            return;
+        }
         try {
             final TradingHaltMain sim = new TradingHaltMain();
             SimulatorFactory factory = new SimulatorFactory(args[0]);
