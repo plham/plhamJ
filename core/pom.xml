@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>plham</groupId>
 		<artifactId>configuration</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>v1.0.0</version>
 		<relativePath>../configuration/pom.xml</relativePath>
 	</parent>
 	<artifactId>core</artifactId>
@@ -14,7 +14,7 @@
 		<dependency>
 			<groupId>com.github.handist</groupId>
 			<artifactId>collections</artifactId>
-			<version>develop-SNAPSHOT</version>
+			<version>v1.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.handist</groupId>

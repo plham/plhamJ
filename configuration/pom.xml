@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>plham</groupId>
 	<artifactId>configuration</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>v1.0.0</version>
 	<packaging>pom</packaging>
 	<url>https://github.com/plham/plhamJ</url>
 
