@@ -5,7 +5,7 @@
 	<groupId>plham</groupId>
 	<artifactId>plhamj</artifactId>
 	<packaging>pom</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>v1.0.0</version>
 
 	<name>Plham - aggregator</name>
 	<description>Aggregator for the &quot;core&quot; and &quot;samples&quot; sub-modules of the Plham financial market simulator.</description>
@@ -40,13 +40,13 @@
 		<dependency>
 			<groupId>plham</groupId>
 			<artifactId>core</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>v1.0.0</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>plham</groupId>
 			<artifactId>samples</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>v1.0.0</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>

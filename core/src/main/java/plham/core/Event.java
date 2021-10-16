@@ -9,5 +9,14 @@ import plham.core.main.SimulatorFactory;
  * A marker interface for events, e.g., shocks and rules (regulations).
  */
 public interface Event extends Serializable {
-	Event setup(Value value, SimulatorFactory sim);
+
+    /**
+     * Provides the name of this event
+     *
+     * @return the string given to this event in the configuration file of the simulation
+     */
+    String getName();
+
+    Event setup(Value value, SimulatorFactory sim);
+
 }

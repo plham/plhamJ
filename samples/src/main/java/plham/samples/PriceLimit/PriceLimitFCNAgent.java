@@ -14,46 +14,51 @@ import plham.core.model.AgentInitializer;
 import plham.core.util.Random;
 
 public class PriceLimitFCNAgent extends FCNAgent {
-	private static final long serialVersionUID = -422099265741636519L;
+    private static final long serialVersionUID = -422099265741636519L;
 
-	public static void register(SimulatorFactory sim) {
-		String className = "PriceLimitFCNAgent";
-		sim.addAgentInitializer(className, new AgentInitializer() {
-			@Override
-			public Agent initialize(long id, String name, Random random, Value json) {
-				return new PriceLimitFCNAgent(id, name, random).setup(json, sim);
-			}
-		});
-	}
+    public static void register(SimulatorFactory sim) {
+        String className = "PriceLimitFCNAgent";
+        sim.addAgentInitializer(className, new AgentInitializer() {
+            /**
+             *
+             */
+            private static final long serialVersionUID = -1244542071744927510L;
 
-	public PriceLimitRule priceLimit;
+            @Override
+            public Agent initialize(long id, String name, Random random, Value json) {
+                return new PriceLimitFCNAgent(id, name, random).setup(json, sim);
+            }
+        });
+    }
 
-	public PriceLimitFCNAgent(long id, String name, Random random) {
-		super(id, name, random);
-	}
+    public PriceLimitRule priceLimit;
 
-	@Override
-	public PriceLimitFCNAgent setup(JSON.Value json, SimulatorFactory sim) {
-		super.setup(json, sim);
-		priceLimit = (PriceLimitRule) sim.createEvents(sim.CONFIG.get(json.get("priceLimit"))).get(0);
-		return this;
-	}
+    public PriceLimitFCNAgent(long id, String name, Random random) {
+        super(id, name, random);
+    }
 
-	@Override
-	public List<Order> submitOrders(Market market) {
-		List<Order> orders = super.submitOrders(market);
-		if (orders.size() == 0) {
-			return orders;
-		}
+    @Override
+    public PriceLimitFCNAgent setup(JSON.Value json, SimulatorFactory sim) {
+        super.setup(json, sim);
+        priceLimit = (PriceLimitRule) sim.createEvents(sim.CONFIG.get(json.get("priceLimit"))).get(0);
+        return this;
+    }
 
-		for (Order order : orders) {
-			double oldPrice = order.getPrice();
-			double newPrice = priceLimit.getLimitedPrice(order, market);
-			if (newPrice != oldPrice) {
-				order.setPrice(newPrice); // Adjust the price.
-				// You may need replanning.
-			}
-		}
-		return orders;
-	}
+    @Override
+    public List<Order> submitOrders(Market market) {
+        List<Order> orders = super.submitOrders(market);
+        if (orders.size() == 0) {
+            return orders;
+        }
+
+        for (Order order : orders) {
+            double oldPrice = order.getPrice();
+            double newPrice = priceLimit.getLimitedPrice(order, market);
+            if (newPrice != oldPrice) {
+                order.setPrice(newPrice); // Adjust the price.
+                // You may need replanning.
+            }
+        }
+        return orders;
+    }
 }

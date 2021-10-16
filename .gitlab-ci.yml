@@ -1,0 +1,40 @@
+image: maven:latest
+
+stages:
+  - build
+  - test
+
+variables:
+  MAVEN_CLI_OPTS: "--batch-mode"
+
+cache:
+  paths:
+    - target/
+
+project_compile:
+  stage: build
+  script:
+    - source /home/gitlab-runner/.profile
+    - mvn $MAVEN_CLI_OPTS -U clean compile
+
+tests:
+  stage: test
+  script:
+    - source /home/gitlab-runner/.profile
+    - mvn $MAVEN_CLI_OPTS verify -Dhostfile=${HOSTFILE}
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - core/target/surefire-reports/TEST-*.xml
+        - samples/target/surefire-reports/TEST-*.xml
+        - core/target/failsafe-reports/TEST-*.xml
+        - samples/target/failsafe-reports/TEST-*.xml
+    paths:
+        - core/target/surefire-reports/TEST-*.xml
+        - samples/target/surefire-reports/TEST-*.xml
+        - samples/target/failsafe-reports/TEST-*.xml
+        - core/target/failsafe-reports/TEST-*.xml
+        - samples/target/plhamoutputtester/*.txt
+        - target/site/*
+    expire_in: 1 week

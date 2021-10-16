@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>plham</groupId>
 		<artifactId>configuration</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>v1.0.0</version>
 		<relativePath>../configuration/pom.xml</relativePath>
 	</parent>
 	<artifactId>core</artifactId>
@@ -14,9 +14,28 @@
 		<dependency>
 			<groupId>com.github.handist</groupId>
 			<artifactId>collections</artifactId>
-			<version>v1.0.0</version>
+			<version>v1.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.handist</groupId>
+			<artifactId>mpi-junit</artifactId>
+			<version>v1.2.2</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<name>Plham - core</name>
 	<description>Core runtime of the Plham Financial Market Simulator. </description>
+	
+		<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>			
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
 </project>

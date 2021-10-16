@@ -1,226 +1,250 @@
 package plham.core.util;
 
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Ported from x10.util.Random
  */
-public final class Random {
-	private static AtomicLong defaultGen = new AtomicLong(System.nanoTime());
-	private static double DOUBLE_ULP = 1.0 / 9007199254740992L;
-	private static float FLOAT_ULP = 1.0f / 16777216L;
-	private static long GOLDEN_GAMMA = -7046029254386353131L;
+public final class Random implements Serializable {
+    private static AtomicLong defaultGen = new AtomicLong(System.nanoTime());
+    private static double DOUBLE_ULP = 1.0 / 9007199254740992L;
+    private static float FLOAT_ULP = 1.0f / 16777216L;
+    private static long GOLDEN_GAMMA = -7046029254386353131L;
+    private static final long serialVersionUID = -145083846754384274L;
 
-	private static int mix32(long z) {
-		long l = z;
-		long l1 = l >>> 33;
-		long l2 = l ^ l1;
-		l = l2 * -49064778989728563L;
-		long l3 = l >>> 33;
-		long l4 = l ^ l3;
-		l = l4 * -4265267296055464877L;
-		long l5 = l >>> 32;
-		return (int) l5;
-	}
+    private static int mix32(long z) {
+        long l = z;
+        long l1 = l >>> 33;
+        long l2 = l ^ l1;
+        l = l2 * -49064778989728563L;
+        long l3 = l >>> 33;
+        long l4 = l ^ l3;
+        l = l4 * -4265267296055464877L;
+        long l5 = l >>> 32;
+        return (int) l5;
+    }
 
-	private static long mix64(long z) {
-		long l = z;
-		long l1 = l >>> 33;
-		long l2 = l ^ l1;
-		l = l2 * -49064778989728563L;
-		long l3 = l >>> 33;
-		long l4 = l ^ l3;
-		l = l4 * -4265267296055464877L;
-		long l5 = l >>> 33;
-		long l6 = l ^ l5;
-		return l6;
-	}
+    private static long mix64(long z) {
+        long l = z;
+        long l1 = l >>> 33;
+        long l2 = l ^ l1;
+        l = l2 * -49064778989728563L;
+        long l3 = l >>> 33;
+        long l4 = l ^ l3;
+        l = l4 * -4265267296055464877L;
+        long l5 = l >>> 33;
+        long l6 = l ^ l5;
+        return l6;
+    }
 
-	private static long mix64variant13(long z) {
-		long l = z;
-		long l1 = l >>> 30;
-		long l2 = l ^ l1;
-		l = l2 * -4658895280553007687L;
-		long l3 = l >>> 27;
-		long l4 = l ^ l3;
-		l = l4 * -7723592293110705685L;
-		long l5 = l >>> 31;
-		long l6 = l ^ l5;
-		return l6;
-	}
+    private static long mix64variant13(long z) {
+        long l = z;
+        long l1 = l >>> 30;
+        long l2 = l ^ l1;
+        l = l2 * -4658895280553007687L;
+        long l3 = l >>> 27;
+        long l4 = l ^ l3;
+        l = l4 * -7723592293110705685L;
+        long l5 = l >>> 31;
+        long l6 = l ^ l5;
+        return l6;
+    }
 
-	private static long mixGamma(long z) {
-		long l = z;
-		long l1 = mix64variant13((l));
-		l = l1 | 1L;
-		long l2 = l >>> 1;
-		long l3 = l ^ l2;
-		int n = Long.bitCount(l3);
-		long l4 = n;
-		boolean b = l4 >= 24L;
-		if (b) {
-			l = l ^ -6148914691236517206L;
-		}
-		return l;
-	}
+    private static long mixGamma(long z) {
+        long l = z;
+        long l1 = mix64variant13((l));
+        l = l1 | 1L;
+        long l2 = l >>> 1;
+        long l3 = l ^ l2;
+        int n = Long.bitCount(l3);
+        long l4 = n;
+        boolean b = l4 >= 24L;
+        if (b) {
+            l = l ^ -6148914691236517206L;
+        }
+        return l;
+    }
 
-	private long gamma;
+    private long gamma;
 
-	private boolean haveStoredGaussian = false;
+    private boolean haveStoredGaussian = false;
 
-	private long seed;
+    private long seed;
 
-	private double storedGaussian = 0.0D;
+    private double storedGaussian = 0.0D;
 
-	public Random() {
-		long s = defaultGen.getAndAdd(2 * GOLDEN_GAMMA);
-		seed = mix64(s);
-		gamma = mixGamma(s + GOLDEN_GAMMA);
-	}
+    public Random() {
+        long s = defaultGen.getAndAdd(2 * GOLDEN_GAMMA);
+        seed = mix64(s);
+        gamma = mixGamma(s + GOLDEN_GAMMA);
+    }
 
-	public Random(long seed) {
-		this(seed, GOLDEN_GAMMA);
-	}
+    public Random(long seed) {
+        this(seed, GOLDEN_GAMMA);
+    }
 
-	public Random(long seed, long gamma) {
-		this.seed = seed;
-		this.gamma = gamma;
-	}
+    public Random(long seed, long gamma) {
+        this.seed = seed;
+        this.gamma = gamma;
+    }
 
-	public boolean nextBoolean() {
-		return nextInt() < 0;
-	}
+    public Random copy() {
+        return new Random(seed, gamma);
+    }
 
-	public void nextBytes(byte[] buf) {
-		int i = 0;
-		while (true) {
-			long x = nextLong();
-			while (i <= 8L) {
-				if (i >= buf.length) {
-					return;
-				}
-				long l = x & 255L;
-				buf[i] = ((byte) l);
-				i++;
-				x >>= 8;
-			}
-		}
-	}
+    @Override
+    public boolean equals(Object obj0) {
+        if (obj0 instanceof Random) {
+            Random obj = (Random) obj0;
+            return seed == obj.seed && gamma == obj.gamma;
+        }
+        return false;
+    }
 
-	public double nextDouble() {
-		long nextSeed = seed + gamma;
-		seed = nextSeed;
-		long l1 = nextSeed >>> 33;
-		long l2 = nextSeed ^ l1;
-		nextSeed = l2 * -49064778989728563L;
-		long l3 = nextSeed >>> 33;
-		long l4 = nextSeed ^ l3;
-		nextSeed = l4 * -4265267296055464877L;
-		long l5 = nextSeed >>> 33;
-		long l6 = nextSeed ^ l5;
-		long l7 = l6 >>> 11;
-		double l8 = l7;
-		return l8 * DOUBLE_ULP;
-	}
+    public long getNthLong(long i) {
+        return mix64(seed + (i + 1) * gamma);
+    }
 
-	public float nextFloat() {
-		long nextSeed = seed + gamma;
-		seed = nextSeed;
-		long l1 = nextSeed >>> 33;
-		long l2 = nextSeed ^ l1;
-		nextSeed = l2 * -49064778989728563L;
-		long l3 = nextSeed >>> 33;
-		long l4 = nextSeed ^ l3;
-		nextSeed = l4 * -4265267296055464877L;
-		long l5 = nextSeed >>> 32;
-		int l6 = (int) l5;
-		int l7 = l6 >>> 8;
-		float l8 = l7;
-		return l8 * FLOAT_ULP;
-	}
+    public boolean nextBoolean() {
+        return nextInt() < 0;
+    }
 
-	public double nextGaussian() {
-		if (haveStoredGaussian) {
-			haveStoredGaussian = false;
-			return storedGaussian;
-		} else {
-			double u1;
-			double u2;
-			double s;
-			do {
-				u1 = 2.0 * nextDouble() - 1.0;
-				u2 = 2.0 * nextDouble() - 1.0;
-				s = u1 * u1 + u2 * u2;
-			} while (s >= 1.0 || s == 0.0);
-			double m = Math.sqrt(-2.0 * Math.log(s) / s);
-			storedGaussian = u2 * m;
-			haveStoredGaussian = true;
-			return u1 * m;
-		}
-	}
+    public void nextBytes(byte[] buf) {
+        int i = 0;
+        while (true) {
+            long x = nextLong();
+            while (i <= 8L) {
+                if (i >= buf.length) {
+                    return;
+                }
+                long l = x & 255L;
+                buf[i] = ((byte) l);
+                i++;
+                x >>= 8;
+            }
+        }
+    }
 
-	public int nextInt() {
-		return mix32(nextSeed());
-	}
+    public double nextDouble() {
+        long nextSeed = seed + gamma;
+        seed = nextSeed;
+        long l1 = nextSeed >>> 33;
+        long l2 = nextSeed ^ l1;
+        nextSeed = l2 * -49064778989728563L;
+        long l3 = nextSeed >>> 33;
+        long l4 = nextSeed ^ l3;
+        nextSeed = l4 * -4265267296055464877L;
+        long l5 = nextSeed >>> 33;
+        long l6 = nextSeed ^ l5;
+        long l7 = l6 >>> 11;
+        double l8 = l7;
+        return l8 * DOUBLE_ULP;
+    }
 
-	public int nextInt(int maxPlus1) {
-		if (maxPlus1 <= 0) {
-			return 0;
-		}
+    public float nextFloat() {
+        long nextSeed = seed + gamma;
+        seed = nextSeed;
+        long l1 = nextSeed >>> 33;
+        long l2 = nextSeed ^ l1;
+        nextSeed = l2 * -49064778989728563L;
+        long l3 = nextSeed >>> 33;
+        long l4 = nextSeed ^ l3;
+        nextSeed = l4 * -4265267296055464877L;
+        long l5 = nextSeed >>> 32;
+        int l6 = (int) l5;
+        int l7 = l6 >>> 8;
+        float l8 = l7;
+        return l8 * FLOAT_ULP;
+    }
 
-		int n = maxPlus1;
+    public double nextGaussian() {
+        if (haveStoredGaussian) {
+            haveStoredGaussian = false;
+            return storedGaussian;
+        } else {
+            double u1;
+            double u2;
+            double s;
+            do {
+                u1 = 2.0 * nextDouble() - 1.0;
+                u2 = 2.0 * nextDouble() - 1.0;
+                s = u1 * u1 + u2 * u2;
+            } while (s >= 1.0 || s == 0.0);
+            double m = Math.sqrt(-2.0 * Math.log(s) / s);
+            storedGaussian = u2 * m;
+            haveStoredGaussian = true;
+            return u1 * m;
+        }
+    }
 
-		if ((n & -n) == n) {
-			return nextInt() & (n - 1);
-		}
+    public int nextInt() {
+        return mix32(nextSeed());
+    }
 
-		int mask = 1;
-		while ((n & ~mask) != 0) {
-			mask <<= 1;
-			mask |= 1;
-		}
+    public int nextInt(int maxPlus1) {
+        if (maxPlus1 <= 0) {
+            return 0;
+        }
 
-		int x;
-		do {
-			x = nextInt() & mask;
-		} while (x >= n);
+        int n = maxPlus1;
 
-		return x;
-	}
+        if ((n & -n) == n) {
+            return nextInt() & (n - 1);
+        }
 
-	public long nextLong() {
-		return mix64(nextSeed());
-	}
+        int mask = 1;
+        while ((n & ~mask) != 0) {
+            mask <<= 1;
+            mask |= 1;
+        }
 
-	public long nextLong(long maxPlus1) {
-		if (maxPlus1 <= 0) {
-			return 0;
-		}
-		long n = maxPlus1;
-		if ((n & -n) == n) {
-			return nextLong() & (n - 1);
-		}
+        int x;
+        do {
+            x = nextInt() & mask;
+        } while (x >= n);
 
-		long mask = 1;
-		while ((n & ~mask) != 0) {
-			mask <<= 1;
-			mask |= 1;
-		}
+        return x;
+    }
 
-		long x;
-		do {
-			x = nextLong() & mask;
-		} while (x >= n);
+    public long nextLong() {
+        return mix64(nextSeed());
+    }
 
-		return x;
-	}
+    public long nextLong(long maxPlus1) {
+        if (maxPlus1 <= 0) {
+            return 0;
+        }
+        long n = maxPlus1;
+        if ((n & -n) == n) {
+            return nextLong() & (n - 1);
+        }
 
-	private long nextSeed() {
-		seed += gamma;
-		return seed;
-	}
+        long mask = 1;
+        while ((n & ~mask) != 0) {
+            mask <<= 1;
+            mask |= 1;
+        }
 
-	public Random split() {
-		return new Random(mix64(nextSeed()), mixGamma(nextSeed()));
-	}
+        long x;
+        do {
+            x = nextLong() & mask;
+        } while (x >= n);
+
+        return x;
+    }
+
+    private long nextSeed() {
+        seed += gamma;
+        return seed;
+    }
+
+    public Random split() {
+        return new Random(mix64(nextSeed()), mixGamma(nextSeed()));
+    }
+
+    @Override
+    public String toString() {
+        return "Random[" + seed + "," + gamma + "]";
+    }
 }

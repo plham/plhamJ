@@ -7,11 +7,11 @@ import java.io.Serializable;
  */
 
 public class Time implements Serializable {
-	private static final long serialVersionUID = -3740728528349778203L;
+    private static final long serialVersionUID = -3740728528349778203L;
 
-	public long t;
+    public long t;
 
-	public Time(long t) {
-		this.t = t;
-	}
+    public Time(long t) {
+        this.t = t;
+    }
 }

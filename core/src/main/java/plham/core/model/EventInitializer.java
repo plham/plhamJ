@@ -7,5 +7,5 @@ import plham.core.Event;
 import plham.core.util.Random;
 
 public interface EventInitializer extends Serializable {
-	Event initialize(long id, Random random, String name, JSON.Value json);
+    Event initialize(long id, Random random, String name, JSON.Value json);
 }
