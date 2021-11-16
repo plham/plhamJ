@@ -32,6 +32,15 @@ import handist.collections.glb.lifeline.Lifeline;
 import handist.collections.util.SavedLog;
 
 import static handist.collections.glb.GlobalLoadBalancer.underGLB;
+import static plham.core.main.log.LogConstants.LOG_ITERATION_START;
+import static plham.core.main.log.LogConstants.LOG_ITERATION_STOP;
+import static plham.core.main.log.LogConstants.LOG_PROCESSORDERS_START;
+import static plham.core.main.log.LogConstants.LOG_PROCESSORDERS_STOP;
+import static plham.core.main.log.LogConstants.LOG_SAGENTSUBMISSION_START;
+import static plham.core.main.log.LogConstants.LOG_SAGENTSUBMISSION_STOP;
+import static plham.core.main.log.LogConstants.LOG_SESSION_START;
+import static plham.core.main.log.LogConstants.LOG_SESSION_STOP;
+
 import apgas.Place;
 import apgas.util.PlaceLocalObject;
 import cassia.util.JSON.Value;
@@ -767,10 +776,13 @@ public class GlbRunner extends PlaceLocalObject {
             throw new RuntimeException("Was about to start a session without order placement, this should not happen");
         }
 
+        logger.put(LOG_SESSION_START, session.sessionName, ""+ System.nanoTime());
         marketSetup(session.withOrderExecution);
 
+        long iterationStamp = System.nanoTime();
         for (long id = 0; id < session.iterationSteps; id ++) {
-            // final long idc = id; // final for use inside lambda expression
+            logger.put(LOG_ITERATION_START, session.sessionName + ":" + id, "" + iterationStamp);
+            final long idc = id; // final for use inside lambda expression
             iterSetup();
 
             placeGroup.broadcastFlat(()->{
@@ -778,6 +790,7 @@ public class GlbRunner extends PlaceLocalObject {
             });
 
             // Submit short-term agent orders
+            logger.put(LOG_SAGENTSUBMISSION_START, session.sessionName + ":" + idc, "" + System.nanoTime());
             sAgents.GLB.toBag((Agent agent,Consumer<List<Order>> orderCollector)->{
                 List<Order> orders = agent.submitOrders(markets);
                 if (session.withPrint) {
@@ -801,8 +814,11 @@ public class GlbRunner extends PlaceLocalObject {
                 sAgents.updateDist();
 
                 if (isMaster) {
+                    logger.put(LOG_SAGENTSUBMISSION_STOP, session.sessionName + ":" + idc, "" + System.nanoTime());
+                    logger.put(LOG_PROCESSORDERS_START, session.sessionName + ":" + idc, "" + System.nanoTime());
                     addOrders(sOrders);
                     handleOrders(session);
+                    logger.put(LOG_PROCESSORDERS_STOP, session.sessionName + ":" + idc, "" + System.nanoTime());
                     updateMarketMisc(session);
                 }
 
@@ -825,11 +841,13 @@ public class GlbRunner extends PlaceLocalObject {
 
                 executeShortTermAgentUpdate();
             });
+            iterationStamp = System.nanoTime();
+            logger.put(LOG_ITERATION_STOP, session.sessionName + ":" + idc, "" + iterationStamp);
         }
-        if (isMaster && session.withPrint) {
+        if (session.withPrint) {
             makeWithPrintOutput(session, SimulationStage.WITH_PRINT_END_SESSION);
         }
-
+        logger.put(LOG_SESSION_STOP, session.sessionName, ""+ System.nanoTime());
     }
 
     private void iterateMarketUpdatesPipeline(Session session) {
