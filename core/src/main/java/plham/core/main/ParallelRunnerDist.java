@@ -1,6 +1,7 @@
 package plham.core.main;
 
 import static apgas.Constructs.*;
+import static plham.core.main.log.LogConstants.*;
 
 import java.io.File;
 import java.io.Serializable;
@@ -125,7 +126,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
             map.delete(key);
             return toReturn;
         }
-        
+
         /**
          * Relocates all logged entries onto the master of the simulation so that the
          * {@link SimulationOutput#postProcess(OutputCollector, SimulationStage)} can
@@ -298,7 +299,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
             return true;
         }
     }
-    
+
     /**
      * Randomized order used to sort the Orders received on master
      */
@@ -352,7 +353,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         DistBag<List<Order>> sOrdersCol = new DistBag<>(pg);
         DistMap<String, List<String>> outputCollectorMap = new DistMap<>(pg);
         DistLog log = new DistLog(pg);
-        
+
         // Creating a simulator in anticipation to initialize distributed array of markets
         // The factory instance `f` should not be used any further, a proper instance will be present
         // in each GlbRunner
@@ -467,7 +468,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         runnerOnWorld.run();
         long simulationStop = System.nanoTime();
         System.err.println("# EXECUTION TIME " + (simulationStop - simulationStart)/1e+9);
-        
+
         // Post simulation, write the logged data to a file if specified
         if (System.getProperties().containsKey(Config.SAVE_LOG_TO_FILE)) {
             String fileName = System.getProperty(Config.SAVE_LOG_TO_FILE);
@@ -480,7 +481,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
             }
         }
     }
-    
+
     /**************************************************************************
      * Members related to the simulation participants                         *
      *************************************************************************/
@@ -507,7 +508,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
     final CachableArray<Market> markets;
     /** Class specifying the outputs to make during the simulation*/
     final transient SimulationOutput output;
-    
+
     /**************************************************************************
      * Members related to runtime                                             *
      *************************************************************************/
@@ -679,20 +680,26 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         }
 
         if (isMaster) {
+            logger.put(LOG_SESSION_START, session.sessionName, ""+ System.nanoTime());
             marketSetup(session.withOrderExecution);
         }
 
+        long iterationStamp = System.nanoTime();
         for (long id = 0; id < session.iterationSteps; id ++) {
-            final long idc = id; // final for use inside lambda expression
-
             if (isMaster) {
+                logger.put(LOG_ITERATION_START, session.sessionName + ":" + id, "" + iterationStamp);
                 iterSetup();
             }
+            //            final long idc = id; // final for use inside lambda expression
+
             markets.<MarketUpdate>broadcast(MarketUpdate::pack, MarketUpdate::unpack);
 
             // Submit short-term agent orders and gather them on root
+            if(isMaster) {
+                logger.put(LOG_SAGENTSUBMISSION_START, session.sessionName + ":" + id, "" + System.nanoTime());
+            }
             sOrders.clear();
-            submitOrders(idc, sAgents, sOrders, session);
+            submitOrders(id, sAgents, sOrders, session);
             try {
                 sOrders.TEAM.gather(master);
             } catch (Exception e) {
@@ -701,8 +708,11 @@ public class ParallelRunnerDist extends PlaceLocalObject {
             }
 
             if (isMaster) {
+                logger.put(LOG_SAGENTSUBMISSION_STOP, session.sessionName + ":" + id, "" + System.nanoTime());
+                logger.put(LOG_PROCESSORDERS_START, session.sessionName + ":" + id, "" + System.nanoTime());
                 addOrders(sOrders);
                 handleOrders(session);
+                logger.put(LOG_PROCESSORDERS_STOP, session.sessionName + ":" + id, "" + System.nanoTime());
                 updateMarketMisc(session);
             }
 
@@ -725,12 +735,17 @@ public class ParallelRunnerDist extends PlaceLocalObject {
 
             if (!isMaster) {
                 executeRemoteAgentUpdate();
+            } else {
+                logger.put(LOG_ITERATION_STOP, session.sessionName + ":" + id, "" + System.nanoTime());
             }
         }
-        if (isMaster && session.withPrint) {
+
+        if (session.withPrint) {
             makeWithPrintOutput(session, SimulationStage.WITH_PRINT_END_SESSION);
         }
-
+        if (isMaster) {    
+            logger.put(LOG_SESSION_STOP, session.sessionName, ""+ System.nanoTime());
+        }
     }
 
     private void iterateMarketUpdatesPipeline(Session session) {
@@ -899,7 +914,7 @@ public class ParallelRunnerDist extends PlaceLocalObject {
         outputAgent(stage);
 
         collector.transferLogsToMaster();
-        
+
         if (isMaster) output.postProcess(collector, stage);
         // Remove all collected entries before next output
         collector.clear();
