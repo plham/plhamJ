@@ -429,7 +429,13 @@ public class Market implements Serializable {
         return fundamentalPrices.get((int) getTime());
     }
 
-    protected double getFundamentalPrice(long t) {
+    /**
+     * Obtain the fundamental price at the specified time
+     * @param t the time in the simulation
+     * @return the fundamental price
+     */
+    public double getFundamentalPrice(long t) {
+        // FIXME why take a long as parameter if we then cast it to int?
         return fundamentalPrices.get((int) t);
     }
 
@@ -457,15 +463,16 @@ public class Market implements Serializable {
         return lastExecutedPrices.get((int) getTime());
     }
 
-    protected double getLastMarketPrice() {
+    public double getLastMarketPrice() {
         return marketPrices.get(marketPrices.size() - 1);
     }
 
-    protected double getMarketPrice() {
+    public double getMarketPrice() {
         return marketPrices.get((int) getTime());
     }
 
-    protected double getMarketPrice(long t) {
+    public double getMarketPrice(long t) {
+        // FIXME why take a long as parameter if we are going to cast it into int?
         return marketPrices.get((int) t);
     }
 
@@ -474,12 +481,12 @@ public class Market implements Serializable {
         return (getBestBuyPrice() + getBestSellPrice()) / 2.0;
     }
 
-    protected double getNextFundamentalPrice() {
+    public double getNextFundamentalPrice() {
         assert getTime() == fundamentalPrices.size() - 1;
         return fundamentalPrices.get(fundamentalPrices.size() - 1);
     }
 
-    protected double getNextMarketPrice() {
+    public double getNextMarketPrice() {
         double lastPrice = marketPrices.get(marketPrices.size() - 1);
         double price = lastPrice;
         if (isRunning()) {
@@ -492,7 +499,7 @@ public class Market implements Serializable {
         return price;
     }
 
-    protected long getOutstandingShares() {
+    public long getOutstandingShares() {
         return outstandingShares;
     }
 
@@ -516,7 +523,7 @@ public class Market implements Serializable {
         return sellOrderBook;
     }
 
-    protected double getTickSize() {
+    public double getTickSize() {
         return tickSize;
     }
 
@@ -836,7 +843,8 @@ public class Market implements Serializable {
         }
     }
 
-    protected void updateFundamentalPrice(Double price) {
+    public void updateFundamentalPrice(Double price) {
+        // FIXME throw runtime exception instead?
         assert !price.isNaN() : "!price.isNaN()";
         assert price >= 0.0 : "price >= 0.0";
         fundamentalPrices.add(price);
@@ -852,7 +860,7 @@ public class Market implements Serializable {
         this.updateMarketPrice(price);
     }
 
-    protected void updateMarketPrice(Double price) {
+    public void updateMarketPrice(Double price) {
         assert !price.isNaN() : "!price.isNaN()";
         assert price >= 0.0 : "price >= 0.0";
         marketPrices.add(price);
