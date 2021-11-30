@@ -2,10 +2,10 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>plham</groupId>
-	<artifactId>plhamj</artifactId>
+	<groupId>com.github.plham</groupId>
+	<artifactId>plhamJ</artifactId>
 	<packaging>pom</packaging>
-	<version>v1.0.0</version>
+	<version>v1.0.1</version>
 
 	<name>Plham - aggregator</name>
 	<description>Aggregator for the &quot;core&quot; and &quot;samples&quot; sub-modules of the Plham financial market simulator.</description>
@@ -38,15 +38,15 @@
 		for the aggregate report it generates -->
 	<dependencies>
 		<dependency>
-			<groupId>plham</groupId>
+			<groupId>com.github.plham</groupId>
 			<artifactId>core</artifactId>
-			<version>v1.0.0</version>
+			<version>v1.0.1</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>plham</groupId>
+			<groupId>com.github.plham</groupId>
 			<artifactId>samples</artifactId>
-			<version>v1.0.0</version>
+			<version>v1.0.1</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>

@@ -3,18 +3,18 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>plham</groupId>
+		<groupId>com.github.plham</groupId>
 		<artifactId>configuration</artifactId>
-		<version>v1.0.0</version>
-		<relativePath>../configuration/pom.xml</relativePath>
+		<version>v1.0.1</version>
+		<relativePath>../configuration/</relativePath>
 	</parent>
 	<artifactId>samples</artifactId>
 
 	<dependencies>
 		<dependency>
-			<groupId>plham</groupId>
+			<groupId>com.github.plham</groupId>
 			<artifactId>core</artifactId>
-			<version>v1.0.0</version>
+			<version>v1.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.handist</groupId>
