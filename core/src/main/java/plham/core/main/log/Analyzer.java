@@ -20,7 +20,9 @@ import handist.collections.dist.DistLog.LogItem;
 import handist.collections.util.SavedLog;
 
 /**
- * Class in charge of parsing logs and producing outputs about the runtime of Runners
+ * Class in charge of parsing logs and producing outputs about the runtime of
+ * Runners
+ *
  * @author Patrick Finnerty
  *
  */
@@ -32,30 +34,38 @@ public class Analyzer {
     private static final String VERBOSE = "v";
 
     private static final Comparator<LogItem> timeStampSort = (a, b) -> {
-        long diff = Long.parseLong(a.appendix) - Long.parseLong(b.appendix);
-        if (diff ==0l) {
+        final long diff = Long.parseLong(a.appendix) - Long.parseLong(b.appendix);
+        if (diff == 0l) {
             return 0;
-        } else if (diff<0l) {
+        } else if (diff < 0l) {
             return -1;
         } else {
             return 1;
         }
     };
 
-    /** Saved log from which the outputs are made */
-    private SavedLog log;
-
-    public Analyzer(SavedLog l) {
-        log = l;
-    }
-
     private static Options commandOptions() {
         final Options opts = new Options();
-        opts.addOption(ITERATION_TIMES, true, "Produce a CSV containing the times spent on the various steps of a simulation");
+        opts.addOption(ITERATION_TIMES, true,
+                "Produce a CSV containing the times spent on the various steps of a simulation");
         opts.addOption(VERBOSE, false, "Verbose, dump the keys and number of entries for each key on std output");
-        opts.addOption(EXTRA_VERBOSE, false, "Extra verbose, dumps the entire content of the log (each key and each entry for said key) on std output");
-        opts.addOption(OVERWRITE, false, "Force Overwrite, in case a file specified as parameter as an output for one of the options this analyser provides, the contents of the existing file will be overwritten.");
+        opts.addOption(EXTRA_VERBOSE, false,
+                "Extra verbose, dumps the entire content of the log (each key and each entry for said key) on std output");
+        opts.addOption(OVERWRITE, false,
+                "Force Overwrite, in case a file specified as parameter as an output for one of the options this analyser provides, the contents of the existing file will be overwritten.");
         return opts;
+    }
+
+    /**
+     * Return the elapsed time between two log items which feature a
+     * {@link System#nanoTime()} timestamp as their appendix
+     *
+     * @param first  the log item recorded first
+     * @param second the log item recoded later
+     * @return the elapsed time (in nanoseconds) between the two arguments
+     */
+    private static long elapsed(LogItem first, LogItem second) {
+        return Long.parseLong(second.appendix) - Long.parseLong(first.appendix);
     }
 
     /**
@@ -63,11 +73,13 @@ public class Analyzer {
      * <p>
      * Call without any arguments for help message
      * <p>
-     * Specify the outputs to produce with their matching options and the log source file last:
-     * Analyzer [option outputFile]* logFile
-     * @param args options specifying which outputs to produce and the log file from which the information is te be taken last
+     * Specify the outputs to produce with their matching options and the log source
+     * file last: Analyzer [option outputFile]* logFile
+     *
+     * @param args options specifying which outputs to produce and the log file from
+     *             which the information is te be taken last
      */
-    public static void main(String []args) {
+    public static void main(String[] args) {
         final Options options = commandOptions();
         if (args.length <= 1) {
             new HelpFormatter().printHelp("(options)+ <log input file>", options);
@@ -86,7 +98,7 @@ public class Analyzer {
         try {
             log = new SavedLog(f);
         } catch (final Exception e) {
-            System.err.println("A problem occurred while parsing input file " +inputFileName);
+            System.err.println("A problem occurred while parsing input file " + inputFileName);
             e.printStackTrace();
             System.exit(-2);
         }
@@ -109,19 +121,22 @@ public class Analyzer {
         if (cmd.hasOption(EXTRA_VERBOSE)) {
             log.printAll(System.out);
         } else if (cmd.hasOption(VERBOSE)) {
-            // In simple verbose output, only show the keys and the number of entries for each key
+            // In simple verbose output, only show the keys and the number of entries for
+            // each key
             log.printKeys(System.out);
         }
-        boolean overwriteFiles = cmd.hasOption(OVERWRITE);
+        final boolean overwriteFiles = cmd.hasOption(OVERWRITE);
 
         makeOutputToFile(cmd, ITERATION_TIMES, analyzer::iterationTimes, overwriteFiles);
     }
 
     /**
-     * Generic method used to check whether an option was set. If so, the relevant output is made
+     * Generic method used to check whether an option was set. If so, the relevant
+     * output is made
      *
-     * @param option the string option
-     * @param outputMethod the method which produces the output based on the contents of the log
+     * @param option       the string option
+     * @param outputMethod the method which produces the output based on the
+     *                     contents of the log
      */
     private static void makeOutputToFile(CommandLine cmd, String option, Consumer<PrintStream> outputMethod,
             boolean overwriteFiles) {
@@ -148,28 +163,28 @@ public class Analyzer {
         }
     }
 
-    /**
-     * Return the elapsed time between two log items which feature a {@link System#nanoTime()} timestamp as their appendix 
-     * @param first the log item recorded first
-     * @param second the log item recoded later
-     * @return the elapsed time (in nanoseconds) between the two arguments
-     */
-    private static long elapsed(LogItem first, LogItem second) {
-        return Long.parseLong(second.appendix) - Long.parseLong(first.appendix);
+    /** Saved log from which the outputs are made */
+    private final SavedLog log;
+
+    public Analyzer(SavedLog l) {
+        log = l;
     }
 
     /**
-     * Produces a table in CSV format with each line containing the iteration time and details of a single iteration 
-     * @param out the output stream into which the table should be printed 
-     * @throws Exception if some inconsistencies are found while producing the output
+     * Produces a table in CSV format with each line containing the iteration time
+     * and details of a single iteration
+     *
+     * @param out the output stream into which the table should be printed
+     * @throws RuntimeException if some inconsistencies are found while producing
+     *                          the output
      */
     public void iterationTimes(PrintStream out) {
-        ArrayList<LogItem> startList = new ArrayList<>(log.getLog(0, LOG_ITERATION_START, 0));
-        ArrayList<LogItem> stopList = new ArrayList<>(log.getLog(0, LOG_ITERATION_STOP, 0));
-        ArrayList<LogItem> sOrdersStart = new ArrayList<>(log.getLog(0, LOG_SAGENTSUBMISSION_START, 0));
-        ArrayList<LogItem> sOrdersStop = new ArrayList<>(log.getLog(0, LOG_SAGENTSUBMISSION_STOP, 0));
-        ArrayList<LogItem> processStart = new ArrayList<>(log.getLog(0, LOG_PROCESSORDERS_START, 0));
-        ArrayList<LogItem> processStop = new ArrayList<>(log.getLog(0, LOG_PROCESSORDERS_STOP, 0));        
+        final ArrayList<LogItem> startList = new ArrayList<>(log.getLog(0, LOG_ITERATION_START, 0));
+        final ArrayList<LogItem> stopList = new ArrayList<>(log.getLog(0, LOG_ITERATION_STOP, 0));
+        final ArrayList<LogItem> sOrdersStart = new ArrayList<>(log.getLog(0, LOG_SAGENTSUBMISSION_START, 0));
+        final ArrayList<LogItem> sOrdersStop = new ArrayList<>(log.getLog(0, LOG_SAGENTSUBMISSION_STOP, 0));
+        final ArrayList<LogItem> processStart = new ArrayList<>(log.getLog(0, LOG_PROCESSORDERS_START, 0));
+        final ArrayList<LogItem> processStop = new ArrayList<>(log.getLog(0, LOG_PROCESSORDERS_STOP, 0));
 
         startList.sort(timeStampSort);
         stopList.sort(timeStampSort);
@@ -180,27 +195,26 @@ public class Analyzer {
 
         out.println("Iteration; Total time; Order Production&transfer; Order Handling");
         // Iterate over all 6 lists to produce the output
-        for (int it = 0; it < startList.size(); it ++) {
-            LogItem start = startList.get(it);
-            LogItem stop = stopList.get(it);
-            long totalTime = elapsed(start, stop);
-            LogItem orderStart = sOrdersStart.get(it);
-            LogItem orderStop = sOrdersStop.get(it);
-            long orderProductionTransfer = elapsed(orderStart, orderStop);
-            LogItem handlingStart = processStart.get(it);
-            LogItem handlingStop = processStop.get(it);
-            long orderHandling = elapsed(handlingStart,handlingStop);
+        for (int it = 0; it < startList.size(); it++) {
+            final LogItem start = startList.get(it);
+            final LogItem stop = stopList.get(it);
+            final long totalTime = elapsed(start, stop);
+            final LogItem orderStart = sOrdersStart.get(it);
+            final LogItem orderStop = sOrdersStop.get(it);
+            final long orderProductionTransfer = elapsed(orderStart, orderStop);
+            final LogItem handlingStart = processStart.get(it);
+            final LogItem handlingStop = processStop.get(it);
+            final long orderHandling = elapsed(handlingStart, handlingStop);
 
             // Small sanity check
-            if (start.msg.equals(stop.msg) &&
-                    orderStart.msg.equals(stop.msg) &&
-                    orderStop.msg.equals(stop.msg) &&
-                    handlingStart.msg.equals(stop.msg) &&
-                    handlingStop.msg.equals(stop.msg)) {
-                out.println(String.format("%s;%s;%s;%s", it, totalTime/1e9, orderProductionTransfer/1e9, orderHandling/1e9));    
+            if (start.msg.equals(stop.msg) && orderStart.msg.equals(stop.msg) && orderStop.msg.equals(stop.msg)
+                    && handlingStart.msg.equals(stop.msg) && handlingStop.msg.equals(stop.msg)) {
+                out.println(String.format("%s;%s;%s;%s", it, totalTime / 1e9, orderProductionTransfer / 1e9,
+                        orderHandling / 1e9));
             } else {
                 System.err.println("### Producing iteration times: The messages of the various log keys did not match");
-                System.err.println(start.msg + " " + stop.msg + " " + orderStart.msg + " " + orderStop.msg + " " + handlingStart.msg + " " + handlingStop.msg);
+                System.err.println(start.msg + " " + stop.msg + " " + orderStart.msg + " " + orderStop.msg + " "
+                        + handlingStart.msg + " " + handlingStop.msg);
                 throw new RuntimeException("Inconcistency in message of iteration number " + it);
             }
         }
