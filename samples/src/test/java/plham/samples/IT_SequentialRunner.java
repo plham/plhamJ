@@ -28,7 +28,7 @@ public class IT_SequentialRunner extends PlhamOutputTester {
         System.setProperty(PLHAMOUTPUTTEST_CREATE_OUTPUT, "true");
         System.setProperty(SimulatorFactory.LEGACY_CLASS_WARNINGS_PROPERTY, "false");
     }
-
+    
     @Parameters(name = "{0}")
     public static Collection<Object[]> constructorParameters() {
         return Arrays.asList(new Object[][] {
